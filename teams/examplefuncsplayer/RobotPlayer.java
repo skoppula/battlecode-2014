@@ -55,6 +55,8 @@ public class RobotPlayer {
 								rc.sneak(toEnemy);
 							}
 						}
+					double delay = rc.getActionDelay();
+					System.out.println("The delay by the Soldier is: " + delay);
 					}
 				} catch (Exception e) {
 					System.out.println("Soldier Exception");

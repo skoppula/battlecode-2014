@@ -1,4 +1,4 @@
-package cowdensitymap;
+package dayonetesting2;
 
 //this code mostly focuses on finding the areas of greatest cow density. It does mostly nothing else. Not even move the soldiers in that direction.
 
