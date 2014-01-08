@@ -9,11 +9,9 @@ public class RobotPlayer{
 	public static void run(RobotController rc){
 		
 		double cowDensMap[][] = rc.senseCowGrowth();
-
 		//Get dimensions of map
 		int mapY = cowDensMap.length, mapX = cowDensMap[0].length;
-
-		MapLocation pastureLocs[] = makeCowMap(cowDensMap, mapY, mapX, 5);
+		MapLocation pastureLocs[] = findPastureLocs(cowDensMap, mapY, mapX, 5);
 		
 	}
 	
