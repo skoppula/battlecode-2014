@@ -1,4 +1,5 @@
 package justgetsomethingworking;
+//This goes to the center of the map
 
 import battlecode.common.*;
 
@@ -56,7 +57,7 @@ public class RobotPlayer{
 	private static void swarmMove(MapLocation averagePositionOfSwarm) throws GameActionException{
 		Direction chosenDirection = rc.getLocation().directionTo(averagePositionOfSwarm);
 		if(rc.isActive()){
-			if(randall.nextDouble()<0.3){//go to swarm center
+			if(randall.nextDouble()<0.2){//go to swarm center
 				for(int directionalOffset:directionalLooks){
 					int forwardInt = chosenDirection.ordinal();
 					Direction trialDir = allDirections[(forwardInt+directionalOffset+8)%8];
@@ -72,6 +73,7 @@ public class RobotPlayer{
 //				}
 				
 				//Get dimensions of map
+				//Move toward the center of the map
 				//This is terrible code change it!
 				double cowDensMap[][] = rc.senseCowGrowth(); 
 				int mapY = cowDensMap.length, mapX = cowDensMap[0].length;
@@ -114,7 +116,22 @@ public class RobotPlayer{
 				}
 			}
 		}else{//there are no enemies, so build a tower
-			if(randall.nextDouble()<0.01&&rc.sensePastrLocations(rc.getTeam()).length<5){
+			//checknearbypastr();
+			MapLocation pastrs[] = rc.sensePastrLocations(rc.getTeam());
+			//write your own function for this
+			boolean a = false;
+			boolean b = false;
+			for (MapLocation i:pastrs) {
+				if (rc.getLocation().distanceSquaredTo(i) < 20) {
+					a = true;
+				}
+			}
+			
+			if (rc.sensePastrLocations(rc.getTeam()).length<5) {
+				b = true;
+			}
+			
+			if( (randall.nextDouble()<0.01&&a && b) || ((Clock.getRoundNum()<100) &&rc.getLocation().distanceSquaredTo(rc.senseHQLocation()) > 100)){
 				//rc.senseCowsAtLocation(arg0);
 				if(rc.isActive()){
 					rc.construct(RobotType.PASTR);
