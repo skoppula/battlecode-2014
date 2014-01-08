@@ -22,8 +22,8 @@ public class RobotPlayer{
 		int pstrCowDens[] = new int[numPastures];
 		
 		//Slides a 3x3 window across the entire map, intervals of three and returns windows with highest 
-		for(int i = 0; i < mapY-3; i+=10){
-			for(int j = 0; j < mapX-3; j+=10){
+		for(int i = 0; i < mapY-3; i+=4){
+			for(int j = 0; j < mapX-3; j+=4){
 				
 				int sum = (int) (cowmap[i][j] + cowmap[i+1][j] + cowmap[i+2][j] 
 							+ cowmap[i][j+1] + cowmap[i+1][j+1] + cowmap[i+2][j+1]
