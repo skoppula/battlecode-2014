@@ -12,6 +12,7 @@ public class RobotPlayer{
         static Random randall = new Random();
         static int directionalLooks[] = new int[]{0,1,-1,2,-2};
         
+
         public static void run(RobotController rcin){
                 rc = rcin;
                 randall.setSeed(rc.getRobot().getID());
@@ -77,8 +78,16 @@ public class RobotPlayer{
 //                        rc.move(chosenDirection);
 //                }
 
-                swarmMove(averagePositionOfSwarm);
+               
         }
+        
+        private static int locToInt(MapLocation m){
+            return (m.x*100 + m.y);
+    }
+    
+    private static MapLocation intToLoc(int i){
+            return new MapLocation(i/100,i%100);
+    }
         
         private static void swarmMove(MapLocation averagePositionOfSwarm) throws GameActionException{
                 Direction chosenDirection = rc.getLocation().directionTo(averagePositionOfSwarm);
@@ -112,13 +121,8 @@ public class RobotPlayer{
                 return new MapLocation(bigM.x/divisor, bigM.y/divisor);
         }
 
-        private static int locToInt(MapLocation m){
-                return (m.x*100 + m.y);
-        }
-        
-        private static MapLocation intToLoc(int i){
-                return new MapLocation(i/100,i%100);
-        }
+
+
         
         private static void tryToShoot() throws GameActionException {
                 //shooting
