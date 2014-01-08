@@ -21,6 +21,11 @@ public class RobotPlayer{
 		MapLocation pstrLocs[] = new MapLocation[numPastures];
 		int pstrCowDens[] = new int[numPastures];
 		
+		//Fill default
+		for (int i = 0; i < numPastures; i++) {
+			pstrLocs[i] = new MapLocation(mapX/2, mapY/2);			
+		}
+		
 		//Slides a 3x3 window across the entire map, intervals of three and returns windows with highest 
 		for(int i = 0; i < mapY-3; i+=4){
 			for(int j = 0; j < mapX-3; j+=4){
@@ -36,6 +41,8 @@ public class RobotPlayer{
 						break;
 					}
 				}
+				
+				
 			}
 		}
 
