@@ -27,14 +27,16 @@ public class RobotPlayer{
 				if(rc.getType()==RobotType.HQ){//if I'm a headquarters
 					runHeadquarters();
 				}else if(rc.getType()==RobotType.SOLDIER){
-					runSoldier();
-					//Get dimensions of map
-					//Move toward the center of the map
-					//This is terrible code change it!
+					//runSoldier();
+					
+					//Move toward goal
 					MapLocation goal = pastureLocs[0];
 					Direction d = rc.getLocation().directionTo(goal);
 					if(rc.isActive()&&rc.canMove(d)){
 						rc.move(d);
+					} else {
+						Direction all[] = Direction.values();
+						rc.move(all[(int)(randall.nextDouble()*8)]);
 					}
 				}
 				rc.yield();
@@ -66,6 +68,7 @@ public class RobotPlayer{
 //		if(rc.isActive()&&rc.canMove(chosenDirection)){
 //			rc.move(chosenDirection);
 //		}
+
 		swarmMove(averagePositionOfSwarm);
 	}
 	
@@ -181,7 +184,8 @@ public class RobotPlayer{
                             }
                     }
             }
-
+            
+            System.out.println("HI");
             return pstrLocs;
     }
 }
