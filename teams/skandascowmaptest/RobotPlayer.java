@@ -3,6 +3,7 @@ package skandascowmaptest;
 
 import battlecode.common.*;
 
+import java.util.Arrays;
 import java.util.Random;
 
 public class RobotPlayer{
@@ -21,7 +22,7 @@ public class RobotPlayer{
 		        //Get dimensions of map
 		        int mapY = cowDensMap.length, mapX = cowDensMap[0].length;
 		        MapLocation pastureLocs[] = findPastureLocs(cowDensMap, mapY, mapX, 5);
-		        //rc.resign();
+		        rc.resign();
         
                 while(true){
                         try{
@@ -203,11 +204,8 @@ public class RobotPlayer{
     				
     			}
     		}
-    		for (int j = 0; j<100;j++) {
-    			for (int i = 0; i < pstrLocs.length; i++) {
-        			System.out.println("SKANDA FOUND THESE LOCATIONS: " + pstrLocs[i]);
-        		}
-    		}
+    		
+    		System.out.println("SKANDA FOUND THESE LOCATIONS: " + Arrays.deepToString(pstrLocs));
     		
 
     		return pstrLocs;

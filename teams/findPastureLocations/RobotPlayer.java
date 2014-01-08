@@ -34,6 +34,9 @@ public class RobotPlayer{
 							+ cowmap[i][j+1] + cowmap[i+1][j+1] + cowmap[i+2][j+1]
 							+ cowmap[i][j+2] + cowmap[i+1][j+2] + cowmap[i+2][j+2]);
 				
+				//high distScore means closer to base
+				//int distScore = mapX*mapY-(i);
+				
 				for(int k = 0; k < numPastures; k++){
 					if(sum>pstrCowDens[k]){
 						pstrLocs[k] = new MapLocation(j+1, i+1);
