@@ -19,11 +19,11 @@ public class RobotPlayer{
 	private static MapLocation[] findPastureLocs(double cowmap[][], int mapY, int mapX, int numPastures) {
 		
 		MapLocation pstrLocs[] = new MapLocation[numPastures];
-		int pstrCowDens[] = new int[5];
+		int pstrCowDens[] = new int[numPastures];
 		
 		//Slides a 3x3 window across the entire map, intervals of three and returns windows with highest 
-		for(int i = 0; i < mapY-3; i+=3){
-			for(int j = 0; j < mapX-3; j+=3){
+		for(int i = 0; i < mapY-3; i+=10){
+			for(int j = 0; j < mapX-3; j+=10){
 				
 				int sum = (int) (cowmap[i][j] + cowmap[i+1][j] + cowmap[i+2][j] 
 							+ cowmap[i][j+1] + cowmap[i+1][j+1] + cowmap[i+2][j+1]
@@ -31,8 +31,8 @@ public class RobotPlayer{
 				
 				for(int k = 0; k < numPastures; k++){
 					if(sum>pstrCowDens[k]){
-						pstrLocs[k+1] = new MapLocation(j, i);
-						pstrCowDens[k+1] = sum;
+						pstrLocs[k] = new MapLocation(j+1, i+1);
+						pstrCowDens[k] = sum;
 						break;
 					}
 				}
