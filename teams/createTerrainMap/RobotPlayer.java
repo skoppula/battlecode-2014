@@ -23,10 +23,10 @@ public class RobotPlayer {
 		int terrainMap[][] = new int[mapY][mapX]; 
 		
 		//Scan over map to identify types of terrain at each location
-		const int	NORMAL = 10;
-		const int	ROAD = 0;
-		const int	WALL = 1000;
-		const int	OFFMAP = -1;
+		final int	NORMAL = 10;
+		final int	ROAD = 0;
+		final int	WALL = 1000;
+		final int	OFFMAP = -1;
 		
 		for(int i = 0; i < mapY; i++){
 			for(int j = 0; j < mapX; j++){
