@@ -1,42 +1,64 @@
 package daytwodebug;
 
 import java.util.Random;
-
 import battlecode.common.*;
 
 public class RobotPlayer {
-    public static RobotController rc;
-    static Direction allDirections[] = Direction.values();
-    static Random randall = new Random();
-    static int directionalLooks[] = new int[]{0,1,-1,2,-2};
     
-    public static void run(RobotController rcin){
-    	rc = rcin;
+    static Random randall = new Random();
+    
+    boolean initializerRun = false;
+    
+    static Direction allDirections[] = Direction.values();
+    double cowDensMap[][] = rc.senseCowGrowth();
+    
+    
+    
+    public static void run(RobotController rc){
+
         randall.setSeed(rc.getRobot().getID());
         
         double cowDensMap[][] = rc.senseCowGrowth();
-    	//Get dimensions of map
         int mapY = cowDensMap.length;
 		int mapX = cowDensMap[0].length;
-    	MapLocation pastureLocs[] = findPastureLocs(cowDensMap, mapY, mapX, 5);
-        MapLocation goal = pastureLocs[0];
-    	//MapLocation goal = new MapLocation(22, 18);
-        
+    	
+		MapLocation pastureLocs[] = findPastureLocs(cowDensMap, mapY, mapX, 5);
+    	
         while(true){
-            try{
-                    if(rc.getType()==RobotType.HQ){//if I'm a headquarters
+        	try{
+                    if(rc.getType()==RobotType.HQ){
                     	runHeadquarters();
-                    }else if(rc.getType()==RobotType.SOLDIER){
-                    	////Possible scenarios:
-                    	///Defensive - depends on time and size of the map
-                    	//Finding the pastr
-                    	//Building the pastr
-                    	//Defending the pastr from enemies
-                    	//Pushing cows into pastrs
                     	
-                    	///Offensive
-                    	//Searching for enemy pastrs
-                    	//Shooting the enemy
+                    } else if (rc.getType()==RobotType.SOLDIER){
+                    	
+                    	//GAME NOTES
+                    	//Round ends when rc.yield() for every robot.
+                    	//New rounds starts -> run() is run again
+                    	
+                    	
+                    	//Spawn three types of robots. Type of robot spawned depends on:
+                    	//	Current distribution of robots
+                    	//	Time or rounds
+                    	//	Size of map and distance to enemy HQ
+                    	
+
+                    	//Four behavior paradigms:
+                    	//
+                    	//	HQ
+                    	//		Run initializers
+                    	//		Keep track robots: store robot ID and occupation 
+                    	//		Manage communication and manage robots (HOW TO?)
+                    	//
+                    	//	Pasture creators
+                    	//		
+                    	//	Defending
+                    	//		Defend from enemies
+                    	//		Pushing cows into pastrs
+                    	//
+                    	///	Offensive
+                    	//		Search for enemy pastrs
+                    	//		Goto and shoot
+                    	
                     	
                     	//If the location is at a node, make a pastr
                     	MapLocation loc = rc.getLocation();
