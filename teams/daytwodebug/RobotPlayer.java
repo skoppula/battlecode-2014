@@ -31,14 +31,25 @@ public class RobotPlayer {
                     if(rc.getType()==RobotType.HQ){//if I'm a headquarters
                     	runHeadquarters();
                     }else if(rc.getType()==RobotType.SOLDIER){
-                    	//run soldier
+                    	////Possible scenarios:
+                    	///Defensive - depends on time and size of the map
+                    	//Finding the pastr
+                    	//Building the pastr
+                    	//Defending the pastr from enemies
+                    	//Pushing cows into pastrs
                     	
+                    	///Offensive
+                    	//Searching for enemy pastrs
+                    	//Shooting the enemy
+                    	
+                    	//If the location is at a node, make a pastr
                     	MapLocation loc = rc.getLocation();
                         if (loc.equals(goal)) {
                     		if(rc.isActive()&&rc.sensePastrLocations(rc.getTeam()).length<5){
                 				rc.construct(RobotType.PASTR);
                 			}
                     	} else {
+                    		//move the soldier
                     		runSoldier(goal, rc);
                     	}
                     }
@@ -60,35 +71,20 @@ public class RobotPlayer {
         	} else {
         		tryToMove();
         	}
-        }
-        else if ( (Clock.getRoundNum() > 30) && (Clock.getRoundNum() < 60) ) {
+        } else if ( (Clock.getRoundNum() > 30) && (Clock.getRoundNum() < 60) ) {
         	if(rc.isActive()&&rc.canMove(Direction.NORTH)){
         		rc.move(Direction.NORTH);
         	} else {
         		tryToMove();
         	}
-        }
-        else {
+        } else {
         	Direction toGoal = rc.getLocation().directionTo(goal);
         	if(rc.isActive()&&rc.canMove(toGoal)){
+        		//Kevin's move function goes here
         		rc.move(toGoal);
-        		System.out.println("YAY");
         	}
         }
-
-        
-    	
 	}
-
-//	private static void moveToGoal(MapLocation goal) throws GameActionException {
-//		// TODO Auto-generated method stub
-//		//Move toward goal
-//        
-//        Direction d = rc.getLocation().directionTo(goal);
-//        if(rc.isActive()&&rc.canMove(d)){
-//        	rc.move(d);
-//        }
-//	}
 
 	private static void tryToMove() throws GameActionException {
 		// TODO Auto-generated method stub
