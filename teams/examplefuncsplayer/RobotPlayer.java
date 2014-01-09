@@ -1,6 +1,7 @@
 package examplefuncsplayer;
 
 import battlecode.common.Direction;
+import battlecode.common.GameConstants;
 import battlecode.common.RobotController;
 import battlecode.common.RobotType;
 import battlecode.common.*;
@@ -55,8 +56,6 @@ public class RobotPlayer {
 								rc.sneak(toEnemy);
 							}
 						}
-					double delay = rc.getActionDelay();
-					System.out.println("The delay by the Soldier is: " + delay);
 					}
 				} catch (Exception e) {
 					System.out.println("Soldier Exception");
