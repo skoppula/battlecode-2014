@@ -1,69 +1,106 @@
 package daytwodebug;
 
+import java.util.HashMap;
 import java.util.Random;
 import battlecode.common.*;
+
+//GAME NOTES
+//Round ends when rc.yield() for every robot.
+//New rounds starts -> run() is run again
+
+//Spawn three types of robots. Type of robot spawned depends on:
+//	Current distribution of robots
+//	Time or rounds
+//	Size of map and distance to enemy HQ
+
+
+//Four behavior paradigms:
+//
+//	HQ
+//		Run initializers
+//		Keep track robots: store robot ID and occupation 
+//		Manage communication and manage robots (HOW TO?)
+//
+//	Pasture creators
+//		
+//	Defending
+//		Defend from enemies
+//		Pushing cows into pastrs
+//
+///	Offensive
+//		Search for enemy pastrs
+//		Goto and shoot
 
 public class RobotPlayer {
     
     static Random randall = new Random();
     
-    boolean initializerRun = false;
-    
+    static boolean initializerRun = false;
     static Direction allDirections[] = Direction.values();
-    double cowDensMap[][] = rc.senseCowGrowth();
+    static double cowDensMap[][];
+    static int mapY, mapX;
+    static MapLocation pastureLocs[];
+    static Text team;
     
+    //Saves only spawned robots, not including HQ
+    static enum types {DEFENDER, ATTACKER, PASTR, NOISETOWER};
+    static HashMap<Integer, Enum> occupations = new HashMap<Integer, Enum>();
     
+    static int[] robotTypeCount = new int[4];
+    
+    public static void initializeGameVars(RobotController rc){
+    	cowDensMap = rc.senseCowGrowth();
+        mapY = cowDensMap.length;
+		mapX = cowDensMap[0].length;
+		pastureLocs = findPastureLocs(cowDensMap, mapY, mapX, 5);
+		team =  rc.getTeam();
+    }
     
     public static void run(RobotController rc){
-
-        randall.setSeed(rc.getRobot().getID());
+    	
+    	int id = rc.getRobot().getID();
+    	RobotType type = rc.getType();
+        randall.setSeed(id);
+    	
+        if(type == RobotType.HQ){
+        	while(true)
+            	runHeadquarters(); 	//Continue spawning so that 25 robots always on field
+        							//Continue scanning robots on field
+        	
+        } else if (type == RobotType.SOLDIER) {
+        	while(true){
+        		if(occupations.get(id) == types.PASTR)
+        			runPastureCreator();
+        		else if(occupations.get(id) == types.DEFENDER)
+            		runDefender();
+        		else if(occupations.get(id) == types.ATTACKER)
+        			runAttacker();
+        		else
+        			runNoiseCreator();
+        	}
+        	
+        } else if (type == RobotType.PASTR) {
+        	while(true)
+        		maintainPasture(); //Suicide in last minute if health gets low
+        } else {
+        	while(true)
+        		maintainNoiseTower();
+        }
         
-        double cowDensMap[][] = rc.senseCowGrowth();
-        int mapY = cowDensMap.length;
-		int mapX = cowDensMap[0].length;
-    	
-		MapLocation pastureLocs[] = findPastureLocs(cowDensMap, mapY, mapX, 5);
-    	
+        
+        
+        
         while(true){
         	try{
                     if(rc.getType()==RobotType.HQ){
-                    	runHeadquarters();
+                    	
                     	
                     } else if (rc.getType()==RobotType.SOLDIER){
-                    	
-                    	//GAME NOTES
-                    	//Round ends when rc.yield() for every robot.
-                    	//New rounds starts -> run() is run again
-                    	
-                    	
-                    	//Spawn three types of robots. Type of robot spawned depends on:
-                    	//	Current distribution of robots
-                    	//	Time or rounds
-                    	//	Size of map and distance to enemy HQ
-                    	
-
-                    	//Four behavior paradigms:
-                    	//
-                    	//	HQ
-                    	//		Run initializers
-                    	//		Keep track robots: store robot ID and occupation 
-                    	//		Manage communication and manage robots (HOW TO?)
-                    	//
-                    	//	Pasture creators
-                    	//		
-                    	//	Defending
-                    	//		Defend from enemies
-                    	//		Pushing cows into pastrs
-                    	//
-                    	///	Offensive
-                    	//		Search for enemy pastrs
-                    	//		Goto and shoot
-                    	
                     	
                     	//If the location is at a node, make a pastr
                     	MapLocation loc = rc.getLocation();
                         if (loc.equals(goal)) {
-                    		if(rc.isActive()&&rc.sensePastrLocations(rc.getTeam()).length<5){
+                    		if(rc.isActive()&&rc.sensePastrLocations().length<5){
                 				rc.construct(RobotType.PASTR);
                 			}
                     	} else {
@@ -76,10 +113,10 @@ public class RobotPlayer {
             } catch (Exception e) {
             	e.printStackTrace();
             }
-            }
-    }
+        }
+	}
     
-    private static void runSoldier(MapLocation goal, RobotController rc) throws GameActionException {
+    private static void runSoldier(RobotController rc, Robot) throws GameActionException {
 		// TODO Auto-generated method stub
     	
     	//tryToMove();
