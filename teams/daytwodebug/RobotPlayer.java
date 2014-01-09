@@ -1,6 +1,5 @@
 package daytwodebug;
 
-
 import java.util.Random;
 
 import battlecode.common.*;
@@ -10,9 +9,6 @@ public class RobotPlayer {
     static Direction allDirections[] = Direction.values();
     static Random randall = new Random();
     static int directionalLooks[] = new int[]{0,1,-1,2,-2};
-    
-
-    
     
     public static void run(RobotController rcin){
     	rc = rcin;
