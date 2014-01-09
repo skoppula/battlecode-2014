@@ -71,42 +71,7 @@ public class RobotPlayer{
 	}
 
 		//Finds best pasture locations
-		private static MapLocation[] findPastureLocs(double cowmap[][], int mapY, int mapX, int numPastures) {
-			
-			MapLocation pstrLocs[] = new MapLocation[numPastures];
-			int pstrCowDens[] = new int[numPastures];
-			
-			//Fill default
-			for (int i = 0; i < numPastures; i++) {
-				pstrLocs[i] = new MapLocation(mapX/2, mapY/2);			
-			}
-			
-			//Slides a 3x3 window across the entire map, intervals of three and returns windows with highest 
-			for(int i = 0; i < mapY-3; i+=4){
-				for(int j = 0; j < mapX-3; j+=4){
-					
-					int sum = (int) (cowmap[i][j] + cowmap[i+1][j] + cowmap[i+2][j] 
-								+ cowmap[i][j+1] + cowmap[i+1][j+1] + cowmap[i+2][j+1]
-								+ cowmap[i][j+2] + cowmap[i+1][j+2] + cowmap[i+2][j+2]);
-					
-					for(int k = 0; k < numPastures; k++){
-						if(sum>pstrCowDens[k]){
-							pstrLocs[k] = new MapLocation(j+1, i+1);
-							pstrCowDens[k] = sum;
-							break;
-						}
-					}
-					
-					
-				}
-			}
-			for (int i = 0; i < pstrLocs.length; i++) {
-				System.out.println("SKANDA FOUND THESE LOCATIONS: " + pstrLocs[i]);
-			}
-			
 
-			return pstrLocs;
-		}
 
 	private static void runSoldier(MapLocation goal, RobotController rc, int round) throws GameActionException {
 		int currentBytecode = Clock.getBytecodeNum();
@@ -175,7 +140,7 @@ public class RobotPlayer{
 	
 	private static void tryToShoot() throws GameActionException {
 		//shooting
-		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent());
+		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class,10000, HQ.opponent());
 		if(enemyRobots.length>0){//if there are enemies
 			Robot anEnemy = enemyRobots[0];
 			RobotInfo anEnemyInfo;
