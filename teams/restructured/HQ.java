@@ -100,6 +100,7 @@ public class HQ {
 	
 	static void senseEnemyPASTRs(RobotController rc){
 		//fill in enemyPASTRs arraylist
+		rc.sensePastrLocations(rc.getTeam().opponent());
 	}
 	
 	//TO DO: compute ideal number of pastures
