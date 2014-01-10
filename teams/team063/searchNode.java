@@ -24,6 +24,7 @@ public class searchNode{
 	}
 	
 	public static searchNode[] getChildren(searchNode s){
+		//System.out.println("Expanding: " + s.state);
 		ArrayList<searchNode> children = new ArrayList<searchNode>();
 		Direction[] directions = new Direction[]{Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST};
 		for(Direction direction: directions){

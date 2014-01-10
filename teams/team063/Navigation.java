@@ -15,29 +15,29 @@ public class Navigation {
 		switch(dy){
 			case 1:
 				switch(dx){
-					case -1:
+					case 1:
 						return Direction.NORTH_WEST;
 					case 0:
 						return Direction.NORTH;
-					case 1:
+					case -1:
 						return Direction.NORTH_EAST;
 				}
 			case 0:
 				switch(dx){
-					case -1:
+					case 1:
 						return Direction.WEST;
 					case 0:
 						return Direction.OMNI;
-					case 1:
+					case -1:
 						return Direction.EAST;
 				}
 			case -1:
 				switch(dx){
-					case -1:
+					case 1:
 						return Direction.SOUTH_WEST;
 					case 0:
 						return Direction.SOUTH;
-					case 1:
+					case -1:
 						return Direction.SOUTH_EAST;
 				}
 		}
@@ -50,7 +50,7 @@ public class Navigation {
 		
 		ArrayList<Direction> directions = new ArrayList<Direction>();
 		for(int i = 0; i<nodes.length-1; i++){
-			Direction direction = nodes[i].directionTo(nodes[i+1]);
+			Direction direction = direction(nodes[i], nodes[i+1]);
 			directions.add(direction);
 		}
 		return (Direction[]) directions.toArray(new Direction[directions.size()]);
@@ -101,17 +101,17 @@ public class Navigation {
 		}
 	
 	public static void main(String[] args){
-		RobotPlayer.terrainMap = new int[][]{{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3}, {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3}};
+		RobotPlayer.terrainMap = new int[][]{{10,10,10,3,3,3,3,3,10,10,10,10,3,3,3,9999,3,3,3,3}, {10,10,10,3,3,3,3,3,10,10,10,10,3,3,3,9999,3,3,3,3},{10,10,10,3,3,3,3,3,10,10,10,10,3,3,3,3,3,3,3,3},{10,10,3,3,3,3,3,3,10,10,10,10,3,3,3,3,3,3,3,3},{10,10,3,3,3,3,3,3,10,10,10,10,3,3,3,3,3,3,3,3},{10,10,3,3,3,3,3,3,10,10,10,10,3,3,3,3,3,3,3,3},{10,10,3,3,3,3,3,3,10,10,10,10,3,3,3,3,3,3,3,3},{10,10,3,3,3,3,3,3,10,10,10,10,3,3,3,3,3,3,3,3},{10,10,3,3,3,3,3,3,10,10,10,10,3,3,3,3,3,3,3,3},{10,10,3,3,3,3,3,3,10,10,10,10,3,3,3,3,3,3,3,3},{10,10,3,3,3,3,3,3,10,10,10,10,3,3,3,3,3,3,3,3},{10,10,3,3,3,3,3,3,10,10,10,10,3,3,3,3,3,3,3,3},{10,10,3,3,3,3,3,3,10,10,10,10,3,3,3,3,3,3,3,3},{10,10,3,3,3,3,3,3,10,10,10,10,3,3,3,3,3,3,3,3},{10,10,3,3,3,3,3,3,10,10,10,10,3,3,3,3,3,3,3,3},{10,10,3,3,3,3,3,3,10,10,10,10,3,3,3,3,3,3,3,3}};
 		
 //		MapLocation a = new MapLocation(0,0);
 //		MapLocation b = new MapLocation(0,1);
 //		Direction[] directions = directionsTo(a,b);
 //		System.out.println("From a: ("+a.x+", "+a.y+") to b:("+b.x+", "+b.y+"): " + Arrays.toString(directions));
 		
-		for(int i = 0; i<20; i++){
-			for(int j = 0; j<20; j++){
-				for(int k = 0; k<20; k++){
-					for(int l = 0; l<20; l++){
+		for(int i = 0; i<10; i++){
+			for(int j = 0; j<10; j++){
+				for(int k = 0; k<10; k++){
+					for(int l = 0; l<10; l++){
 						MapLocation a = new MapLocation(i,j);
 						MapLocation b = new MapLocation(k,l);
 						Direction[] directions = directionsTo(a,b);
