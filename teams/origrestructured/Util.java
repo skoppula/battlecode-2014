@@ -60,14 +60,15 @@ public class Util {
 		return res;
 	}
 	
-	public static void unstick(RobotController rc, Direction toDest) throws GameActionException{
+	public static void unstick(RobotController rc, Direction toDest, MapLocation dest) throws GameActionException{
 		System.out.println("Trying to move " + toDest);
 		for(Direction tryDir: tryDirections(toDest)){ //think of ways that would make sense to try, ordered by likelihood of finding opening
-			if(rc.canMove(tryDir) && rc.canMove(toDest) == false){ //robot moves along wall to try to find way to move in toDest
+			while(rc.canMove(tryDir) && rc.canMove(toDest) == false){ //robot moves along wall to try to find way to move in toDest
 				if(rc.isActive()){
 					System.out.println("Moving " + tryDir);
 					rc.move(tryDir);
 				}
+				rc.yield();
 			}
 			if(rc.canMove(tryDir) == false){ //robot couldn't find a way to move in toDest before hitting another wall in tryDir direction (corner case)
 				System.out.println("Can't move " + tryDir);
@@ -75,34 +76,36 @@ public class Util {
 			}
 			if(rc.canMove(toDest)){
 				System.out.println("found hole");
+				if(rc.isActive()){
+					rc.move(toDest);
+					System.out.print("Moving toDest");
+				}
+				else{
+					rc.yield();
+					rc.move(toDest);
+					System.out.println("Took a nap and then moved toDest");
+				}
 				break;
 			}
 		}
 		//robot has found an opening that allows it to move in direction toDest
 	}
 	
-	public static void bstarMove(RobotController rc, MapLocation goal) throws GameActionException {
+	public static void moveTo(RobotController rc, MapLocation dest) throws GameActionException {
 		// TODO Auto-generated method stub
-		MapLocation dest = new MapLocation(20, 20); //testing to go to 5,5 here.
-		MapLocation loc = rc.getLocation();
-		Direction toDest = rc.getLocation().directionTo(dest);
-		//System.out.println("bstarMove!!!");
-    	if(loc.x != dest.x && loc.y != dest.y){
-    		System.out.println("Hi!");
+
+    	Direction toDest = rc.getLocation().directionTo(dest);
+    	if(rc.getLocation().equals(dest) == false){
     		if(rc.isActive() && rc.canMove(toDest)){
     			rc.move(toDest);
     			toDest = rc.getLocation().directionTo(dest);
     		}else{ //robot is either inactive or can't move toDest
-    			if(rc.isActive()){ //if robot can't move toDest...
+    			if(rc.isActive() && rc.canMove(toDest) == false){ //if robot can't move toDest...
     				System.out.println("UNSTICKING");
-    				unstick(rc, toDest); //unstick it
+    				unstick(rc, toDest, dest); //unstick it
     			}
-    		rc.yield();
     		}
     	}//until rc.getLocation.equals(dest)
-    	else {
-    		System.out.println("YAAAY WE'RE IN BUSINESS");
-    	}
 	}
 	
 
