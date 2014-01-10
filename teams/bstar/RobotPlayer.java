@@ -51,6 +51,7 @@ public class RobotPlayer{
 		}
 	}
 
+
 	@SuppressWarnings("incomplete-switch")
 	public static Direction[] tryDirections(Direction toDest){ //this method basically just returns a list of directions i think it should try when stuck. just logic'ed it out here.
 		Direction[] res = new Direction[]{toDest.opposite()};
@@ -79,7 +80,7 @@ public class RobotPlayer{
 	public static void unstick(RobotController rc, Direction toDest) throws GameActionException{
 		System.out.println("Trying to move " + toDest);
 		for(Direction tryDir: tryDirections(toDest)){ //think of ways that would make sense to try, ordered by likelihood of finding opening
-			while(rc.canMove(tryDir) && rc.canMove(toDest) == false){ //robot moves along wall to try to find way to move in toDest
+			if(rc.canMove(tryDir) && rc.canMove(toDest) == false){ //robot moves along wall to try to find way to move in toDest
 				if(rc.isActive()){
 					System.out.println("Moving " + tryDir);
 					rc.move(tryDir);
@@ -97,6 +98,32 @@ public class RobotPlayer{
 		//robot has found an opening that allows it to move in direction toDest
 	}
 	
+	public static void bstarMove(RobotController rc, MapLocation dest) throws GameActionException {
+		// TODO Auto-generated method stub
+		//MapLocation dest = new MapLocation(20, 20); //testing to go to 5,5 here.
+		
+		MapLocation loc = rc.getLocation();
+		Direction toDest = rc.getLocation().directionTo(dest);
+		//System.out.println("bstarMove!!!");
+    	if(loc.x != dest.x && loc.y != dest.y){
+    		System.out.println("Hi!");
+    		if(rc.isActive() && rc.canMove(toDest)){
+    			rc.move(toDest);
+    			toDest = rc.getLocation().directionTo(dest);
+    		}else{ //robot is either inactive or can't move toDest
+    			if(rc.isActive()){ //if robot can't move toDest...
+    				System.out.println("UNSTICKING");
+    				unstick(rc, toDest); //unstick it
+    			}
+    		rc.yield();
+    		}
+    	}//until rc.getLocation.equals(dest)
+    	else {
+    		System.out.println("YAAAY WE'RE IN BUSINESS");
+    	}
+	}
+	
+	
 	public static void run(RobotController rcin){
         RobotController rc = rcin;
         createTerrainMap(rc);
@@ -110,9 +137,9 @@ public class RobotPlayer{
         					rc.spawn(Direction.NORTH);
         				}
                     }else if(rc.getType()==RobotType.SOLDIER){
-                    	MapLocation dest = new MapLocation(5,5); //testing to go to 5,5 here.
+                    	MapLocation dest = new MapLocation(20, 20); //testing to go to 5,5 here.
                     	Direction toDest = rc.getLocation().directionTo(dest);
-                    	while(rc.getLocation().equals(dest) == false){
+                    	if(rc.getLocation().equals(dest) == false){
                     		if(rc.isActive() && rc.canMove(toDest)){
                     			rc.move(toDest);
                     			toDest = rc.getLocation().directionTo(dest);
