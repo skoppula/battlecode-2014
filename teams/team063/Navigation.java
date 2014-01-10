@@ -7,13 +7,11 @@ import java.util.List;
 
 import battlecode.common.Direction;
 import battlecode.common.MapLocation;
-import battlecode.common.RobotController;
 
 public class Navigation {
 	public static Direction direction(MapLocation a, MapLocation b){
 		int dx = a.x - b.x;
 		int dy = a.y - b.y;
-		Direction res = null;
 		switch(dy){
 			case 1:
 				switch(dx){
@@ -49,6 +47,7 @@ public class Navigation {
 	
 	public static Direction[] directionsTo(MapLocation start, MapLocation goal){
 		MapLocation[] nodes = locationsTo(start, goal);
+		
 		ArrayList<Direction> directions = new ArrayList<Direction>();
 		for(int i = 0; i<nodes.length-1; i++){
 			Direction direction = nodes[i].directionTo(nodes[i+1]);
@@ -102,14 +101,26 @@ public class Navigation {
 		}
 	
 	public static void main(String[] args){
-		MapLocation a = new MapLocation(0,0);
-		MapLocation b = new MapLocation(7,3);
-		RobotPlayer.terrainMap = new int[][]{{3,3,3,3,3,3,3,3,3,3}, {3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3}}; 
+		RobotPlayer.terrainMap = new int[][]{{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3}, {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},{3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3}};
 		
-		searchNode c = new searchNode(a, null);
-		searchNode d = new searchNode(b, c, 10);
-		Direction[] directions = directionsTo(a,b);
-		System.out.println(Arrays.toString(directions));
+//		MapLocation a = new MapLocation(0,0);
+//		MapLocation b = new MapLocation(0,1);
+//		Direction[] directions = directionsTo(a,b);
+//		System.out.println("From a: ("+a.x+", "+a.y+") to b:("+b.x+", "+b.y+"): " + Arrays.toString(directions));
+		
+		for(int i = 0; i<20; i++){
+			for(int j = 0; j<20; j++){
+				for(int k = 0; k<20; k++){
+					for(int l = 0; l<20; l++){
+						MapLocation a = new MapLocation(i,j);
+						MapLocation b = new MapLocation(k,l);
+						Direction[] directions = directionsTo(a,b);
+						System.out.println("From a: ("+a.x+", "+a.y+") to b:("+b.x+", "+b.y+"): " + Arrays.toString(directions));
+					}
+				}
+			}
+		}
+
 		
 //		ArrayList<searchNode> list = new ArrayList<searchNode>();
 //		list.add(c);

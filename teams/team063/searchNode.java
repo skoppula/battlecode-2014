@@ -5,8 +5,6 @@ import java.util.Collections;
 
 import battlecode.common.Direction;
 import battlecode.common.MapLocation;
-import battlecode.common.RobotController;
-import battlecode.common.TerrainTile;
 
 public class searchNode{
 	MapLocation state;
@@ -30,7 +28,7 @@ public class searchNode{
 		Direction[] directions = new Direction[]{Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST};
 		for(Direction direction: directions){
 			MapLocation child = s.state.add(direction); //tries every cardinal direction
-			if(child.x<RobotPlayer.terrainMap.length && child.x>0 && child.y<RobotPlayer.terrainMap[0].length && child.y>0){
+			if(child.x<RobotPlayer.terrainMap.length && child.x>=0 && child.y<RobotPlayer.terrainMap[0].length && child.y>=0){
 				if(RobotPlayer.terrainMap[child.x][child.y] == 3  || RobotPlayer.terrainMap[child.x][child.y] == 10 ){ //tests if terrain on child space is ROAD or NORMAL
 					searchNode addchild = new searchNode(child, s, s.cost + RobotPlayer.terrainMap[child.x][child.y]); //adds cost of traveling on ROAD (3) or NORMAL (10)
 					children.add((searchNode)addchild);

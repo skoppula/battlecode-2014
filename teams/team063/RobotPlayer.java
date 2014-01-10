@@ -1,5 +1,6 @@
 package team063;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -49,25 +50,78 @@ public class RobotPlayer{
 		}
 	}
 	
-	
-	public static void run(RobotController rc) throws GameActionException{
-		Direction[] allDirections = {Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST};
-		createTerrainMap(rc); //stores a terrain map in RobotPlayer.terrainMap
-		
-		while(true){
-			
-			if(rc.getType()==RobotType.HQ){//if I'm a headquarters
-				Direction spawnDir = Direction.NORTH;
-				if(Clock.getRoundNum() == 30 && rc.isActive()){
-					rc.spawn(Direction.NORTH);
-				}
-			}
-			if(rc.getType()==RobotType.SOLDIER){
-				MapLocation destination = new MapLocation(5,5);
-				Direction[] directions = new Direction[]{Direction.NORTH, Direction.NORTH, Direction.NORTH, Direction.NORTH, Direction.NORTH};
-				//Direction[] directions = Navigation.directionsTo(rc.getLocation(), destination);
-				Direction currentdir = directions[0];
+	public static void moveTo(RobotController rc, MapLocation goal) throws GameActionException{
+		Direction[] directions = Navigation.directionsTo(rc.getLocation(), goal);
+		while(directions.length > 0){
+			Direction toGoal = directions[0];
+			directions.remove(0);
+			if(rc.isActive()&&rc.canMove(toGoal)){
+				rc.move(toGoal);
 			}
 		}
 	}
+	
+//	public static void run(RobotController rc) throws GameActionException{
+//		Direction[] allDirections = {Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST};
+//		createTerrainMap(rc); //stores a terrain map in RobotPlayer.terrainMap
+//		Direction[] path;
+//		
+//		while(true){
+//			
+//			if(rc.getType()==RobotType.HQ){//if I'm a headquarters
+//				Direction spawnDir = Direction.NORTH;
+//				if(rc.senseRobotCount() == 0 && rc.isActive()){
+//					rc.spawn(Direction.NORTH);
+//				}
+//			}
+//			if(rc.getType()==RobotType.SOLDIER){
+//				MapLocation destination = new MapLocation(5,5);
+//				moveTo(rc, destination);
+//				rc.yield();
+//				
+//				//Direction[] directions = Navigation.directionsTo(rc.getLocation(), destination);
+//				
+//			}
+//		}
+//	}
+//}
+	public static void run(RobotController rcin){
+        RobotController rc = rcin;
+		Direction[] allDirections = Direction.values();
+        Direction[] kevinDir = Navigation.directionsTo(rcin.getLocation(), new MapLocation(5,5));
+        int round = 0;
+        createTerrainMap(rc);
+        //robotID + how much it has gone through the list
+        //put zeroes in the places that it has already gone through
+        
+        while(true){
+            try{
+                    if(rc.getType()==RobotType.HQ){//if I'm a headquarters
+                    	Direction spawnDir = Direction.NORTH;
+        				if(rc.senseRobotCount() == 0 && rc.isActive()){
+        					rc.spawn(Direction.NORTH);
+        				}
+                    }else if(rc.getType()==RobotType.SOLDIER){
+                    	
+                    	//First I want to get the robot out of the headquarters a little
+                    	if(Clock.getRoundNum() < 10 && rc.isActive()&&rc.canMove(Direction.NORTH)){
+                    		rc.move(Direction.NORTH);
+                    	} else {
+                    		//Now it will go in a clockwise circle following the array
+                    		if (rc.isActive()&&rc.canMove(kevinDir[round])) {
+                    			rc.move(kevinDir[round]);
+                    			round +=1;
+                    		}
+                    		
+                    		
+                    		
+                    	}
+                    }
+                    
+                    rc.yield();
+            } catch (Exception e) {
+            	e.printStackTrace();
+            }
+            }
+    }
 }
