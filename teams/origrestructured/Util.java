@@ -82,7 +82,9 @@ public class Util {
 				}
 				else{
 					rc.yield();
-					rc.move(toDest);
+					if(rc.isActive()){
+						rc.move(toDest);
+					}
 					System.out.println("Took a nap and then moved toDest");
 				}
 				break;
