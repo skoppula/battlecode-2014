@@ -13,11 +13,9 @@ import battlecode.common.RobotType;
 
 import java.util.Random;
 
-
-
 //GAME NOTES
-//Round ends when rc.yield() for every robot.
-//New rounds starts -> run() is run again
+//Round ends when rc.yield() or 10000 bytecodes for every robot.
+//Every robot spawned: run() called once
 
 public class RobotPlayer {
     
@@ -31,20 +29,20 @@ public class RobotPlayer {
         	RobotType type = rc.getType();
         	
         	while(true) {
-        		if(type == RobotType.HQ){
+        		
+        		if(type == RobotType.HQ)
                 	HQ.runHeadquarters(rc);
-        		}else if (type == RobotType.PASTR) {
+        		
+        		else if (type == RobotType.PASTR)
         			PASTR.maintainPasture(rc);
-        		} else if (type == RobotType.SOLDIER) {
+        		
+        		else if (type == RobotType.SOLDIER) {
         			COWBOY.shootNearby(rc);
-
         			COWBOY.runSoldier(rc);
         			
         			//Util.tryToMove(rc);
                 	
-        		}
-
-        		
+        		}  		
                 
 //            	
 //            	if (type == RobotType.NOISETOWER) {
@@ -72,8 +70,8 @@ public class RobotPlayer {
         		
         		rc.yield();
             }
-		} catch (GameActionException e) {
-			// TODO Auto-generated catch block
+		
+    	} catch (GameActionException e) {
 			e.printStackTrace();
 		}
         

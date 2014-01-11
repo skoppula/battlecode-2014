@@ -19,7 +19,6 @@ public class COWBOY {
     static HashMap<Integer, Integer> roboEnemyAssignment = new HashMap<Integer, Integer>();
     //Integer [Robot ID]:Integer [index of a MapLocation in enemyPASTRs[] ]
     
-    
     public static void runSoldier(RobotController rc) throws GameActionException {
 		// TODO Auto-generated method stub
     	
