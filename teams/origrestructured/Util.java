@@ -19,8 +19,6 @@ public class Util {
     
     //the A* directions algorithm goes here, preferably implemented with subclasses
     //public static Direction[] directionsTo(MapLocation start, MapLocation goal)
-    
-	
 	
 	static void cornerMove(RobotController rc) throws GameActionException {
 		// TODO Auto-generated method stub

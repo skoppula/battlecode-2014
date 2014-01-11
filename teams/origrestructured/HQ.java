@@ -149,6 +149,8 @@ public class HQ {
 							+ cowDensMap[i][j+1] + cowDensMap[i+1][j+1] + cowDensMap[i+2][j+1]
 							+ cowDensMap[i][j+2] + cowDensMap[i+1][j+2] + cowDensMap[i+2][j+2]);
 				
+				
+				
 				for(int k = 0; k < idealNumPastures; k++){
 					if(sum>pstrCowDens[k]){
 						pstrLocs[k] = new MapLocation(j+1, i+1);
