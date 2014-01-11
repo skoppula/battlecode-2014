@@ -155,10 +155,13 @@ public class HQ {
 							+ cowDensMap[i][j+1] + cowDensMap[i+1][j+1] + cowDensMap[i+2][j+1]
 							+ cowDensMap[i][j+2] + cowDensMap[i+1][j+2] + cowDensMap[i+2][j+2]);
 				
-				
+				//More weight = farther away from HQ = bad
+				double weight = hq.getLocation().distanceSquaredTo(new MapLocation(j,i));
 				
 				for(int k = 0; k < idealNumPastures; k++){
-					if(sum>pstrCowDens[k]){
+					
+					//Balancing profit in pasture productivity vs. distance: (sum-weight)
+					if((sum-weight)>pstrCowDens[k]){
 						pstrLocs[k] = new MapLocation(j+1, i+1);
 						
 						//broadcast these locations to channel 168
