@@ -80,7 +80,9 @@ public class Util {
 				}
 				else{
 					rc.yield();
-					rc.move(toDest);
+					if(rc.isActive()){
+						rc.move(toDest);
+					}
 					System.out.println("Took a nap and then moved toDest");
 				}
 				break;
@@ -104,6 +106,7 @@ public class Util {
     			}
     		}
     	}//until rc.getLocation.equals(dest)
+    	
 	}
 	
 
@@ -125,6 +128,7 @@ public class Util {
 	static int locToInt(MapLocation m){
 		return (m.x*100 + m.y);
 	}
+
 
 	
 }

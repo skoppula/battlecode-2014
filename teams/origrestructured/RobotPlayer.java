@@ -8,6 +8,9 @@ import battlecode.common.RobotType;
 
 
 
+
+
+
 import java.util.Random;
 
 
@@ -20,7 +23,6 @@ public class RobotPlayer {
     
     static enum types {DEFENDER, ATTACKER, PASTR, NOISETOWER};
     static Direction[] allDirections = Direction.values();
-    
     
     public static void run(RobotController rc){
     	
@@ -35,7 +37,7 @@ public class RobotPlayer {
         			PASTR.maintainPasture(rc);
         		} else if (type == RobotType.SOLDIER) {
         			COWBOY.shootNearby(rc);
-                	
+
         			COWBOY.runSoldier(rc);
         			
         			//Util.tryToMove(rc);

@@ -3,6 +3,7 @@ package origrestructured;
 import java.util.HashMap;
 import java.util.Random;
 
+import battlecode.common.Clock;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.Robot;
@@ -21,12 +22,27 @@ public class COWBOY {
     
     public static void runSoldier(RobotController rc) throws GameActionException {
 		// TODO Auto-generated method stub
-    	//MapLocation pastr1 = HQ.desiredPASTRs[0];
-    	MapLocation pastr1 = new MapLocation(1, 1);
-    	Util.bstarMove(rc, pastr1);
     	
-    	//Util.randomMove(rc);
+
+    	//System.out.println("SOLDIER SAYS THAT INITIALIZERRUN IS  " + HQ.initializerRun);
+    	
+    	int num = rc.sensePastrLocations(HQ.team).length;
+    	int goalint =rc.readBroadcast(168+num);
+    	
+		MapLocation target = Util.intToLoc(goalint);
 		
+		if (goalint != 0) {
+    		Util.moveTo(rc, target);
+    		System.out.println(goalint);	
+			//Util.randomMove(rc);
+//    		for (MapLocation i:goals) {
+//    			System.out.println("SKANDA FOUND THESE LOCATIONS: " + i);
+//    		}
+    	}
+    	else {
+    		Util.randomMove(rc);
+    		System.out.println(goalint);		
+    	}
 	}
     
 	public static void runDefender(RobotController rc) {

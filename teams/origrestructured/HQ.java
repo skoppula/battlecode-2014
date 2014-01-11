@@ -47,9 +47,8 @@ public class HQ {
 	public static void runHeadquarters(RobotController rc) throws GameActionException{
 		
 		//This costs 8 rounds and tons of bytecodes - don't do it at first
-		if(!initializerRun&&Clock.getRoundNum()>5) {
+		if(!initializerRun&&Clock.getRoundNum() < 10) {
 			initializeGameVars(rc);
-			initializerRun = true;
 		}
 		
 		senseEnemyPASTRs(rc);
@@ -65,6 +64,7 @@ public class HQ {
 				rc.spawn(i);
 			}
 		}
+		
 		rc.yield();
 	}
 	
@@ -78,7 +78,7 @@ public class HQ {
     	//update corresponding hashmaps
 	}
 
-	public static void initializeGameVars(RobotController rc){
+	public static void initializeGameVars(RobotController rc) throws GameActionException{
     	
     	hq = rc;
     	
@@ -88,9 +88,15 @@ public class HQ {
     	mapY = cowDensMap.length;
     	mapX = cowDensMap[0].length;
     	idealNumPastures = computeNumPastures();
+    	
     	desiredPASTRs = findPastureLocs();
+    	//desiredPASTRs = findgoal(hq, hq.getLocation());
+    	
     	currPASTRs = new boolean[idealNumPastures];
     	createTerrainMap();
+    	initializerRun = true;
+    	System.out.println("HQ SAYS THAT INITIALIZERRUN IS  " + initializerRun);
+    	
     
     }
 	
@@ -108,7 +114,7 @@ public class HQ {
 //		if(hq.isActive()&&hq.canMove(spawnDir)){
 //			hq.spawn(spawnDir);
 //		}
-		System.out.println("Okay!");
+//		System.out.println("Okay!");
 	}
 	
 	static void senseEnemyPASTRs(RobotController rc) throws GameActionException{
@@ -120,7 +126,7 @@ public class HQ {
 		for (int i=0;i<enemyPASTRs.length;i++) {
 			int x = enemyPASTRs[i].x;
 			int y = enemyPASTRs[i].y;
-			rc.broadcast(5505+i, x*100+y);
+			rc.broadcast(505+i, x*100+y);
 		}
 		
 	}
@@ -131,14 +137,14 @@ public class HQ {
 	}
 	
 	//TO DO: improve with position weighting
-	static MapLocation[] findPastureLocs() {
+	static MapLocation[] findPastureLocs() throws GameActionException {
 		
 		MapLocation pstrLocs[] = new MapLocation[idealNumPastures];
 		int pstrCowDens[] = new int[idealNumPastures];
 		
 		//Fill default
 		for (int i = 0; i < idealNumPastures; i++) {
-			pstrLocs[i] = new MapLocation(mapX/2, mapY/2);			
+			pstrLocs[i] = new MapLocation(mapX/2, mapY/2);
 		}
 		
 		//Slides a 3x3 window across the entire map, intervals of three and returns windows with highest 
@@ -154,18 +160,87 @@ public class HQ {
 				for(int k = 0; k < idealNumPastures; k++){
 					if(sum>pstrCowDens[k]){
 						pstrLocs[k] = new MapLocation(j+1, i+1);
+						
+						//broadcast these locations to channel 168
+						int pstrlocint = Util.locToInt(pstrLocs[k]);
+						hq.broadcast(168 + k, pstrlocint);
+						
 						pstrCowDens[k] = sum;
 						break;
 					}
 				}
-				
-				
 			}
 		}
+		return pstrLocs;
+	}
+	
+	private static MapLocation[] findgoal(RobotController rc, MapLocation initialLoc) throws GameActionException {
+		// TODO Auto-generated method stub
 		
-		for (int i = 0; i < pstrLocs.length; i++) {
-			System.out.println("SKANDA FOUND THESE LOCATIONS: " + pstrLocs[i]);
+		//wallbot sense HQ locations
+		//MapLocation myHQ = rc.senseHQLocation();
+		//MapLocation enemyHQ = rc.senseEnemyHQLocation();
+		
+		MapLocation pstrLocs[] = new MapLocation[idealNumPastures];
+		double cowDensMap[][] = rc.senseCowGrowth();
+		//Get dimensions of map
+	    int mapY = cowDensMap.length;
+		int mapX = cowDensMap[0].length;
+		
+		//
+		int x = initialLoc.x;
+		int y = initialLoc.y;
+		int start = 0;
+		int end = mapY;
+		
+		int clear = 0;
+		
+		//pp stands for possible pastrs
+		int pp = 0;
+		int p1X = x;
+		int p1Y = y;
+		
+		if (initialLoc.y > mapY/2) {
+			end = initialLoc.y;
+			p1Y = start + 3;
+		} else {
+			start = initialLoc.y;
+			p1Y = mapY - 3;
 		}
+
+		MapLocation goal = new MapLocation(mapX - 3, initialLoc.y);
+		
+		//Figure out where the possible pastr is in p1X and p1Y
+		for (int j = initialLoc.x - 5; j < initialLoc.x + 5; j++) {
+			
+			clear = 0;
+			
+			for(int i = start; i < end; i++){
+				TerrainTile a = rc.senseTerrainTile(new MapLocation(j, i));
+				if (a.equals(TerrainTile.VOID)) {
+					//System.out.println(i + " YAAAY");
+					clear=0;
+				} else if (a.equals(TerrainTile.ROAD)) {
+					clear +=2;
+				} else if (a.equals(TerrainTile.NORMAL)) {
+					clear +=1;
+				} 
+			}
+			
+			if (clear >= end - start) {
+				System.out.println("For x: " + j + "and y" + start);
+				p1X = j;
+				//mentioned earlier p1Y = start + 2;
+				pp +=1;
+				goal = new MapLocation(p1X, p1Y);
+			}
+			
+		}
+		
+		int goalint = Util.locToInt(goal);
+		int pastrs = rc.sensePastrLocations(rc.getTeam()).length;
+		rc.broadcast(168+pastrs, goalint);
+		pstrLocs[0] = goal;
 		
 		return pstrLocs;
 	}
