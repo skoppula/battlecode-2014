@@ -1,4 +1,4 @@
-package origrestructured;
+package origrestructured.copy.preskanda;
 
 import java.util.HashMap;
 import java.util.Random;
@@ -33,11 +33,8 @@ public class COWBOY {
 		
 		if (goalint != 0) {
     		Util.moveTo(rc, target);
-    		//System.out.println(goalint);	
-			//Util.randomMove(rc);
-//    		for (MapLocation i:goals) {
-//    			System.out.println("SKANDA FOUND THESE LOCATIONS: " + i);
-//    		}
+    		System.out.println(goalint);	
+
     	}
     	else {
     		Util.randomMove(rc);

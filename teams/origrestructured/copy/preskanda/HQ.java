@@ -1,4 +1,4 @@
-package origrestructured;
+package origrestructured.copy.preskanda;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,12 +46,6 @@ public class HQ {
 	//		Manage communication and manage robots (HOW TO?)
 	public static void runHeadquarters(RobotController rc) throws GameActionException{
 		
-		//Continue spawning so that 25 robots always on field
-		spawnRobot(rc);
-		//This can be modified so that a robot is only spawned under certain circumstances. For example:
-		//Broadcast range 1000-1025
-		//spawnRobotOnBroadcast(rc);
-				
 		//This costs 8 rounds and tons of bytecodes - don't do it at first
 		if(!initializerRun&&Clock.getRoundNum() < 10) {
 			initializeGameVars(rc);
@@ -61,9 +55,19 @@ public class HQ {
 		//updateRobotDistro(rc);
 		//updateAssignments();
 		
+		
+		//Continue spawning so that 25 robots always on field
+		
+		for (Direction i:Util.allDirections) {
+			if(rc.isActive() && rc.canMove(i)&& totalRobots()<GameConstants.MAX_ROBOTS) {
+				//spawnRobot();
+				rc.spawn(i);
+			}
+		}
+		
 		rc.yield();
 	}
-
+	
 
 	private static void updateAssignments() {
 		// update robots assigned to:
@@ -97,7 +101,7 @@ public class HQ {
     }
 	
 	//TO DO
-	static void spawnRobot(RobotController rc) throws GameActionException{
+	static void spawnRobot() throws GameActionException{
 		//1. decide what type of robot needs to be spawned. Type of robot spawned depends on:
 	    //		Current distribution of robots
 	    //		Time or rounds
@@ -106,28 +110,11 @@ public class HQ {
 		//3. spawn
 		//4. update id-occupation hashtable (occupations) and appropriate assignment tables (PASTR.roboPSTRsAssignment)
 		
-		for (Direction i:Util.allDirections) {
-			if(rc.isActive() && rc.canMove(i)&& rc.senseRobotCount()<GameConstants.MAX_ROBOTS) {
-				rc.spawn(i);
-			}
-		}
-	}
-	
-	private static void spawnRobotOnBroadcast(RobotController rc) throws GameActionException {
-		// Spawn on broadcast command:
-		rc.broadcast(1000, 1);
-		int robots = rc.senseRobotCount(); //This does not include the HQ
-		int exist = rc.readBroadcast(1000+robots);
-		if (exist==1) { //You want this robot to exist
-			spawnRobot(rc);
-//			The following is only active if you want to broadcast stuff - place the following
-//			block of code anywhere you want a new robot to be made
-//			int robots = rc.senseRobotCount();
-//			rc.broadcast(1001+robots, 1);
-			
-		} else { //You don't want this robot to exist
-			//do nothing
-		}
+//		Direction spawnDir = Direction.NORTH;
+//		if(hq.isActive()&&hq.canMove(spawnDir)){
+//			hq.spawn(spawnDir);
+//		}
+//		System.out.println("Okay!");
 	}
 	
 	static void senseEnemyPASTRs(RobotController rc) throws GameActionException{
@@ -168,19 +155,13 @@ public class HQ {
 							+ cowDensMap[i][j+1] + cowDensMap[i+1][j+1] + cowDensMap[i+2][j+1]
 							+ cowDensMap[i][j+2] + cowDensMap[i+1][j+2] + cowDensMap[i+2][j+2]);
 				
-				//More weight = farther away from HQ = bad
-				double weight = hq.getLocation().distanceSquaredTo(new MapLocation(j,i));
-				
 				for(int k = 0; k < idealNumPastures; k++){
-					
-					//Balancing profit in pasture productivity vs. distance: (sum-weight)
-					if((sum-weight)>pstrCowDens[k]){
+					if(sum>pstrCowDens[k]){
 						pstrLocs[k] = new MapLocation(j+1, i+1);
 						
 						//broadcast these locations to channel 168
 						int pstrlocint = Util.locToInt(pstrLocs[k]);
 						hq.broadcast(168 + k, pstrlocint);
-						System.out.println("FIND PASTURES found : " + pstrlocint);
 						
 						pstrCowDens[k] = sum;
 						break;
@@ -265,6 +246,10 @@ public class HQ {
 	//TO DO
 	static void updateRobotDistro(RobotController rc){
 		//update currPASTRs and robotTypeCount
+	}
+	
+	static int totalRobots(){
+		return robotTypeCount[0] + robotTypeCount[1] + robotTypeCount[2] + robotTypeCount[3];
 	}
 	
 	public static void createTerrainMap(){

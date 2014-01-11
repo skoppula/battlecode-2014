@@ -1,4 +1,4 @@
-package origrestructured;
+package origrestructured.copy.preskanda;
 
 import java.util.Random;
 
@@ -10,7 +10,7 @@ import battlecode.common.RobotController;
 
 public class Util {
 	
-    public static Direction allDirections[] = {Direction.NORTH, Direction.SOUTH, Direction.NORTH_EAST, Direction.SOUTH_EAST, Direction.WEST, Direction.SOUTH_WEST, Direction.NORTH_WEST, Direction.EAST};
+    public static Direction allDirections[] = Direction.values();
     static Random rand = new Random();
 	
     public static Direction dirToMove(MapLocation start, MapLocation goal, int[][] terrainMap){
@@ -19,6 +19,8 @@ public class Util {
     
     //the A* directions algorithm goes here, preferably implemented with subclasses
     //public static Direction[] directionsTo(MapLocation start, MapLocation goal)
+    
+	
 	
 	static void cornerMove(RobotController rc) throws GameActionException {
 		// TODO Auto-generated method stub
@@ -59,11 +61,7 @@ public class Util {
 	
 	public static void unstick(RobotController rc, Direction toDest, MapLocation dest) throws GameActionException{
 		System.out.println("Trying to move " + toDest);
-		Direction[] attempts = tryDirections(toDest);
-		for (int i=0;i< attempts.length;i++) {
-			int j = 6 - rand.nextInt(7);
-			System.out.println(j);
-			Direction tryDir = attempts[j]; 
+		for(Direction tryDir: tryDirections(toDest)){ //think of ways that would make sense to try, ordered by likelihood of finding opening
 			while(rc.canMove(tryDir) && rc.canMove(toDest) == false){ //robot moves along wall to try to find way to move in toDest
 				if(rc.isActive()){
 					System.out.println("Moving " + tryDir);
@@ -76,16 +74,17 @@ public class Util {
 				continue;
 			}
 			if(rc.canMove(toDest)){
-				//System.out.println("found hole");
+				System.out.println("found hole");
 				if(rc.isActive()){
 					rc.move(toDest);
 					System.out.print("Moving toDest");
 				}
 				else{
 					rc.yield();
-					if(rc.isActive()&&rc.canMove(toDest)){
+					if(rc.isActive()){
 						rc.move(toDest);
 					}
+					System.out.println("Took a nap and then moved toDest");
 				}
 				break;
 			}
@@ -95,8 +94,6 @@ public class Util {
 	
 	public static void moveTo(RobotController rc, MapLocation dest) throws GameActionException {
 		// TODO Auto-generated method stub
-		
-		System.out.println("Destinatino is " + dest.x + "and " + dest.y);
 
     	Direction toDest = rc.getLocation().directionTo(dest);
     	if(rc.getLocation().equals(dest) == false){
@@ -105,7 +102,7 @@ public class Util {
     			toDest = rc.getLocation().directionTo(dest);
     		}else{ //robot is either inactive or can't move toDest
     			if(rc.isActive() && rc.canMove(toDest) == false){ //if robot can't move toDest...
-    				//System.out.println("UNSTICKING");
+    				System.out.println("UNSTICKING");
     				unstick(rc, toDest, dest); //unstick it
     			}
     		}
