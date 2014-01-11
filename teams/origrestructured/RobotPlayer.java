@@ -39,9 +39,6 @@ public class RobotPlayer {
         		else if (type == RobotType.SOLDIER) {
         			COWBOY.shootNearby(rc);
         			COWBOY.runSoldier(rc);
-        			
-        			//Util.tryToMove(rc);
-                	
         		}  		
                 
 //            	
