@@ -70,7 +70,7 @@ public class HQ {
     	idealNumPastures = computeNumPastures();
     	
     	desiredPASTRs = findPastureLocs();
-    	System.out.println(Arrays.deepToString(desiredPASTRs));
+    	System.out.println("Desired pastures : " +Arrays.deepToString( desiredPASTRs));
     	writePSTRLocsToComm(rc, desiredPASTRs);
     	
     	currPASTRs = new boolean[idealNumPastures];
@@ -99,6 +99,9 @@ public class HQ {
 	}
 
 	static void commToHashMaps(RobotController rc){
+		//channels 2 - 25 encode robot id:occupation mapping.
+		//Encoded as XXXXX0Y where XXXXX is the robot ID and Y is robot occupation
+		//Y = 0 DEFENDER, 1 ATTACKER, 2 PASTR, 3 NOISETOWER
 		for(int i = 2; i < 26; i++){
 			if(i==-1)
 				continue;
@@ -238,7 +241,7 @@ public class HQ {
 		
 		if(Util.sumArray(robotTypeCount)<GameConstants.MAX_ROBOTS && rc.isActive()){
 			
-			System.out.println(Arrays.toString(robotTypeCount));
+			System.out.println("Types of robots : " + Arrays.toString(robotTypeCount));
 			if(robotTypeCount[2] < desiredPASTRs.length)
 				PASTR.spawnPASTR(rc);
 			
@@ -324,7 +327,7 @@ public class HQ {
 				for(int k = 0; k < idealNumPastures; k++){
 					
 					//Balancing profit in pasture productivity vs. distance: (sum-weight/10)
-					if((sum-weight/10)>pstrCowDens[k]){
+					if((sum-weight/(mapY))>pstrCowDens[k]){
 						pstrLocs[k] = new MapLocation(j+1, i+1);
 						
 						//broadcast these locations to channel 168
