@@ -9,7 +9,9 @@ import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
+import battlecode.common.Robot;
 import battlecode.common.RobotController;
+import battlecode.common.RobotInfo;
 
 public class Util {
 	
@@ -76,7 +78,7 @@ public class Util {
 		Direction[] attempts = tryDirections(toDest);
 		for (int i=0;i< attempts.length;i++) {
 			int j = 6 - rand.nextInt(7);
-			System.out.println(j);
+//			System.out.println(j);
 			Direction tryDir = attempts[j]; 
 			while(rc.canMove(tryDir) && rc.canMove(toDest) == false){ //robot moves along wall to try to find way to move in toDest
 				if(rc.isActive()){
@@ -86,7 +88,7 @@ public class Util {
 				rc.yield();
 			}
 			if(rc.canMove(tryDir) == false){ //robot couldn't find a way to move in toDest before hitting another wall in tryDir direction (corner case)
-				System.out.println("Can't move " + tryDir);
+//				System.out.println("Can't move " + tryDir);
 				continue;
 			}
 			if(rc.canMove(toDest)){
@@ -199,6 +201,25 @@ public class Util {
 	
 	static int idAssignToInt(int id, int j){
 		return id*100+j;
+	}
+
+	public static int idRoundToInt(int id, int roundNum) {
+		return id*10000+roundNum;
+	}
+	
+	static void shootNearby(RobotController rc) throws GameActionException {
+		//shooting
+		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent());
+		if(enemyRobots.length>0){//if there are enemies
+			Robot anEnemy = enemyRobots[0];
+			RobotInfo anEnemyInfo;
+			anEnemyInfo = rc.senseRobotInfo(anEnemy);
+			if(anEnemyInfo.location.distanceSquaredTo(rc.getLocation())<rc.getType().attackRadiusMaxSquared){
+				if(rc.isActive()){
+					rc.attackSquare(anEnemyInfo.location);
+				}
+			}
+		}
 	}
 	
 //	static void printHashMap(HashMap map){

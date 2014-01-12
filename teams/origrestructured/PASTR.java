@@ -1,7 +1,6 @@
 package origrestructured;
 
-import java.util.Arrays;
-
+import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
@@ -27,19 +26,38 @@ public class PASTR {
 			}
 		}
 		
+		try {
+			for(int i = 101; i < 130; i++){
+				if(rc.readBroadcast(i)%10000!=Clock.getRoundNum()){
+					rc.broadcast(i, Util.idRoundToInt(rc.getRobot().getID(), Clock.getRoundNum()));
+					break;
+				}
+			}
+		} catch (GameActionException e) {
+			e.printStackTrace();
+		}
+		
 		System.out.println("Spawned PASTR precursor");
+		rc.setIndicatorString(0, "PASTR precursor");
     }
     
 
     
 	public static void runPastureCreator(RobotController rc) {
 		
-		
-		
-		MapLocation[] desiredPASTRs = Util.commToPSTRLocs(rc);
-
-		
 		try {
+			Util.shootNearby(rc);
+			
+			for(int i = 101; i < 130; i++){
+				if(rc.readBroadcast(i)%10000!=Clock.getRoundNum()){
+					rc.broadcast(i, Util.idRoundToInt(rc.getRobot().getID(), Clock.getRoundNum()));
+					break;
+				}
+			}
+		
+		
+			MapLocation[] desiredPASTRs = Util.commToPSTRLocs(rc);
+
 			if(rc.isActive()) {
 				
 				
@@ -56,8 +74,10 @@ public class PASTR {
 				
 				if(idx > -1) {
 						MapLocation target = desiredPASTRs[idx];
-
-						if(rc.getLocation().x == target.x  &&  rc.getLocation().y == target.y) {
+						
+						rc.setIndicatorString(1, target.toString());
+						
+						if(rc.getLocation().distanceSquaredTo(target)<3) {
 							rc.construct(RobotType.PASTR);
 							System.out.println("Converted PASTR");
 						}
@@ -81,6 +101,16 @@ public class PASTR {
 		//suicide
 		//update currPASTRs[] and roboPSTRsAssignment
 		
+		try {
+			for(int i = 101; i < 130; i++){
+				if(rc.readBroadcast(i)%10000!=Clock.getRoundNum()){
+					rc.broadcast(i, Util.idRoundToInt(rc.getRobot().getID(), Clock.getRoundNum()));
+					break;
+				}
+			}
+		} catch (GameActionException e) {
+			e.printStackTrace();
+		}
 		
 		try {
 			if(rc.getHealth()<3 && rc.isActive())

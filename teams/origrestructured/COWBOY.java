@@ -1,12 +1,11 @@
 package origrestructured;
 
 import origrestructured.HQ.types;
+import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
-import battlecode.common.Robot;
 import battlecode.common.RobotController;
-import battlecode.common.RobotInfo;
 
 public class COWBOY {
 	
@@ -19,11 +18,22 @@ public class COWBOY {
 		//3. shootNearby()
 		
 		try {
+			for(int i = 101; i < 130; i++){
+				if(rc.readBroadcast(i)%10000!=Clock.getRoundNum()){
+					rc.broadcast(i, Util.idRoundToInt(rc.getRobot().getID(), Clock.getRoundNum()));
+					break;
+				}
+			}
+		} catch (GameActionException e) {
+			e.printStackTrace();
+		}
+		
+		try {
 			MapLocation[] desiredPASTRs = Util.commToPSTRLocs(rc);
 			
 			if(rc.isActive()) {
 				int id = rc.getRobot().getID();
-				shootNearby(rc);
+				Util.shootNearby(rc);
 				
 				int idx = -1;
 				for(int i = 26; i < 51; i++){
@@ -34,7 +44,8 @@ public class COWBOY {
 				
 				if(idx>-1) {
 						MapLocation target = desiredPASTRs[idx];
-				
+						rc.setIndicatorString(1, target.toString());
+						
 						if(rc.getLocation().distanceSquaredTo(target) < 3)
 							Util.randomMove(rc);
 						else
@@ -56,12 +67,23 @@ public class COWBOY {
 		//if near pasture -> shoot pasture
 		//else shoot anything nearby
 		
+		try {
+			for(int i = 101; i < 130; i++){
+				if(rc.readBroadcast(i)%10000!=Clock.getRoundNum()){
+					rc.broadcast(i, Util.idRoundToInt(rc.getRobot().getID(), Clock.getRoundNum()));
+					break;
+				}
+			}
+		} catch (GameActionException e) {
+			e.printStackTrace();
+		}
+		
 		MapLocation[] enemyPASTRs = Util.commToEnemyPSTRLocs(rc);
 		
 		try {
 			if(rc.isActive()){
 				int id = rc.getRobot().getID();
-				shootNearby(rc);
+				Util.shootNearby(rc);
 				
 				int idx = -1;
 				for(int i = 26; i < 51; i++){
@@ -72,9 +94,13 @@ public class COWBOY {
 				
 				if(idx > -1) {
 						MapLocation target = enemyPASTRs[idx];
+						rc.setIndicatorString(1, target.toString());
+						
+						if(target.x==-1)
+							rc.selfDestruct();
 				
 						if(rc.getLocation().distanceSquaredTo(target) < 3)
-							shootNearby(rc);
+							Util.shootNearby(rc);
 						else
 							Util.moveTo(rc, target);
 						
@@ -84,22 +110,6 @@ public class COWBOY {
 			}
 		} catch (GameActionException e) {
 			e.printStackTrace();
-		}
-	}
-	
-	
-	static void shootNearby(RobotController rc) throws GameActionException {
-		//shooting
-		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent());
-		if(enemyRobots.length>0){//if there are enemies
-			Robot anEnemy = enemyRobots[0];
-			RobotInfo anEnemyInfo;
-			anEnemyInfo = rc.senseRobotInfo(anEnemy);
-			if(anEnemyInfo.location.distanceSquaredTo(rc.getLocation())<rc.getType().attackRadiusMaxSquared){
-				if(rc.isActive()){
-					rc.attackSquare(anEnemyInfo.location);
-				}
-			}
 		}
 	}
 	
@@ -114,18 +124,31 @@ public class COWBOY {
 			    		rc.broadcast(0, 0);
 						HQ.robotTypeCount[0]++;
 						System.out.println("Spawned defender");
+						rc.setIndicatorString(0, "Defender");
 						
 			    	} else {
 			    		HQ.tempSpawnedType = types.ATTACKER;
 			    		rc.broadcast(0, 1);
 						HQ.robotTypeCount[1]++;
 						System.out.println("Spawned attacker");
+						rc.setIndicatorString(0, "Attacker");
 			    	}
 				} catch (GameActionException e) {
 					e.printStackTrace();
 				}
 				break;
 			}
+		}
+		
+		try {
+			for(int i = 101; i < 130; i++){
+				if(rc.readBroadcast(i)%10000!=Clock.getRoundNum()){
+					rc.broadcast(i, Util.idRoundToInt(rc.getRobot().getID(), Clock.getRoundNum()));
+					break;
+				}
+			}
+		} catch (GameActionException e) {
+			e.printStackTrace();
 		}
     }
 

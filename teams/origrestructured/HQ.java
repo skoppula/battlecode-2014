@@ -87,7 +87,10 @@ public class HQ {
 			initializeGameVars(rc);
 		
 		spawnRobot(rc);
-
+		
+    	//update corresponding hashmaps
+		commToHashMaps(rc);
+		
 		senseEnemyPASTRs(rc);
 		updateRobotDistro(rc);
 		updateAssignments(rc);
@@ -148,9 +151,6 @@ public class HQ {
     	// 1. creating own pastrs
     	// 2. defending own pastrs
     	// 3. attacking enemy pastrs
-    	
-    	//update corresponding hashmaps
-		commToHashMaps(rc);
 
 		for(int id:occupations.keySet()){
 			
@@ -238,6 +238,7 @@ public class HQ {
 		
 		if(Util.sumArray(robotTypeCount)<GameConstants.MAX_ROBOTS && rc.isActive()){
 			
+			System.out.println(Arrays.toString(robotTypeCount));
 			if(robotTypeCount[2] < desiredPASTRs.length)
 				PASTR.spawnPASTR(rc);
 			
@@ -257,6 +258,9 @@ public class HQ {
 	}
 	
 	static void senseEnemyPASTRs(RobotController rc) {
+		
+//		System.out.println(enemyPASTRs);
+		
 		//fill in enemyPASTRs arraylist
 		MapLocation[] currEnemyLocs = rc.sensePastrLocations(team.opponent());
 		List<MapLocation> currEnemyList = Arrays.asList(currEnemyLocs); 
@@ -267,10 +271,13 @@ public class HQ {
 				enemyPASTRs.add(m);
 		}
 		
-		//remove old locations and remove assigned robots
+		//remove old locations and reassign those robots by replacing their assignmed location
 		for(int i = 0; i < enemyPASTRs.size(); i++){
 			if(!currEnemyList.contains(enemyPASTRs.get(i))){
-				enemyPASTRs.set(i, currEnemyLocs[0]);
+				if(currEnemyLocs.length==0) //ATTACKER MOVES TO ENEMY HQ IF THERE IS NO OTHER PLACE TO ATTACK.
+						enemyPASTRs.set(i, new MapLocation(-1, -1));
+				else
+					enemyPASTRs.set(i, currEnemyLocs[0]);
 			}
 		}
 		
@@ -346,6 +353,64 @@ public class HQ {
 	
 	//TO DO
 	static void updateRobotDistro(RobotController rc){
+		
+		int clock = Clock.getRoundNum();
+		
+		try {
+			for(int i = 101; i < 131; i++){
+				int val = rc.readBroadcast(i);
+				
+				if(val==-1)
+					break;
+				
+				
+				int round = val%10000;
+				int id = (val-round)/10000;
+				
+				if((clock-round)>1 && occupations.containsKey(id)){
+					switch(occupations.get(id)) {
+						case DEFENDER: { 
+							if(clock%11==0)
+								robotTypeCount[0]--; 
+										defendPSTRsAssignment.remove(id);
+										occupations.remove(id);
+										break;
+						}
+						case ATTACKER: {robotTypeCount[1]--; 
+										roboEnemyAssignment.remove(id);
+										occupations.remove(id);
+										break;		
+						}
+						case PASTR: break;
+						case NOISETOWER: break;
+					}
+				}	
+			}
+			
+			List<MapLocation> currPASTRsLocs = Arrays.asList(rc.sensePastrLocations(team));
+			if(clock>200 && currPASTRsLocs.size()<desiredPASTRs.length){
+				
+				//TO DO: need to keep track of PASTR to-be's: spawning too many PASTRs while other pastrs are en route
+				if(clock%11==0)
+					robotTypeCount[2]--;
+				
+				currPASTRs = new boolean[desiredPASTRs.length];
+				
+				for(int i = 0; i < desiredPASTRs.length; i++){
+					
+					for(int j = 0; j < currPASTRsLocs.size();j++){
+						if(desiredPASTRs[i].distanceSquaredTo(currPASTRsLocs.get(j))<3)
+							currPASTRs[i] = true;
+					}
+				}
+			}
+			
+		} catch (GameActionException e) {
+			e.printStackTrace();
+		}
+		
+		
+		
 		//update currPASTRs and robotTypeCount
 	}
 	

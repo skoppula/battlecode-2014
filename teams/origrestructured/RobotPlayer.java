@@ -19,6 +19,7 @@ public class RobotPlayer {
 	 * Channel 26-50: robot id:target assignment mapping. Encoded as XXXX0B where XXXX is the robot ID and B is index of the robot target
 	 * Channel 51-70: pasture locations
 	 * Channel 71-100: enemy locations
+	 * Channel 101-130: robot posting the round number, so that hq can see which robots died
 	 */
 	
 	 public static void run(RobotController rc){
@@ -29,7 +30,7 @@ public class RobotPlayer {
         	
         	if(rc.readBroadcast(1)!=-1){
         		//On first run, set all robot occupations to -1.
-        		for(int i = 0; i < 101; i++)
+        		for(int i = 0; i < 131; i++)
         			rc.broadcast(i, -1);
         		
         	} else {
