@@ -1,12 +1,17 @@
 package origrestructured2;
 
+import java.util.ArrayList;
+//import java.util.HashMap;
+//import java.util.Iterator;
 import java.util.Random;
 
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
+import battlecode.common.Robot;
 import battlecode.common.RobotController;
+import battlecode.common.RobotInfo;
 
 public class Util {
 	
@@ -17,11 +22,22 @@ public class Util {
     	return null;
     }
     
+    public static int indexOfMin(int... arr) {
+        int idx = -1;
+        int p = Integer.MAX_VALUE;
+        for(int i = 0; i < arr.length; i++)
+            if(arr[i] < p) {
+                p = arr[i];
+                idx = i;
+            }
+        return idx;
+    }
+    
+    
     //the A* directions algorithm goes here, preferably implemented with subclasses
     //public static Direction[] directionsTo(MapLocation start, MapLocation goal)
 	
 	static void cornerMove(RobotController rc) throws GameActionException {
-		// TODO Auto-generated method stub
 		//For some reason this shows preference for corners, and random twitching
 		for (int i = 0;i<7;i++) {
 			Random rand = new Random(rc.getRobot().getID());
@@ -91,7 +107,7 @@ public class Util {
 	public static void moveTo(RobotController rc, MapLocation dest) throws GameActionException {
 		// TODO Auto-generated method stub
 		
-		System.out.println("Destinatino is " + dest.x + "and " + dest.y);
+//		System.out.println("Destinatino is " + dest.x + "and " + dest.y);
 
     	Direction toDest = rc.getLocation().directionTo(dest);
     	if(rc.getLocation().equals(dest) == false){
@@ -127,7 +143,89 @@ public class Util {
 	static int locToInt(MapLocation m){
 		return (m.x*100 + m.y);
 	}
-
-
 	
+    static MapLocation[] commToPSTRLocs(RobotController rc){
+    	
+    	int channel = 51;
+    	ArrayList<MapLocation> locs = new ArrayList<MapLocation>();
+    	
+    	
+    	try {
+    		int val = rc.readBroadcast(channel);
+    		while(val!=-1){
+    			locs.add(Util.intToLoc(val));
+    			channel++;
+    			val = rc.readBroadcast(channel);
+    		}
+    	} catch (GameActionException e){
+    		e.printStackTrace();
+    	}
+    	
+    	
+    	return locs.toArray(new MapLocation[locs.size()]);
+    }
+
+    static MapLocation[] commToEnemyPSTRLocs(RobotController rc){
+    	
+    	
+    	int channel = 71;
+    	ArrayList<MapLocation> locs = new ArrayList<MapLocation>();
+    	
+    	try {
+    		int val = rc.readBroadcast(channel);
+    		while(val!=-1){
+    			locs.add(Util.intToLoc(val));
+    			channel++;
+    			val = rc.readBroadcast(channel);
+    		}
+    	} catch (GameActionException e){
+    		e.printStackTrace();
+    	}
+    	
+    	return locs.toArray(new MapLocation[locs.size()]);
+    }
+    
+	static int sumArray(int[] arr){
+		int sum = 0;
+
+		for (int i : arr)
+		    sum += i;
+		
+		return sum;
+	}
+	
+	static int idAssignToInt(int id, int j){
+		return id*100+j;
+	}
+
+	public static int idRoundToInt(int id, int roundNum) {
+		return id*10000+roundNum;
+	}
+	
+	static void shootNearby(RobotController rc) throws GameActionException {
+		//shooting
+		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent());
+		if(enemyRobots.length>0){//if there are enemies
+			Robot anEnemy = enemyRobots[0];
+			RobotInfo anEnemyInfo;
+			anEnemyInfo = rc.senseRobotInfo(anEnemy);
+			if(anEnemyInfo.location.distanceSquaredTo(rc.getLocation())<rc.getType().attackRadiusMaxSquared){
+				if(rc.isActive()){
+					rc.attackSquare(anEnemyInfo.location);
+				}
+			}
+		}
+	}
+	
+//	static void printHashMap(HashMap map){
+//
+//		Iterator iterator = map.keySet().iterator();  
+//		   
+//		while (iterator.hasNext()) {  
+//		   String key = "" + iterator.next();  
+//		   String value = "" + map.get(key);
+//		 
+//		   System.out.println("KEY:" + key + " VALUE:" + value);  
+//		}
+//	}
 }

@@ -1,10 +1,13 @@
 package origrestructured;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Random;
 
 import battlecode.common.Clock;
-import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
@@ -14,66 +17,47 @@ import battlecode.common.TerrainTile;
 
 public class HQ {
 	
-    public static boolean initializerRun = false;
-    public static double cowDensMap[][];
-    public static int mapY, mapX;
-    public static MapLocation desiredPASTRs[];
-    public static boolean currPASTRs[];
-    public static Team team;
-    public static Team enemy;
-    public static int idealNumPastures;
+    static HashMap<Integer, Integer> roboPSTRsAssignment = new HashMap<Integer, Integer>();
+    //Integer [Robot ID]:Integer [index of a MapLocation in desiredPASTRLocs[] ]
+	
+    static HashMap<Integer, Integer> defendPSTRsAssignment = new HashMap<Integer, Integer>();
+    //Integer [Robot ID]:Integer [index of a MapLocation in desiredPASTRLocs[] ]
+	
+    static HashMap<Integer, Integer> roboEnemyAssignment = new HashMap<Integer, Integer>();
+    //Integer [Robot ID]:Integer [index of a MapLocation in enemyPASTRs[] ]
+	
+    public static volatile boolean initializerRun = false;
+    public static volatile double cowDensMap[][];
+    public static volatile int mapY, mapX;
+    static volatile MapLocation desiredPASTRs[];
+    public static volatile boolean currPASTRs[]; //This is pasture locations that have robots assigned and en route to become pastures there, not 'current' pastures
+    public static volatile Team team;
+    public static volatile Team enemy;
+    public static volatile int idealNumPastures;
     
-    static int[][] terrainMap;
+    static volatile int[][] terrainMap;
 	final static int	NORMAL = 10;
 	final static int	ROAD = 3;
 	final static int	WALL = 1000;
 	final static int	OFFMAP = 99999;
     
-    //public static ArrayList<MapLocation> enemyPASTRs = new ArrayList<MapLocation>();
-	public static MapLocation[] enemyPASTRs;
+    public static volatile ArrayList<MapLocation> enemyPASTRs = new ArrayList<MapLocation>();
 	
 	static RobotController hq;
+	static Random rand;
 	
     //Saves only spawned robots, not including HQ
     static enum types {DEFENDER, ATTACKER, PASTR, NOISETOWER};
-	static HashMap occupations = new HashMap();
+	public static volatile HashMap<Integer, types> occupations = new HashMap<Integer, types>();
+    public static volatile types tempSpawnedType;
     
-    static int[] robotTypeCount = new int[4];
+    static int[] robotTypeCount = {0,0,0,0};
 	
 	//	HQ Behavior Paradigm:
 	//		Run initializers
 	//		Keep track robots: store robot ID and occupation; and robot goals
 	//		Manage communication and manage robots (HOW TO?)
-	public static void runHeadquarters(RobotController rc) throws GameActionException{
-		
-		//Continue spawning so that 25 robots always on field
-		spawnRobot(rc);
-		//This can be modified so that a robot is only spawned under certain circumstances. For example:
-		//Broadcast range 1000-1025
-		//spawnRobotOnBroadcast(rc);
-				
-		//This costs 8 rounds and tons of bytecodes - don't do it at first
-		if(!initializerRun&&Clock.getRoundNum() < 10) {
-			initializeGameVars(rc);
-		}
-		
-		senseEnemyPASTRs(rc);
-		//updateRobotDistro(rc);
-		//updateAssignments();
-		
-		rc.yield();
-	}
-
-
-	private static void updateAssignments() {
-		// update robots assigned to:
-    	// 1. creating own pastrs
-    	// 2. defending own pastrs
-    	// 3. attacking enemy pastrs
-    	
-    	//update corresponding hashmaps
-	}
-
+    
 	public static void initializeGameVars(RobotController rc) throws GameActionException{
     	
     	hq = rc;
@@ -85,19 +69,165 @@ public class HQ {
     	mapX = cowDensMap[0].length;
     	idealNumPastures = computeNumPastures();
     	
-    	//desiredPASTRs = findPastureLocs();
-    	desiredPASTRs = findgoal(hq, hq.getLocation());
+    	desiredPASTRs = findPastureLocs();
+    	System.out.println("Desired pastures : " +Arrays.deepToString( desiredPASTRs));
+    	writePSTRLocsToComm(rc, desiredPASTRs);
     	
     	currPASTRs = new boolean[idealNumPastures];
     	createTerrainMap();
     	initializerRun = true;
-    	System.out.println("HQ SAYS THAT INITIALIZERRUN IS  " + initializerRun);
     	
-    
+    	rand = new Random(17);
     }
+    
+	public static void runHeadquarters(RobotController rc) throws GameActionException {
+		
+		//This costs 8 rounds and tons of bytecodes - don't do it at first
+		if(!initializerRun && Clock.getRoundNum() < 10)
+			initializeGameVars(rc);
+		
+		spawnRobot(rc);
+		
+    	//update corresponding hashmaps
+		commToHashMaps(rc);
+		
+		senseEnemyPASTRs(rc);
+		updateRobotDistro(rc);
+		updateAssignments(rc);
+		
+		rc.yield();
+	}
+
+	static void commToHashMaps(RobotController rc){
+		//channels 2 - 25 encode robot id:occupation mapping.
+		//Encoded as XXXXX0Y where XXXXX is the robot ID and Y is robot occupation
+		//Y = 0 DEFENDER, 1 ATTACKER, 2 PASTR, 3 NOISETOWER
+		for(int i = 2; i < 26; i++){
+			if(i==-1)
+				continue;
+			
+			int val = 0;
+			try {
+				val = rc.readBroadcast(i);
+			} catch (GameActionException e) {
+				e.printStackTrace();
+			}
+			
+			int job = val%100;
+			int id = (val-job)/100;
+			
+			switch(job) {
+				case 0: occupations.put(id, HQ.types.DEFENDER); break;
+				case 1: occupations.put(id, HQ.types.ATTACKER); break;
+				case 2: occupations.put(id, HQ.types.PASTR); break;
+				case 3: occupations.put(id, HQ.types.NOISETOWER); break;
+			}
+		}
+		
+		for(int i = 26; i < 51; i++){
+			
+			int val = 0;
+			try {
+				val = rc.readBroadcast(i);
+			} catch (GameActionException e) {
+				e.printStackTrace();
+			}
+			
+			if(val==-1)
+				continue;
+			
+			int index = val%100;
+			int id = (val-index)/100;
+			
+			switch(occupations.get(id)) {
+				case DEFENDER: defendPSTRsAssignment.put(id, index); break;
+				case ATTACKER: roboEnemyAssignment.put(id, index); break;
+				case PASTR: roboPSTRsAssignment.put(id, index); break;
+				case NOISETOWER: break;
+			}
+		}
+	}
 	
-	//TO DO
+	private static void updateAssignments(RobotController rc) {
+		
+		// update robots assigned to:
+    	// 1. creating own pastrs
+    	// 2. defending own pastrs
+    	// 3. attacking enemy pastrs
+
+		for(int id:occupations.keySet()){
+			
+			if(roboPSTRsAssignment.containsKey(id) || defendPSTRsAssignment.containsKey(id) || roboEnemyAssignment.containsKey(id))
+				continue;
+			
+			types type = occupations.get(id);
+			
+			if(type==types.PASTR){
+				for(int i = 0; i < desiredPASTRs.length; i++){
+					if(!currPASTRs[i]) {
+						roboPSTRsAssignment.put(id, i);
+						currPASTRs[i]=true;
+						break;
+					}
+				} continue;
+
+			} else if (type==types.DEFENDER) {
+				
+				int[] counts = new int[desiredPASTRs.length];
+				for(int pastr:defendPSTRsAssignment.values())
+					counts[pastr]++;
+				
+				defendPSTRsAssignment.put(id,Util.indexOfMin(counts));
+			
+			} else if (type==types.ATTACKER) {
+				
+				int[] counts = new int[enemyPASTRs.size()];
+				for(int pastr:roboEnemyAssignment.values())
+					counts[pastr]++;
+				
+				roboEnemyAssignment.put(id,Util.indexOfMin(counts));
+				
+			}
+		}
+		
+		assignmentsToComm(rc);
+	}
+	
+	static void assignmentsToComm(RobotController rc){
+		
+		try {
+			Iterator<Integer> iterator = roboPSTRsAssignment.keySet().iterator();  
+			
+			int channel = 26;
+			while (iterator.hasNext()) {  
+			   int id = iterator.next();  
+			   int index = roboPSTRsAssignment.get(id);
+			   rc.broadcast(channel, Util.idAssignToInt(id, index));
+			   channel++;
+			}
+			
+			iterator = defendPSTRsAssignment.keySet().iterator();
+			while (iterator.hasNext()) {  
+				   int id = iterator.next();  
+				   int index = defendPSTRsAssignment.get(id);
+				   rc.broadcast(channel, Util.idAssignToInt(id, index));
+				   channel++;
+			}
+			
+			iterator = roboEnemyAssignment.keySet().iterator();
+			while (iterator.hasNext()) {  
+				   int id = iterator.next();  
+				   int index = roboEnemyAssignment.get(id);
+				   rc.broadcast(channel, Util.idAssignToInt(id, index));
+				   channel++;
+			}
+		} catch (GameActionException e){
+			e.printStackTrace();
+		}
+	}
+	
 	static void spawnRobot(RobotController rc) throws GameActionException{
+		
 		//1. decide what type of robot needs to be spawned. Type of robot spawned depends on:
 	    //		Current distribution of robots
 	    //		Time or rounds
@@ -106,47 +236,70 @@ public class HQ {
 		//3. spawn
 		//4. update id-occupation hashtable (occupations) and appropriate assignment tables (PASTR.roboPSTRsAssignment)
 		
-		for (Direction i:Util.allDirections) {
-			if(rc.isActive() && rc.canMove(i)&& rc.senseRobotCount()<GameConstants.MAX_ROBOTS) {
-				rc.spawn(i);
+		//System.out.println(rc.senseRobotCount());
+		//System.out.println(Arrays.toString(robotTypeCount));
+		
+		if(Util.sumArray(robotTypeCount)<GameConstants.MAX_ROBOTS && rc.isActive()){
+			
+			System.out.println("Types of robots : " + Arrays.toString(robotTypeCount));
+			if(robotTypeCount[2] < desiredPASTRs.length)
+				PASTR.spawnPASTR(rc);
+			
+			else if (robotTypeCount[0] < 2*desiredPASTRs.length)
+				COWBOY.spawnCOWBOY(rc, types.DEFENDER);
+			
+			else if (robotTypeCount[1] < 5)
+				COWBOY.spawnCOWBOY(rc, types.ATTACKER);
+			
+			else {
+				if(rand.nextDouble()<0.5)
+					COWBOY.spawnCOWBOY(rc, types.DEFENDER);
+				else
+					COWBOY.spawnCOWBOY(rc, types.ATTACKER);
 			}
 		}
 	}
 	
-	private static void spawnRobotOnBroadcast(RobotController rc) throws GameActionException {
-		// Spawn on broadcast command:
-		rc.broadcast(1000, 1);
-		int robots = rc.senseRobotCount(); //This does not include the HQ
-		int exist = rc.readBroadcast(1000+robots);
-		if (exist==1) { //You want this robot to exist
-			spawnRobot(rc);
-//			The following is only active if you want to broadcast stuff - place the following
-//			block of code anywhere you want a new robot to be made
-//			int robots = rc.senseRobotCount();
-//			rc.broadcast(1001+robots, 1);
-			
-		} else { //You don't want this robot to exist
-			//do nothing
+	static void senseEnemyPASTRs(RobotController rc) {
+		
+//		System.out.println(enemyPASTRs);
+		
+		//fill in enemyPASTRs arraylist
+		MapLocation[] currEnemyLocs = rc.sensePastrLocations(team.opponent());
+		List<MapLocation> currEnemyList = Arrays.asList(currEnemyLocs); 
+		
+		//add in new locations
+		for(MapLocation m:currEnemyLocs){
+			if(!enemyPASTRs.contains(m))
+				enemyPASTRs.add(m);
 		}
+		
+		//remove old locations and reassign those robots by replacing their assignmed location
+		for(int i = 0; i < enemyPASTRs.size(); i++){
+			if(!currEnemyList.contains(enemyPASTRs.get(i))){
+				if(currEnemyLocs.length==0) //ATTACKER MOVES TO ENEMY HQ IF THERE IS NO OTHER PLACE TO ATTACK.
+						enemyPASTRs.set(i, new MapLocation(-1, -1));
+				else
+					enemyPASTRs.set(i, currEnemyLocs[0]);
+			}
+		}
+		
+		writeEnemyLocsToComm(rc);
 	}
 	
-	static void senseEnemyPASTRs(RobotController rc) throws GameActionException{
-		//fill in enemyPASTRs arraylist
-		enemyPASTRs = rc.sensePastrLocations(rc.getTeam().opponent());
-		
-		//broadcast locations to channel? 10 to broadcast 2 to read, max of 5 or so pastrs...
-		//channel 505505 (SOS!)
-		for (int i=0;i<enemyPASTRs.length;i++) {
-			int x = enemyPASTRs[i].x;
-			int y = enemyPASTRs[i].y;
-			rc.broadcast(505+i, x*100+y);
+	static void writeEnemyLocsToComm(RobotController rc){
+		try {
+			for(int i = 0; i < enemyPASTRs.size(); i++){
+					rc.broadcast(71+i,Util.locToInt(enemyPASTRs.get(i)));
+			}
+		} catch (GameActionException e) {
+			e.printStackTrace();
 		}
-		
 	}
 	
 	//TO DO: compute ideal number of pastures
 	static int computeNumPastures(){
-		return 5;
+		return 4;
 	}
 	
 	//TO DO: improve with position weighting
@@ -173,14 +326,13 @@ public class HQ {
 				
 				for(int k = 0; k < idealNumPastures; k++){
 					
-					//Balancing profit in pasture productivity vs. distance: (sum-weight)
-					if((sum-weight)>pstrCowDens[k]){
+					//Balancing profit in pasture productivity vs. distance: (sum-weight/10)
+					if((sum-weight/(mapY))>pstrCowDens[k]){
 						pstrLocs[k] = new MapLocation(j+1, i+1);
 						
 						//broadcast these locations to channel 168
 						int pstrlocint = Util.locToInt(pstrLocs[k]);
 						hq.broadcast(168 + k, pstrlocint);
-						System.out.println("FIND PASTURES found : " + pstrlocint);
 						
 						pstrCowDens[k] = sum;
 						break;
@@ -188,91 +340,84 @@ public class HQ {
 				}
 			}
 		}
+		
 		return pstrLocs;
 	}
 	
-	private static MapLocation[] findgoal(RobotController rc, MapLocation initialLoc) throws GameActionException {
-		// TODO Auto-generated method stub
-		
-		//wallbot sense HQ locations
-		//MapLocation myHQ = rc.senseHQLocation();
-		//MapLocation enemyHQ = rc.senseEnemyHQLocation();
-		
-		MapLocation pstrLocs[] = new MapLocation[idealNumPastures];
-		double cowDensMap[][] = rc.senseCowGrowth();
-		//Get dimensions of map
-	    int mapY = cowDensMap.length;
-		int mapX = cowDensMap[0].length;
-		
-		//
-		int x = initialLoc.x;
-		int y = initialLoc.y;
-		int start = 0;
-		int end = mapY;
-		
-		int clear = 0;
-		
-		//pp stands for possible pastrs
-		int pp = 0;
-		int p1X = x;
-		int p1Y = y;
-		
-		if (initialLoc.y > mapY/2) {
-			end = initialLoc.y;
-			p1Y = start + 3;
-		} else {
-			start = initialLoc.y;
-			p1Y = mapY - 3;
-		}
-
-		MapLocation goal = new MapLocation(mapX - 3, initialLoc.y);
-		
-		//Figure out where the possible pastr is in p1X and p1Y
-		for (int j = initialLoc.x - 5; j < initialLoc.x + 5; j++) {
-			
-			clear = 0;
-			
-			for(int i = start; i < end; i++){
-				TerrainTile a = rc.senseTerrainTile(new MapLocation(j, i));
-				if (a.equals(TerrainTile.VOID)) {
-					//System.out.println(i + " YAAAY");
-					clear=0;
-				} else if (a.equals(TerrainTile.ROAD)) {
-					clear +=2;
-				} else if (a.equals(TerrainTile.NORMAL)) {
-					clear +=1;
-				} 
+	static void writePSTRLocsToComm(RobotController rc, MapLocation[] pstrLocs){
+		try {
+			for(int i = 0; i < pstrLocs.length; i++){
+					rc.broadcast(51+i,Util.locToInt(pstrLocs[i]));
 			}
-			
-			if (clear >= end - start) {
-				System.out.println("For x: " + j + "and y" + start);
-				p1X = j;
-				//mentioned earlier p1Y = start + 2;
-				pp +=1;
-				goal = new MapLocation(p1X, p1Y);
-			}
-			
+		} catch (GameActionException e) {
+			e.printStackTrace();
 		}
-		
-		int goalint = Util.locToInt(goal);
-		int pastrs = rc.sensePastrLocations(rc.getTeam()).length;
-		rc.broadcast(168+pastrs, goalint);
-		pstrLocs[0] = goal;
-		
-		return pstrLocs;
 	}
 	
 	//TO DO
 	static void updateRobotDistro(RobotController rc){
+		
+		int clock = Clock.getRoundNum();
+		
+		try {
+			for(int i = 101; i < 131; i++){
+				int val = rc.readBroadcast(i);
+				
+				if(val==-1)
+					break;
+				
+				
+				int round = val%10000;
+				int id = (val-round)/10000;
+				
+				if((clock-round)>1 && occupations.containsKey(id)){
+					switch(occupations.get(id)) {
+						case DEFENDER: { 
+							if(clock%11==0)
+								robotTypeCount[0]--; 
+										defendPSTRsAssignment.remove(id);
+										occupations.remove(id);
+										break;
+						}
+						case ATTACKER: {robotTypeCount[1]--; 
+										roboEnemyAssignment.remove(id);
+										occupations.remove(id);
+										break;		
+						}
+						case PASTR: break;
+						case NOISETOWER: break;
+					}
+				}	
+			}
+			
+			List<MapLocation> currPASTRsLocs = Arrays.asList(rc.sensePastrLocations(team));
+			if(clock>200 && currPASTRsLocs.size()<desiredPASTRs.length){
+				
+				//TO DO: need to keep track of PASTR to-be's: spawning too many PASTRs while other pastrs are en route
+				if(clock%11==0)
+					robotTypeCount[2]--;
+				
+				currPASTRs = new boolean[desiredPASTRs.length];
+				
+				for(int i = 0; i < desiredPASTRs.length; i++){
+					
+					for(int j = 0; j < currPASTRsLocs.size();j++){
+						if(desiredPASTRs[i].distanceSquaredTo(currPASTRsLocs.get(j))<3)
+							currPASTRs[i] = true;
+					}
+				}
+			}
+			
+		} catch (GameActionException e) {
+			e.printStackTrace();
+		}
+		
+		
+		
 		//update currPASTRs and robotTypeCount
 	}
 	
 	public static void createTerrainMap(){
-		//Establish directions
-		Direction allDirections[] = Direction.values();
-		for (int i = 0; i < allDirections.length; i ++) {
-			System.out.println(allDirections[i]);
-		}
 
 		//Get cow density field and map dimensions
 		double cowDensMap[][] = hq.senseCowGrowth();
