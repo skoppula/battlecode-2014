@@ -1,5 +1,7 @@
 package origrestructured;
 
+import java.util.Arrays;
+
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
@@ -32,12 +34,16 @@ public class PASTR {
     
 	public static void runPastureCreator(RobotController rc) {
 		
-		System.out.println("RUNNING PASTURE CREATOR");
+		
 		
 		MapLocation[] desiredPASTRs = Util.commToPSTRLocs(rc);
+
 		
 		try {
 			if(rc.isActive()) {
+				
+				
+				
 				int id = rc.getRobot().getID();
 				
 				int idx = -1;
@@ -46,7 +52,7 @@ public class PASTR {
 					if((val-val%100)/100==id)
 						idx = val%100;
 				}
-					
+				
 				
 				if(idx > -1) {
 						MapLocation target = desiredPASTRs[idx];

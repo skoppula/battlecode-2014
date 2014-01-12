@@ -72,7 +72,7 @@ public class Util {
 	}
 	
 	public static void unstick(RobotController rc, Direction toDest, MapLocation dest) throws GameActionException{
-		System.out.println("Trying to move " + toDest);
+//		System.out.println("Trying to move " + toDest);
 		Direction[] attempts = tryDirections(toDest);
 		for (int i=0;i< attempts.length;i++) {
 			int j = 6 - rand.nextInt(7);
@@ -80,7 +80,7 @@ public class Util {
 			Direction tryDir = attempts[j]; 
 			while(rc.canMove(tryDir) && rc.canMove(toDest) == false){ //robot moves along wall to try to find way to move in toDest
 				if(rc.isActive()){
-					System.out.println("Moving " + tryDir);
+//					System.out.println("Moving " + tryDir);
 					rc.move(tryDir);
 				}
 				rc.yield();
@@ -93,7 +93,7 @@ public class Util {
 				//System.out.println("found hole");
 				if(rc.isActive()){
 					rc.move(toDest);
-					System.out.print("Moving toDest");
+//					System.out.print("Moving toDest");
 				}
 				else{
 					rc.yield();
@@ -110,7 +110,7 @@ public class Util {
 	public static void moveTo(RobotController rc, MapLocation dest) throws GameActionException {
 		// TODO Auto-generated method stub
 		
-		System.out.println("Destinatino is " + dest.x + "and " + dest.y);
+//		System.out.println("Destinatino is " + dest.x + "and " + dest.y);
 
     	Direction toDest = rc.getLocation().directionTo(dest);
     	if(rc.getLocation().equals(dest) == false){
@@ -148,30 +148,39 @@ public class Util {
 	}
 	
     static MapLocation[] commToPSTRLocs(RobotController rc){
+    	
     	int channel = 51;
     	ArrayList<MapLocation> locs = new ArrayList<MapLocation>();
     	
+    	
     	try {
     		int val = rc.readBroadcast(channel);
-    		while(val!=-1)
+    		while(val!=-1){
     			locs.add(Util.intToLoc(val));
-    		val = rc.readBroadcast(channel);
+    			channel++;
+    			val = rc.readBroadcast(channel);
+    		}
     	} catch (GameActionException e){
     		e.printStackTrace();
     	}
+    	
     	
     	return locs.toArray(new MapLocation[locs.size()]);
     }
 
     static MapLocation[] commToEnemyPSTRLocs(RobotController rc){
+    	
+    	
     	int channel = 71;
     	ArrayList<MapLocation> locs = new ArrayList<MapLocation>();
     	
     	try {
     		int val = rc.readBroadcast(channel);
-    		while(val!=-1)
+    		while(val!=-1){
     			locs.add(Util.intToLoc(val));
-    		val = rc.readBroadcast(channel);
+    			channel++;
+    			val = rc.readBroadcast(channel);
+    		}
     	} catch (GameActionException e){
     		e.printStackTrace();
     	}
