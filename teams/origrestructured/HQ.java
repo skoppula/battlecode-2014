@@ -3,6 +3,7 @@ package origrestructured;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
@@ -16,11 +17,20 @@ import battlecode.common.TerrainTile;
 
 public class HQ {
 	
+    static HashMap<Integer, Integer> roboPSTRsAssignment = new HashMap<Integer, Integer>();
+    //Integer [Robot ID]:Integer [index of a MapLocation in desiredPASTRLocs[] ]
+	
+    static HashMap<Integer, Integer> defendPSTRsAssignment = new HashMap<Integer, Integer>();
+    //Integer [Robot ID]:Integer [index of a MapLocation in desiredPASTRLocs[] ]
+	
+    static HashMap<Integer, Integer> roboEnemyAssignment = new HashMap<Integer, Integer>();
+    //Integer [Robot ID]:Integer [index of a MapLocation in enemyPASTRs[] ]
+	
     public static volatile boolean initializerRun = false;
     public static volatile double cowDensMap[][];
     public static volatile int mapY, mapX;
-    public static volatile MapLocation desiredPASTRs[];
-    public static volatile boolean currPASTRs[];
+    static volatile MapLocation desiredPASTRs[];
+    public static volatile boolean currPASTRs[]; //This is pasture locations that have robots assigned and en route to become pastures there, not 'current' pastures
     public static volatile Team team;
     public static volatile Team enemy;
     public static volatile int idealNumPastures;
@@ -60,8 +70,8 @@ public class HQ {
     	idealNumPastures = computeNumPastures();
     	
     	desiredPASTRs = findPastureLocs();
-    	
     	System.out.println(Arrays.deepToString(desiredPASTRs));
+    	writePSTRLocsToComm(rc, desiredPASTRs);
     	
     	currPASTRs = new boolean[idealNumPastures];
     	createTerrainMap();
@@ -80,13 +90,58 @@ public class HQ {
 
 		senseEnemyPASTRs(rc);
 		updateRobotDistro(rc);
-		updateAssignments();
+		updateAssignments(rc);
 		
 		rc.yield();
 	}
 
-
-	private static void updateAssignments() {
+	static void commToHashMaps(RobotController rc){
+		for(int i = 2; i < 26; i++){
+			if(i==-1)
+				continue;
+			
+			int val = 0;
+			try {
+				val = rc.readBroadcast(i);
+			} catch (GameActionException e) {
+				e.printStackTrace();
+			}
+			
+			int job = val%100;
+			int id = (val-job)/100;
+			
+			switch(job) {
+				case 0: occupations.put(id, HQ.types.DEFENDER); break;
+				case 1: occupations.put(id, HQ.types.ATTACKER); break;
+				case 2: occupations.put(id, HQ.types.PASTR); break;
+				case 3: occupations.put(id, HQ.types.NOISETOWER); break;
+			}
+		}
+		
+		for(int i = 26; i < 51; i++){
+			if(i==-1)
+				continue;
+			
+			int val = 0;
+			try {
+				val = rc.readBroadcast(i);
+			} catch (GameActionException e) {
+				e.printStackTrace();
+			}
+			
+			int index = val%100;
+			int id = (val-index)/100;
+			
+			switch(occupations.get(id)) {
+				case DEFENDER: defendPSTRsAssignment.put(id, index); break;
+				case ATTACKER: roboEnemyAssignment.put(id, index); break;
+				case PASTR: roboPSTRsAssignment.put(id, index); break;
+				case NOISETOWER: break;
+			}
+		}
+	}
+	
+	private static void updateAssignments(RobotController rc) {
 		
 		// update robots assigned to:
     	// 1. creating own pastrs
@@ -94,10 +149,11 @@ public class HQ {
     	// 3. attacking enemy pastrs
     	
     	//update corresponding hashmaps
-		
+		commToHashMaps(rc);
+
 		for(int id:occupations.keySet()){
 			
-			if(PASTR.roboPSTRsAssignment.containsKey(id) || COWBOY.defendPSTRsAssignment.containsKey(id) || COWBOY.roboEnemyAssignment.containsKey(id))
+			if(roboPSTRsAssignment.containsKey(id) || defendPSTRsAssignment.containsKey(id) || roboEnemyAssignment.containsKey(id))
 				continue;
 			
 			types type = occupations.get(id);
@@ -105,7 +161,8 @@ public class HQ {
 			if(type==types.PASTR){
 				for(int i = 0; i < desiredPASTRs.length; i++){
 					if(!currPASTRs[i]) {
-						PASTR.roboPSTRsAssignment.put(id, i);
+						roboPSTRsAssignment.put(id, i);
+						currPASTRs[i]=true;
 						break;
 					}
 				} continue;
@@ -113,20 +170,55 @@ public class HQ {
 			} else if (type==types.DEFENDER) {
 				
 				int[] counts = new int[desiredPASTRs.length];
-				for(int pastr:COWBOY.defendPSTRsAssignment.values())
+				for(int pastr:defendPSTRsAssignment.values())
 					counts[pastr]++;
 				
-				COWBOY.defendPSTRsAssignment.put(id,Util.indexOfMin(counts));
+				defendPSTRsAssignment.put(id,Util.indexOfMin(counts));
 			
 			} else if (type==types.ATTACKER) {
 				
 				int[] counts = new int[enemyPASTRs.size()];
-				for(int pastr:COWBOY.roboEnemyAssignment.values())
+				for(int pastr:roboEnemyAssignment.values())
 					counts[pastr]++;
 				
-				COWBOY.roboEnemyAssignment.put(id,Util.indexOfMin(counts));
+				roboEnemyAssignment.put(id,Util.indexOfMin(counts));
 				
 			}
+		}
+		
+		assignmentsToComm(rc);
+	}
+	
+	static void assignmentsToComm(RobotController rc){
+		
+		try {
+			Iterator<Integer> iterator = roboPSTRsAssignment.keySet().iterator();  
+			
+			int channel = 26;
+			while (iterator.hasNext()) {  
+			   int id = iterator.next();  
+			   int index = roboPSTRsAssignment.get(id);
+			   rc.broadcast(channel, Util.idAssignToInt(id, index));
+			   channel++;
+			}
+			
+			iterator = defendPSTRsAssignment.keySet().iterator();
+			while (iterator.hasNext()) {  
+				   int id = iterator.next();  
+				   int index = defendPSTRsAssignment.get(id);
+				   rc.broadcast(channel, Util.idAssignToInt(id, index));
+				   channel++;
+			}
+			
+			iterator = roboEnemyAssignment.keySet().iterator();
+			while (iterator.hasNext()) {  
+				   int id = iterator.next();  
+				   int index = roboEnemyAssignment.get(id);
+				   rc.broadcast(channel, Util.idAssignToInt(id, index));
+				   channel++;
+			}
+		} catch (GameActionException e){
+			e.printStackTrace();
 		}
 	}
 	
@@ -148,7 +240,7 @@ public class HQ {
 			if(robotTypeCount[2] < desiredPASTRs.length)
 				PASTR.spawnPASTR(rc);
 			
-			else if (robotTypeCount[0] < 1.5*desiredPASTRs.length)
+			else if (robotTypeCount[0] < 2*desiredPASTRs.length)
 				COWBOY.spawnCOWBOY(rc, types.DEFENDER);
 			
 			else if (robotTypeCount[1] < 5)
@@ -163,8 +255,7 @@ public class HQ {
 		}
 	}
 	
-	static void senseEnemyPASTRs(RobotController rc) throws GameActionException{
-
+	static void senseEnemyPASTRs(RobotController rc) {
 		//fill in enemyPASTRs arraylist
 		MapLocation[] currEnemyLocs = rc.sensePastrLocations(team.opponent());
 		List<MapLocation> currEnemyList = Arrays.asList(currEnemyLocs); 
@@ -182,14 +273,17 @@ public class HQ {
 			}
 		}
 		
-		//broadcast locations to channel? 10 to broadcast 2 to read, max of 5 or so pastrs...
-		//channel 505505 (SOS!)
-		for (int i=0;i<enemyPASTRs.size();i++) {
-			int x = enemyPASTRs.get(i).x;
-			int y = enemyPASTRs.get(i).y;
-			rc.broadcast(505+i, x*100+y);
+		writeEnemyLocsToComm(rc);
+	}
+	
+	static void writeEnemyLocsToComm(RobotController rc){
+		try {
+			for(int i = 0; i < enemyPASTRs.size(); i++){
+					rc.broadcast(71+i,Util.locToInt(enemyPASTRs.get(i)));
+			}
+		} catch (GameActionException e) {
+			e.printStackTrace();
 		}
-		
 	}
 	
 	//TO DO: compute ideal number of pastures
@@ -235,7 +329,18 @@ public class HQ {
 				}
 			}
 		}
+		
 		return pstrLocs;
+	}
+	
+	static void writePSTRLocsToComm(RobotController rc, MapLocation[] pstrLocs){
+		try {
+			for(int i = 0; i < pstrLocs.length; i++){
+					rc.broadcast(51+i,Util.locToInt(pstrLocs[i]));
+			}
+		} catch (GameActionException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	//TO DO

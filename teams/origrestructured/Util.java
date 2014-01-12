@@ -1,7 +1,8 @@
 package origrestructured;
 
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.ArrayList;
+//import java.util.HashMap;
+//import java.util.Iterator;
 import java.util.Random;
 
 import battlecode.common.Direction;
@@ -145,7 +146,39 @@ public class Util {
 	static int locToInt(MapLocation m){
 		return (m.x*100 + m.y);
 	}
+	
+    static MapLocation[] commToPSTRLocs(RobotController rc){
+    	int channel = 51;
+    	ArrayList<MapLocation> locs = new ArrayList<MapLocation>();
+    	
+    	try {
+    		int val = rc.readBroadcast(channel);
+    		while(val!=-1)
+    			locs.add(Util.intToLoc(val));
+    		val = rc.readBroadcast(channel);
+    	} catch (GameActionException e){
+    		e.printStackTrace();
+    	}
+    	
+    	return locs.toArray(new MapLocation[locs.size()]);
+    }
 
+    static MapLocation[] commToEnemyPSTRLocs(RobotController rc){
+    	int channel = 71;
+    	ArrayList<MapLocation> locs = new ArrayList<MapLocation>();
+    	
+    	try {
+    		int val = rc.readBroadcast(channel);
+    		while(val!=-1)
+    			locs.add(Util.intToLoc(val));
+    		val = rc.readBroadcast(channel);
+    	} catch (GameActionException e){
+    		e.printStackTrace();
+    	}
+    	
+    	return locs.toArray(new MapLocation[locs.size()]);
+    }
+    
 	static int sumArray(int[] arr){
 		int sum = 0;
 
@@ -155,15 +188,19 @@ public class Util {
 		return sum;
 	}
 	
-	static void printHashMap(HashMap map){
-
-		Iterator iterator = map.keySet().iterator();  
-		   
-		while (iterator.hasNext()) {  
-		   String key = "" + iterator.next();  
-		   String value = "" + map.get(key);
-		 
-		   System.out.println("KEY:" + key + " VALUE:" + value);  
-		}
+	static int idAssignToInt(int id, int j){
+		return id*100+j;
 	}
+	
+//	static void printHashMap(HashMap map){
+//
+//		Iterator iterator = map.keySet().iterator();  
+//		   
+//		while (iterator.hasNext()) {  
+//		   String key = "" + iterator.next();  
+//		   String value = "" + map.get(key);
+//		 
+//		   System.out.println("KEY:" + key + " VALUE:" + value);  
+//		}
+//	}
 }

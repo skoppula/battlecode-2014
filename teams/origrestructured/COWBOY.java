@@ -1,7 +1,5 @@
 package origrestructured;
 
-import java.util.HashMap;
-
 import origrestructured.HQ.types;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
@@ -12,12 +10,8 @@ import battlecode.common.RobotInfo;
 
 public class COWBOY {
 	
-    static HashMap<Integer, Integer> defendPSTRsAssignment = new HashMap<Integer, Integer>();
-    //Integer [Robot ID]:Integer [index of a MapLocation in desiredPASTRLocs[] ]
 	
-    static HashMap<Integer, Integer> roboEnemyAssignment = new HashMap<Integer, Integer>();
-    //Integer [Robot ID]:Integer [index of a MapLocation in enemyPASTRs[] ]
-    
+
 	public static void runDefender(RobotController rc) {
 		
 		//1. move toward assigned pasture
@@ -25,12 +19,21 @@ public class COWBOY {
 		//3. shootNearby()
 		
 		try {
+			MapLocation[] desiredPASTRs = Util.commToPSTRLocs(rc);
+			
 			if(rc.isActive()) {
 				int id = rc.getRobot().getID();
 				shootNearby(rc);
 				
-				if(defendPSTRsAssignment.containsKey(id)) {
-						MapLocation target = HQ.desiredPASTRs[defendPSTRsAssignment.get(id)];
+				int idx = -1;
+				for(int i = 26; i < 51; i++){
+					int val = rc.readBroadcast(i);
+					if((val-val%100)/100==id)
+						idx = val%100;
+				}
+				
+				if(idx>-1) {
+						MapLocation target = desiredPASTRs[idx];
 				
 						if(rc.getLocation().distanceSquaredTo(target) < 3)
 							Util.randomMove(rc);
@@ -38,7 +41,7 @@ public class COWBOY {
 							Util.moveTo(rc, target);
 						
 				} else
-					Util.moveTo(rc, HQ.desiredPASTRs[0]);
+					Util.moveTo(rc, desiredPASTRs[0]);
 				
 			}
 		} catch (GameActionException e) {
@@ -53,13 +56,22 @@ public class COWBOY {
 		//if near pasture -> shoot pasture
 		//else shoot anything nearby
 		
+		MapLocation[] enemyPASTRs = Util.commToEnemyPSTRLocs(rc);
+		
 		try {
 			if(rc.isActive()){
 				int id = rc.getRobot().getID();
 				shootNearby(rc);
 				
-				if(roboEnemyAssignment.containsKey(id)) {
-						MapLocation target = HQ.enemyPASTRs.get(roboEnemyAssignment.get(id));
+				int idx = -1;
+				for(int i = 26; i < 51; i++){
+					int val = rc.readBroadcast(i);
+					if((val-val%100)/100==id)
+						idx = val%100;
+				}
+				
+				if(idx > -1) {
+						MapLocation target = enemyPASTRs[idx];
 				
 						if(rc.getLocation().distanceSquaredTo(target) < 3)
 							shootNearby(rc);
@@ -67,7 +79,7 @@ public class COWBOY {
 							Util.moveTo(rc, target);
 						
 				} else
-					Util.moveTo(rc, HQ.enemyPASTRs.get(0));
+					Util.moveTo(rc, enemyPASTRs[0]);
 				
 			}
 		} catch (GameActionException e) {
@@ -99,11 +111,13 @@ public class COWBOY {
 					rc.spawn(i);
 					if(type==HQ.types.DEFENDER) {
 			    		HQ.tempSpawnedType = types.DEFENDER;
+			    		rc.broadcast(0, 0);
 						HQ.robotTypeCount[0]++;
 						System.out.println("Spawned defender");
 						
 			    	} else {
 			    		HQ.tempSpawnedType = types.ATTACKER;
+			    		rc.broadcast(0, 1);
 						HQ.robotTypeCount[1]++;
 						System.out.println("Spawned attacker");
 			    	}
