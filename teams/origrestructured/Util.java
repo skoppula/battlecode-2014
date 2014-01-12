@@ -1,4 +1,4 @@
-package origrestructured;
+package origrestructured2;
 
 import java.util.Random;
 
@@ -59,11 +59,7 @@ public class Util {
 	
 	public static void unstick(RobotController rc, Direction toDest, MapLocation dest) throws GameActionException{
 		System.out.println("Trying to move " + toDest);
-		Direction[] attempts = tryDirections(toDest);
-		for (int i=0;i< attempts.length;i++) {
-			int j = 6 - rand.nextInt(7);
-			System.out.println(j);
-			Direction tryDir = attempts[j]; 
+		for(Direction tryDir: tryDirections(toDest)){ //think of ways that would make sense to try, ordered by likelihood of finding opening
 			while(rc.canMove(tryDir) && rc.canMove(toDest) == false){ //robot moves along wall to try to find way to move in toDest
 				if(rc.isActive()){
 					System.out.println("Moving " + tryDir);
@@ -76,16 +72,15 @@ public class Util {
 				continue;
 			}
 			if(rc.canMove(toDest)){
-				//System.out.println("found hole");
+				System.out.println("found hole");
 				if(rc.isActive()){
 					rc.move(toDest);
 					System.out.print("Moving toDest");
 				}
 				else{
 					rc.yield();
-					if(rc.isActive()&&rc.canMove(toDest)){
-						rc.move(toDest);
-					}
+					rc.move(toDest);
+					System.out.println("Took a nap and then moved toDest");
 				}
 				break;
 			}
