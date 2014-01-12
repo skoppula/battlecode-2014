@@ -1,5 +1,7 @@
 package origrestructured;
 
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Random;
 
 import battlecode.common.Direction;
@@ -17,11 +19,22 @@ public class Util {
     	return null;
     }
     
+    public static int indexOfMin(int... arr) {
+        int idx = -1;
+        int p = Integer.MAX_VALUE;
+        for(int i = 0; i < arr.length; i++)
+            if(arr[i] < p) {
+                p = arr[i];
+                idx = i;
+            }
+        return idx;
+    }
+    
+    
     //the A* directions algorithm goes here, preferably implemented with subclasses
     //public static Direction[] directionsTo(MapLocation start, MapLocation goal)
 	
 	static void cornerMove(RobotController rc) throws GameActionException {
-		// TODO Auto-generated method stub
 		//For some reason this shows preference for corners, and random twitching
 		for (int i = 0;i<7;i++) {
 			Random rand = new Random(rc.getRobot().getID());
@@ -133,6 +146,24 @@ public class Util {
 		return (m.x*100 + m.y);
 	}
 
+	static int sumArray(int[] arr){
+		int sum = 0;
 
+		for (int i : arr)
+		    sum += i;
+		
+		return sum;
+	}
 	
+	static void printHashMap(HashMap map){
+
+		Iterator iterator = map.keySet().iterator();  
+		   
+		while (iterator.hasNext()) {  
+		   String key = "" + iterator.next();  
+		   String value = "" + map.get(key);
+		 
+		   System.out.println("KEY:" + key + " VALUE:" + value);  
+		}
+	}
 }

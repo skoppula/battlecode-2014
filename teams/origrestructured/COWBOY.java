@@ -1,15 +1,14 @@
 package origrestructured;
 
 import java.util.HashMap;
-import java.util.Random;
 
-import battlecode.common.Clock;
+import origrestructured.HQ.types;
+import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.Robot;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
-import battlecode.common.RobotType;
 
 public class COWBOY {
 	
@@ -19,49 +18,61 @@ public class COWBOY {
     static HashMap<Integer, Integer> roboEnemyAssignment = new HashMap<Integer, Integer>();
     //Integer [Robot ID]:Integer [index of a MapLocation in enemyPASTRs[] ]
     
-    public static void runSoldier(RobotController rc) throws GameActionException {
-		// TODO Auto-generated method stub
-    	
-
-    	//System.out.println("SOLDIER SAYS THAT INITIALIZERRUN IS  " + HQ.initializerRun);
-    	
-    	int num = rc.sensePastrLocations(HQ.team).length;
-    	int goalint =rc.readBroadcast(168+num);
-    	
-		MapLocation target = Util.intToLoc(goalint);
-		
-		if (goalint != 0) {
-    		Util.moveTo(rc, target);
-    		//System.out.println(goalint);	
-			//Util.randomMove(rc);
-//    		for (MapLocation i:goals) {
-//    			System.out.println("SKANDA FOUND THESE LOCATIONS: " + i);
-//    		}
-    	}
-    	else {
-    		Util.randomMove(rc);
-    		System.out.println(goalint);		
-    	}
-	}
-    
 	public static void runDefender(RobotController rc) {
 		
 		//1. move toward assigned pasture
 		//2. if near pasture -> randomMove()
 		//3. shootNearby()
 		
-		rc.yield();
+		try {
+			if(rc.isActive()) {
+				int id = rc.getRobot().getID();
+				shootNearby(rc);
+				
+				if(defendPSTRsAssignment.containsKey(id)) {
+						MapLocation target = HQ.desiredPASTRs[defendPSTRsAssignment.get(id)];
+				
+						if(rc.getLocation().distanceSquaredTo(target) < 3)
+							Util.randomMove(rc);
+						else
+							Util.moveTo(rc, target);
+						
+				} else
+					Util.moveTo(rc, HQ.desiredPASTRs[0]);
+				
+			}
+		} catch (GameActionException e) {
+			e.printStackTrace();
+		}
+		
 	}
 	
 	public static void runAttacker(RobotController rc) {
-		
-		MapLocation currLoc = rc.getLocation();
 		
 		//move toward assigned pasture
 		//if near pasture -> shoot pasture
 		//else shoot anything nearby
 		
-		rc.yield();
+		try {
+			if(rc.isActive()){
+				int id = rc.getRobot().getID();
+				shootNearby(rc);
+				
+				if(roboEnemyAssignment.containsKey(id)) {
+						MapLocation target = HQ.enemyPASTRs.get(roboEnemyAssignment.get(id));
+				
+						if(rc.getLocation().distanceSquaredTo(target) < 3)
+							shootNearby(rc);
+						else
+							Util.moveTo(rc, target);
+						
+				} else
+					Util.moveTo(rc, HQ.enemyPASTRs.get(0));
+				
+			}
+		} catch (GameActionException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	
@@ -79,6 +90,30 @@ public class COWBOY {
 			}
 		}
 	}
+	
+    public static void spawnCOWBOY(RobotController rc, HQ.types type){
+			
+		for (Direction i:Util.allDirections) {
+			if(rc.canMove(i)) {
+				try {
+					rc.spawn(i);
+					if(type==HQ.types.DEFENDER) {
+			    		HQ.tempSpawnedType = types.DEFENDER;
+						HQ.robotTypeCount[0]++;
+						System.out.println("Spawned defender");
+						
+			    	} else {
+			    		HQ.tempSpawnedType = types.ATTACKER;
+						HQ.robotTypeCount[1]++;
+						System.out.println("Spawned attacker");
+			    	}
+				} catch (GameActionException e) {
+					e.printStackTrace();
+				}
+				break;
+			}
+		}
+    }
 
 	
 	
