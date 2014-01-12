@@ -119,8 +119,6 @@ public class HQ {
 		}
 		
 		for(int i = 26; i < 51; i++){
-			if(i==-1)
-				continue;
 			
 			int val = 0;
 			try {
@@ -128,6 +126,9 @@ public class HQ {
 			} catch (GameActionException e) {
 				e.printStackTrace();
 			}
+			
+			if(val==-1)
+				continue;
 			
 			int index = val%100;
 			int id = (val-index)/100;
