@@ -1,6 +1,7 @@
-package origrestructured2;
+package origrestructured;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 //import java.util.HashMap;
 //import java.util.Iterator;
 import java.util.Random;
@@ -52,30 +53,43 @@ public class Util {
 	@SuppressWarnings("incomplete-switch")
 	public static Direction[] tryDirections(Direction toDest){ //this method basically just returns a list of directions i think it should try when stuck. just logic'ed it out here.
 		Direction[] res = new Direction[]{toDest.opposite()};
-		switch(toDest){
-			case NORTH:
-				res = new Direction[]{Direction.EAST, Direction.WEST, Direction.NORTH_WEST, Direction.NORTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.SOUTH_EAST};
-			case NORTH_EAST:
-				res = new Direction[]{Direction.EAST, Direction.NORTH, Direction.SOUTH, Direction.SOUTH_EAST, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST};
-			case EAST:
-				res = new Direction[]{Direction.NORTH, Direction.SOUTH, Direction.NORTH_EAST, Direction.SOUTH_EAST, Direction.WEST, Direction.SOUTH_WEST, Direction.NORTH_WEST};
-			case SOUTH_EAST:
-				res = new Direction[]{Direction.EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.NORTH_EAST, Direction.NORTH_WEST, Direction.WEST, Direction.NORTH};
-			case SOUTH:
-				res = new Direction[]{Direction.WEST, Direction.EAST, Direction.SOUTH_WEST, Direction.SOUTH_EAST, Direction.NORTH, Direction.NORTH_WEST, Direction.NORTH_EAST};
-			case SOUTH_WEST:
-				res = new Direction[]{Direction.SOUTH, Direction.WEST, Direction.NORTH_WEST, Direction.SOUTH_EAST, Direction.NORTH_EAST, Direction.NORTH, Direction.EAST};
-			case WEST:
-				res = new Direction[]{Direction.NORTH, Direction.SOUTH, Direction.NORTH_WEST, Direction.SOUTH_EAST, Direction.EAST, Direction.NORTH_EAST, Direction.SOUTH_EAST};
-			case NORTH_WEST:
-				res = new Direction[]{Direction.NORTH, Direction.WEST, Direction.NORTH_EAST, Direction.SOUTH_WEST, Direction.SOUTH_EAST, Direction.SOUTH, Direction.EAST};
+		Direction[] directions = new Direction[]{Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST};
+		int dir = Arrays.asList(directions).indexOf(toDest);
+		System.out.println(dir);
+		switch(dir){
+			case 0:
+				res = new Direction[]{Direction.EAST, Direction.WEST, Direction.SOUTH};
+				break;
+			case 1:
+				res = new Direction[]{Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
+				break;
+			case 2:
+				res = new Direction[]{Direction.NORTH, Direction.SOUTH, Direction.WEST};
+				break;
+			case 3:
+				res = new Direction[]{Direction.SOUTH, Direction.EAST, Direction.NORTH, Direction.WEST};
+				break;
+			case 4:
+				res = new Direction[]{Direction.WEST, Direction.EAST, Direction.NORTH};
+				break;
+			case 5:
+				res = new Direction[]{Direction.SOUTH, Direction.WEST, Direction.NORTH, Direction.EAST};
+				break;
+			case 6:
+				res = new Direction[]{Direction.SOUTH, Direction.NORTH, Direction.EAST};
+				break;
+			case 7:
+				res = new Direction[]{Direction.NORTH, Direction.WEST, Direction.SOUTH, Direction.EAST};
+				break;
+				
 		}
 		return res;
 	}
 	
 	public static void unstick(RobotController rc, Direction toDest, MapLocation dest) throws GameActionException{
-		System.out.println("Trying to move " + toDest);
-		for(Direction tryDir: tryDirections(toDest)){ //think of ways that would make sense to try, ordered by likelihood of finding opening
+		System.out.println("Trying to move " + toDest + " towards (" + dest.x + ", " + dest.y + ")");
+		Direction[] directions = tryDirections(toDest);
+		for(Direction tryDir: directions){ //think of ways that would make sense to try, ordered by likelihood of finding opening
 			while(rc.canMove(tryDir) && rc.canMove(toDest) == false){ //robot moves along wall to try to find way to move in toDest
 				if(rc.isActive()){
 					System.out.println("Moving " + tryDir);
@@ -91,14 +105,16 @@ public class Util {
 				System.out.println("found hole");
 				if(rc.isActive()){
 					rc.move(toDest);
-					System.out.print("Moving toDest");
+					System.out.println("Moving toDest");
 				}
 				else{
 					rc.yield();
-					rc.move(toDest);
+					if (rc.isActive()){
+						rc.move(toDest);
+					}
 					System.out.println("Took a nap and then moved toDest");
+					break;
 				}
-				break;
 			}
 		}
 		//robot has found an opening that allows it to move in direction toDest
@@ -106,22 +122,21 @@ public class Util {
 	
 	public static void moveTo(RobotController rc, MapLocation dest) throws GameActionException {
 		// TODO Auto-generated method stub
-		
-//		System.out.println("Destinatino is " + dest.x + "and " + dest.y);
 
     	Direction toDest = rc.getLocation().directionTo(dest);
-    	if(rc.getLocation().equals(dest) == false){
+    	while(rc.getLocation().equals(dest) == false){
     		if(rc.isActive() && rc.canMove(toDest)){
     			rc.move(toDest);
     			toDest = rc.getLocation().directionTo(dest);
     		}else{ //robot is either inactive or can't move toDest
     			if(rc.isActive() && rc.canMove(toDest) == false){ //if robot can't move toDest...
-    				//System.out.println("UNSTICKING");
+    				System.out.println("UNSTICKING");
     				unstick(rc, toDest, dest); //unstick it
+    				toDest = rc.getLocation().directionTo(dest);
     			}
+    		rc.yield();
     		}
     	}//until rc.getLocation.equals(dest)
-    	
 	}
 	
 
