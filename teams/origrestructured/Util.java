@@ -13,6 +13,7 @@ import battlecode.common.MapLocation;
 import battlecode.common.Robot;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
+import battlecode.common.RobotType;
 
 public class Util {
 	
@@ -306,7 +307,17 @@ public class Util {
 	
 	static void shootNearby(RobotController rc) throws GameActionException {
 		//shooting
-		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent());
+		Robot[] enemyRobots = null;
+		Robot[] enemyThings = rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent()); //senses all enemy units (including HQ) on map
+		ArrayList<Robot> enemyUnits = new ArrayList<Robot>();
+		for(Robot unit: enemyThings){ //for every unit...
+			RobotInfo enemyInfo = rc.senseRobotInfo(unit);
+			if(enemyInfo.type != RobotType.HQ){ //if the unit is not a HQ
+				enemyUnits.add(unit); //add it to an arraylist of things to attack
+			}
+		enemyRobots = enemyUnits.toArray(new Robot[enemyUnits.size()]); //add it to the array of things to attack
+			
+		}
 		if(enemyRobots.length>0){//if there are enemies
 			Robot anEnemy = enemyRobots[0];
 			RobotInfo anEnemyInfo;
