@@ -245,11 +245,15 @@ public class HQ {
 			if(robotTypeCount[2] < desiredPASTRs.length)
 				PASTR.spawnPASTR(rc);
 			
-			else if (robotTypeCount[0] < 2*desiredPASTRs.length)
+			else if (robotTypeCount[0] < desiredPASTRs.length)
 				COWBOY.spawnCOWBOY(rc, types.DEFENDER);
 			
 			else if (robotTypeCount[1] < 5)
 				COWBOY.spawnCOWBOY(rc, types.ATTACKER);
+			
+			else if(robotTypeCount[0] < desiredPASTRs.length){
+				COWBOY.spawnCOWBOY(rc, types.DEFENDER);
+			}
 			
 			else {
 				if(rand.nextDouble()<0.5)

@@ -22,7 +22,7 @@ public class RobotPlayer {
 	 * Channel 101-130: robot posting the round number, so that hq can see which robots died
 	 */
 	
-	 public static void run(RobotController rc){
+	public static void run(RobotController rc){
     	
     	try {
     		int id = rc.getRobot().getID();
