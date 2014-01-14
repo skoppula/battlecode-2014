@@ -1,4 +1,4 @@
-package noisebot;
+package origrestructured;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,6 +13,7 @@ import battlecode.common.MapLocation;
 import battlecode.common.Robot;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
+import battlecode.common.RobotType;
 
 public class Util {
 	
@@ -51,34 +52,104 @@ public class Util {
 	}
 	
 	@SuppressWarnings("incomplete-switch")
-	public static Direction[] tryDirections(Direction toDest){ //this method basically just returns a list of directions i think it should try when stuck. just logic'ed it out here.
+	public static MapLocation valueOf(MapLocation a){
+		return new MapLocation(a.x, a.y);
+	}
+	
+	@SuppressWarnings("incomplete-switch")
+	public static Direction[] tryDirections(RobotController rc, Direction toDest, MapLocation dest){ //this method basically just returns a list of directions i think it should try when stuck. just logic'ed it out here.
 		Direction[] res = new Direction[]{toDest.opposite()};
-		Direction[] directions = new Direction[]{Direction.NORTH, Direction.NORTH_EAST, Direction.EAST, Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST, Direction.WEST, Direction.NORTH_WEST};
-		int dir = Arrays.asList(directions).indexOf(toDest);
-		System.out.println(dir);
-		switch(dir){
-			case 0:
-				res = new Direction[]{Direction.EAST, Direction.WEST, Direction.SOUTH};
+		switch(toDest){
+			case NORTH:
+				Direction nfirst;
+				Direction nsecond;
+				int dx = rc.getLocation().x - dest.x;
+				if(dx>0){ //current x greater than dest.x
+					nfirst = Direction.WEST;
+				}
+				else{ //current x is less than dest.x OR rarely that both are equal
+					nfirst = Direction.EAST;
+				}
+				
+				if(nfirst == Direction.WEST){
+					nsecond = Direction.EAST;
+				}
+				else{
+					nsecond = Direction.WEST;
+				}
+				
+				res = new Direction[]{nfirst, nsecond, Direction.SOUTH};
 				break;
-			case 1:
+			case NORTH_EAST:
 				res = new Direction[]{Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
 				break;
-			case 2:
-				res = new Direction[]{Direction.NORTH, Direction.SOUTH, Direction.WEST};
+			case EAST:
+				Direction efirst;
+				Direction esecond;
+				int edy = rc.getLocation().y - dest.y;
+				if(edy>0){ //current y greater than dest.y
+					efirst = Direction.SOUTH;
+				}
+				else{ //current x is less than dest.x OR rarely that both are equal
+					efirst = Direction.NORTH;
+				}
+				
+				if(efirst == Direction.SOUTH){
+					esecond = Direction.NORTH;
+				}
+				else{
+					esecond = Direction.SOUTH;
+				}
+				
+				res = new Direction[]{efirst, esecond, Direction.WEST};
 				break;
-			case 3:
+			case SOUTH_EAST:
 				res = new Direction[]{Direction.SOUTH, Direction.EAST, Direction.NORTH, Direction.WEST};
 				break;
-			case 4:
-				res = new Direction[]{Direction.WEST, Direction.EAST, Direction.NORTH};
+			case SOUTH:
+				Direction sfirst;
+				Direction ssecond;
+				int sdx = rc.getLocation().x - dest.x;
+				if(sdx>0){ //current x greater than dest.x
+					sfirst = Direction.WEST;
+				}
+				else{ //current x is less than dest.x OR rarely that both are equal
+					sfirst = Direction.EAST;
+				}
+				
+				if(sfirst == Direction.WEST){
+					ssecond = Direction.EAST;
+				}
+				else{
+					ssecond = Direction.WEST;
+				}
+				
+				res = new Direction[]{sfirst, ssecond, Direction.NORTH};
 				break;
-			case 5:
+			case SOUTH_WEST:
 				res = new Direction[]{Direction.SOUTH, Direction.WEST, Direction.NORTH, Direction.EAST};
 				break;
-			case 6:
-				res = new Direction[]{Direction.SOUTH, Direction.NORTH, Direction.EAST};
+			case WEST:
+				Direction wfirst;
+				Direction wsecond;
+				int wdy = rc.getLocation().y - dest.y;
+				if(wdy>0){ //current y greater than dest.y
+					wfirst = Direction.SOUTH;
+				}
+				else{ //current x is less than dest.x OR rarely that both are equal
+					wfirst = Direction.NORTH;
+				}
+				
+				if(wfirst == Direction.SOUTH){
+					wsecond = Direction.NORTH;
+				}
+				else{
+					wsecond = Direction.SOUTH;
+				}
+				
+				res = new Direction[]{wfirst, wsecond, Direction.EAST};
 				break;
-			case 7:
+			case NORTH_WEST:
 				res = new Direction[]{Direction.NORTH, Direction.WEST, Direction.SOUTH, Direction.EAST};
 				break;
 				
@@ -88,7 +159,7 @@ public class Util {
 	
 	public static void unstick(RobotController rc, Direction toDest, MapLocation dest) throws GameActionException{
 		System.out.println("Trying to move " + toDest + " towards (" + dest.x + ", " + dest.y + ")");
-		Direction[] directions = tryDirections(toDest);
+		Direction[] directions = tryDirections(rc, toDest, dest);
 		for(Direction tryDir: directions){ //think of ways that would make sense to try, ordered by likelihood of finding opening
 			while(rc.canMove(tryDir) && rc.canMove(toDest) == false){ //robot moves along wall to try to find way to move in toDest
 				if(rc.isActive()){
@@ -122,17 +193,109 @@ public class Util {
 	
 	public static void moveTo(RobotController rc, MapLocation dest) throws GameActionException {
 		// TODO Auto-generated method stub
-
+		MapLocation laststuck = new MapLocation(0,0);
+		MapLocation beforelaststuck = new MapLocation(0,0);
     	Direction toDest = rc.getLocation().directionTo(dest);
     	while(rc.getLocation().equals(dest) == false){
     		if(rc.isActive() && rc.canMove(toDest)){
     			rc.move(toDest);
+    			rc.yield();
     			toDest = rc.getLocation().directionTo(dest);
     		}else{ //robot is either inactive or can't move toDest
     			if(rc.isActive() && rc.canMove(toDest) == false){ //if robot can't move toDest...
-    				System.out.println("UNSTICKING");
-    				unstick(rc, toDest, dest); //unstick it
-    				toDest = rc.getLocation().directionTo(dest);
+    				if(laststuck.equals(rc.getLocation()) || beforelaststuck.equals(rc.getLocation())){ //wait, I've been here before
+    					Random randint = new Random();
+    					while(rc.canMove(toDest) == false){
+    						Direction randdir = allDirections[randint.nextInt(7)];
+        					System.out.println("I'm stuck. Trying random direction " + randdir);
+        					while(rc.canMove(randdir)){
+        						if(rc.isActive()){
+        							rc.move(randdir);
+        						}
+        						rc.yield();	
+        					}
+    					}
+    				}
+    				else{
+    					beforelaststuck = valueOf(laststuck);
+    					laststuck = rc.getLocation();
+    					System.out.println("UNSTICKING");
+    					unstick(rc, toDest, dest); //unstick it
+    					toDest = rc.getLocation().directionTo(dest);
+    				}
+    			}
+    		rc.yield();
+    		}
+    	}//until rc.getLocation.equals(dest)
+	}
+	
+	public static void sneakunstick(RobotController rc, Direction toDest, MapLocation dest) throws GameActionException{
+		System.out.println("Trying to sneak " + toDest + " towards (" + dest.x + ", " + dest.y + ")");
+		Direction[] directions = tryDirections(rc, toDest, dest);
+		for(Direction tryDir: directions){ //think of ways that would make sense to try, ordered by likelihood of finding opening
+			while(rc.canMove(tryDir) && rc.canMove(toDest) == false){ //robot moves along wall to try to find way to move in toDest
+				if(rc.isActive()){
+					System.out.println("Sneaking " + tryDir);
+					rc.sneak(tryDir);
+				}
+				rc.yield();
+			}
+			if(rc.canMove(tryDir) == false){ //robot couldn't find a way to move in toDest before hitting another wall in tryDir direction (corner case)
+				System.out.println("Can't sneak " + tryDir);
+				continue;
+			}
+			if(rc.canMove(toDest)){
+				System.out.println("found hole");
+				if(rc.isActive()){
+					rc.sneak(toDest);
+					System.out.println("Sneaking toDest");
+				}
+				else{
+					rc.yield();
+					rc.yield();
+					if (rc.isActive()){
+						rc.sneak(toDest);
+					}
+					System.out.println("Took a nap and then sneaked toDest");
+					break;
+				}
+			}
+		}
+		//robot has found an opening that allows it to move in direction toDest
+	}
+	
+	public static void sneakTo(RobotController rc, MapLocation dest) throws GameActionException {
+		// TODO Auto-generated method stub
+		MapLocation laststuck = new MapLocation(0,0);
+		MapLocation beforelaststuck = new MapLocation(0,0);
+    	Direction toDest = rc.getLocation().directionTo(dest);
+    	while(rc.getLocation().equals(dest) == false){
+    		if(rc.isActive() && rc.canMove(toDest)){
+    			rc.sneak(toDest);
+    			rc.yield();
+    			toDest = rc.getLocation().directionTo(dest);
+    		}else{ //robot is either inactive or can't move toDest
+    			if(rc.isActive() && rc.canMove(toDest) == false){ //if robot can't move toDest...
+    				if(laststuck.equals(rc.getLocation()) || beforelaststuck.equals(rc.getLocation())){ //wait... I've been here before
+    					Random randint = new Random();
+    					while(rc.canMove(toDest) == false){
+							Direction randdir = allDirections[randint.nextInt(7)]; //try a random direction to go in to break from oscillation
+							System.out.println("I'm stuck. Trying random direction " + randdir);
+							while(rc.canMove(randdir)){
+								if(rc.isActive()){
+									rc.sneak(randdir);
+								}
+								rc.yield();
+							}
+    					}
+    				}
+    				else{
+    					beforelaststuck = valueOf(laststuck);
+    					laststuck = rc.getLocation();
+    					System.out.println("UNSTICKING");
+    					sneakunstick(rc, toDest, dest); //unstick it
+    					toDest = rc.getLocation().directionTo(dest);
+    				}
     			}
     		rc.yield();
     		}
@@ -219,7 +382,17 @@ public class Util {
 	
 	static void shootNearby(RobotController rc) throws GameActionException {
 		//shooting
-		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent());
+		Robot[] enemyRobots = null;
+		Robot[] enemyThings = rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent()); //senses all enemy units (including HQ) on map
+		ArrayList<Robot> enemyUnits = new ArrayList<Robot>();
+		for(Robot unit: enemyThings){ //for every unit...
+			RobotInfo enemyInfo = rc.senseRobotInfo(unit);
+			if(enemyInfo.type != RobotType.HQ){ //if the unit is not a HQ
+				enemyUnits.add(unit); //add it to an arraylist of things to attack
+			}
+		enemyRobots = enemyUnits.toArray(new Robot[enemyUnits.size()]); //add it to the array of things to attack
+			
+		}
 		if(enemyRobots.length>0){//if there are enemies
 			Robot anEnemy = enemyRobots[0];
 			RobotInfo anEnemyInfo;
