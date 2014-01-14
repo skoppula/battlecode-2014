@@ -1,6 +1,8 @@
 package noisebot;
 
+import battlecode.common.Clock;
 import battlecode.common.GameActionException;
+import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotType;
 
@@ -57,10 +59,19 @@ public class RobotPlayer {
         		
         		else {
         			
-        			if (rc.isActive()&& rc.getLocation().distanceSquaredTo(rc.senseHQLocation()) >15) {
+        			if (rc.isActive()&& rc.getLocation().distanceSquaredTo(rc.senseHQLocation()) >25) {
         				rc.construct(RobotType.NOISETOWER);
         			} else {
-        				Util.randomMove(rc);
+        				
+        				if (rc.isActive()&&Clock.getRoundNum() > 210) {
+        					rc.construct(RobotType.PASTR);
+        				} else {
+        					MapLocation loc = rc.getLocation();
+        					MapLocation perimeter1 = new MapLocation(loc.x+5, loc.y);
+        					rc.senseObjectAtLocation(perimeter1);
+        					Util.randomMove(rc);
+        					//take up positions
+        				}
         			}
 //        			for(int i = 2; i < 26; i++){
 //        				int val = rc.readBroadcast(i);
