@@ -245,15 +245,11 @@ public class HQ {
 			if(robotTypeCount[2] < desiredPASTRs.length)
 				PASTR.spawnPASTR(rc);
 			
-			else if (robotTypeCount[0] < desiredPASTRs.length)
+			else if (robotTypeCount[0] < 2*desiredPASTRs.length)
 				COWBOY.spawnCOWBOY(rc, types.DEFENDER);
 			
 			else if (robotTypeCount[1] < 5)
 				COWBOY.spawnCOWBOY(rc, types.ATTACKER);
-			
-			else if(robotTypeCount[0] < desiredPASTRs.length){
-				COWBOY.spawnCOWBOY(rc, types.DEFENDER);
-			}
 			
 			else {
 				if(rand.nextDouble()<0.5)
@@ -310,7 +306,7 @@ public class HQ {
 	static MapLocation[] findPastureLocs() throws GameActionException {
 		
 		MapLocation pstrLocs[] = new MapLocation[idealNumPastures];
-		int pstrCowDens[] = new int[idealNumPastures];
+		double pstrCowDens[] = new double[idealNumPastures];
 		
 		//Fill default
 		for (int i = 0; i < idealNumPastures; i++) {
@@ -321,24 +317,21 @@ public class HQ {
 		for(int i = 0; i < mapY-3; i+=4){
 			for(int j = 0; j < mapX-3; j+=4){
 				
-				int sum = (int) (cowDensMap[i][j] + cowDensMap[i+1][j] + cowDensMap[i+2][j] 
+				double sum = (cowDensMap[i][j] + cowDensMap[i+1][j] + cowDensMap[i+2][j] 
 							+ cowDensMap[i][j+1] + cowDensMap[i+1][j+1] + cowDensMap[i+2][j+1]
 							+ cowDensMap[i][j+2] + cowDensMap[i+1][j+2] + cowDensMap[i+2][j+2]);
 				
 				//More weight = farther away from HQ = bad
 				double weight = hq.getLocation().distanceSquaredTo(new MapLocation(j,i));
+				double weight1 = hq.senseEnemyHQLocation().distanceSquaredTo(new MapLocation(j,i));
 				
 				for(int k = 0; k < idealNumPastures; k++){
 					
 					//Balancing profit in pasture productivity vs. distance: (sum-weight/10)
-					if((sum-weight/(mapY))>pstrCowDens[k]){
+					if((sum-weight/weight1)>pstrCowDens[k]){
 						pstrLocs[k] = new MapLocation(j+1, i+1);
 						
-						//broadcast these locations to channel 168
-						int pstrlocint = Util.locToInt(pstrLocs[k]);
-						hq.broadcast(168 + k, pstrlocint);
-						
-						pstrCowDens[k] = sum;
+						pstrCowDens[k] = (sum-weight/weight1);
 						break;
 					}
 				}
