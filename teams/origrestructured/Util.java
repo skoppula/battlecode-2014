@@ -199,19 +199,21 @@ public class Util {
     	while(rc.getLocation().equals(dest) == false){
     		if(rc.isActive() && rc.canMove(toDest)){
     			rc.move(toDest);
-    			toDest = rc.getLocation().directionTo(dest);
     			rc.yield();
+    			toDest = rc.getLocation().directionTo(dest);
     		}else{ //robot is either inactive or can't move toDest
     			if(rc.isActive() && rc.canMove(toDest) == false){ //if robot can't move toDest...
-    				if(laststuck.equals(rc.getLocation()) || beforelaststuck.equals(rc.getLocation())){
+    				if(laststuck.equals(rc.getLocation()) || beforelaststuck.equals(rc.getLocation())){ //wait, I've been here before
     					Random randint = new Random();
-    					Direction randdir = allDirections[randint.nextInt(7)];
-    					while(rc.canMove(toDest) == false || rc.canMove(randdir)){
-    						System.out.print("I'm stuck. Trying random direction " + randdir);
-    						if(rc.isActive()){
-    							rc.move(randdir);
-    						}
-    						rc.yield();
+    					while(rc.canMove(toDest) == false){
+    						Direction randdir = allDirections[randint.nextInt(7)];
+        					System.out.println("I'm stuck. Trying random direction " + randdir);
+        					while(rc.canMove(randdir)){
+        						if(rc.isActive()){
+        							rc.move(randdir);
+        						}
+        						rc.yield();	
+        					}
     					}
     				}
     				else{
@@ -219,6 +221,79 @@ public class Util {
     					laststuck = rc.getLocation();
     					System.out.println("UNSTICKING");
     					unstick(rc, toDest, dest); //unstick it
+    					toDest = rc.getLocation().directionTo(dest);
+    				}
+    			}
+    		rc.yield();
+    		}
+    	}//until rc.getLocation.equals(dest)
+	}
+	
+	public static void sneakunstick(RobotController rc, Direction toDest, MapLocation dest) throws GameActionException{
+		System.out.println("Trying to sneak " + toDest + " towards (" + dest.x + ", " + dest.y + ")");
+		Direction[] directions = tryDirections(rc, toDest, dest);
+		for(Direction tryDir: directions){ //think of ways that would make sense to try, ordered by likelihood of finding opening
+			while(rc.canMove(tryDir) && rc.canMove(toDest) == false){ //robot moves along wall to try to find way to move in toDest
+				if(rc.isActive()){
+					System.out.println("Sneaking " + tryDir);
+					rc.sneak(tryDir);
+				}
+				rc.yield();
+			}
+			if(rc.canMove(tryDir) == false){ //robot couldn't find a way to move in toDest before hitting another wall in tryDir direction (corner case)
+				System.out.println("Can't sneak " + tryDir);
+				continue;
+			}
+			if(rc.canMove(toDest)){
+				System.out.println("found hole");
+				if(rc.isActive()){
+					rc.sneak(toDest);
+					System.out.println("Sneaking toDest");
+				}
+				else{
+					rc.yield();
+					rc.yield();
+					if (rc.isActive()){
+						rc.sneak(toDest);
+					}
+					System.out.println("Took a nap and then sneaked toDest");
+					break;
+				}
+			}
+		}
+		//robot has found an opening that allows it to move in direction toDest
+	}
+	
+	public static void sneakTo(RobotController rc, MapLocation dest) throws GameActionException {
+		// TODO Auto-generated method stub
+		MapLocation laststuck = new MapLocation(0,0);
+		MapLocation beforelaststuck = new MapLocation(0,0);
+    	Direction toDest = rc.getLocation().directionTo(dest);
+    	while(rc.getLocation().equals(dest) == false){
+    		if(rc.isActive() && rc.canMove(toDest)){
+    			rc.sneak(toDest);
+    			rc.yield();
+    			toDest = rc.getLocation().directionTo(dest);
+    		}else{ //robot is either inactive or can't move toDest
+    			if(rc.isActive() && rc.canMove(toDest) == false){ //if robot can't move toDest...
+    				if(laststuck.equals(rc.getLocation()) || beforelaststuck.equals(rc.getLocation())){ //wait... I've been here before
+    					Random randint = new Random();
+    					while(rc.canMove(toDest) == false){
+							Direction randdir = allDirections[randint.nextInt(7)]; //try a random direction to go in to break from oscillation
+							System.out.println("I'm stuck. Trying random direction " + randdir);
+							while(rc.canMove(randdir)){
+								if(rc.isActive()){
+									rc.sneak(randdir);
+								}
+								rc.yield();
+							}
+    					}
+    				}
+    				else{
+    					beforelaststuck = valueOf(laststuck);
+    					laststuck = rc.getLocation();
+    					System.out.println("UNSTICKING");
+    					sneakunstick(rc, toDest, dest); //unstick it
     					toDest = rc.getLocation().directionTo(dest);
     				}
     			}
