@@ -1,4 +1,4 @@
-package origrestructured;
+package noisebot;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -65,8 +65,8 @@ public class HQ {
     	team =  hq.getTeam();
     	enemy = team.opponent();
     	cowDensMap = hq.senseCowGrowth();
-    	mapY = cowDensMap.length;
-    	mapX = cowDensMap[0].length;
+    	mapY = hq.getMapHeight();
+    	mapX = hq.getMapWidth();
     	idealNumPastures = computeNumPastures();
     	
     	desiredPASTRs = findPastureLocs();
