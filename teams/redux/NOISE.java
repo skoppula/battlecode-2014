@@ -1,4 +1,4 @@
-package origrestructured;
+package redux;
 
 import battlecode.common.RobotController;
 
