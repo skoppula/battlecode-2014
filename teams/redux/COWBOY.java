@@ -1,4 +1,4 @@
-package origrestructured;
+package redux;
 
 import origrestructured.HQ.types;
 import battlecode.common.Clock;
