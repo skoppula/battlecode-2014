@@ -15,9 +15,8 @@ public class PASTR {
 		for (Direction i:Util.allDirections) {
 			if(rc.canMove(i)) {
 				try {
-					rc.spawn(i);
-//					HQ.tempSpawnedType = types.PASTR;
 					rc.broadcast(0, 2);
+					rc.spawn(i);
 					HQ.robotTypeCount[2]++;
 				} catch (GameActionException e) {
 					e.printStackTrace();
@@ -26,19 +25,7 @@ public class PASTR {
 			}
 		}
 		
-		try {
-			for(int i = 101; i < 130; i++){
-				if(rc.readBroadcast(i)%10000!=Clock.getRoundNum()){
-					rc.broadcast(i, Util.idRoundToInt(rc.getRobot().getID(), Clock.getRoundNum()));
-					break;
-				}
-			}
-		} catch (GameActionException e) {
-			e.printStackTrace();
-		}
-		
 		System.out.println("Spawned PASTR precursor");
-		rc.setIndicatorString(0, "PASTR precursor");
     }
     
 

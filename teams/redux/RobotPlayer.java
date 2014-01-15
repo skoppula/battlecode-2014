@@ -13,6 +13,7 @@ public class RobotPlayer {
 	/*
 	 * A value of (-1) implies no writing to channels has occurred.
 	 * Channel 0: Type of robot a spawned robot should be
+	 * Channel 1: Noise pasture to be created? (1: yes, 0: no)
 	 * Channel ID: [occupation #] + destination: AABB
 	 */
 	
