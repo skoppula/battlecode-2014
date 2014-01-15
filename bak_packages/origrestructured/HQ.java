@@ -1,4 +1,4 @@
-package redux;
+package origrestructured;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,6 +16,15 @@ import battlecode.common.Team;
 import battlecode.common.TerrainTile;
 
 public class HQ {
+	
+    static HashMap<Integer, Integer> roboPSTRsAssignment = new HashMap<Integer, Integer>();
+    //Integer [Robot ID]:Integer [index of a MapLocation in desiredPASTRLocs[] ]
+	
+    static HashMap<Integer, Integer> defendPSTRsAssignment = new HashMap<Integer, Integer>();
+    //Integer [Robot ID]:Integer [index of a MapLocation in desiredPASTRLocs[] ]
+	
+    static HashMap<Integer, Integer> roboEnemyAssignment = new HashMap<Integer, Integer>();
+    //Integer [Robot ID]:Integer [index of a MapLocation in enemyPASTRs[] ]
 	
     public static volatile boolean initializerRun = false;
     public static volatile double cowDensMap[][];
@@ -39,6 +48,7 @@ public class HQ {
 	
     //Saves only spawned robots, not including HQ
     static enum types {DEFENDER, ATTACKER, PASTR, NOISETOWER};
+	public static volatile HashMap<Integer, types> occupations = new HashMap<Integer, types>();
     public static volatile types tempSpawnedType;
     
     static int[] robotTypeCount = {0,0,0,0};
@@ -60,7 +70,8 @@ public class HQ {
     	idealNumPastures = computeNumPastures();
     	
     	desiredPASTRs = findPastureLocs();
-    	System.out.println("Desired pastures : " +Arrays.deepToString(desiredPASTRs));
+    	System.out.println("Desired pastures : " +Arrays.deepToString( desiredPASTRs));
+    	writePSTRLocsToComm(rc, desiredPASTRs);
     	
     	currPASTRs = new boolean[idealNumPastures];
     	createTerrainMap();
@@ -231,11 +242,11 @@ public class HQ {
 		if(Util.sumArray(robotTypeCount)<GameConstants.MAX_ROBOTS && rc.isActive()){
 			
 			System.out.println("Types of robots : " + Arrays.toString(robotTypeCount));
-			if (robotTypeCount[0] < 3*desiredPASTRs.length)
-				COWBOY.spawnCOWBOY(rc, types.DEFENDER);
-
-			else if(robotTypeCount[2] < desiredPASTRs.length)
+			if(robotTypeCount[2] < desiredPASTRs.length)
 				PASTR.spawnPASTR(rc);
+			
+			else if (robotTypeCount[0] < 2*desiredPASTRs.length)
+				COWBOY.spawnCOWBOY(rc, types.DEFENDER);
 			
 			else if (robotTypeCount[1] < 5)
 				COWBOY.spawnCOWBOY(rc, types.ATTACKER);
