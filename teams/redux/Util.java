@@ -1,9 +1,6 @@
 package redux;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-//import java.util.HashMap;
-//import java.util.Iterator;
 import java.util.Random;
 
 import battlecode.common.Direction;
@@ -21,6 +18,15 @@ public class Util {
     static Random rand = new Random();
 	
     public static Direction dirToMove(MapLocation start, MapLocation goal, int[][] terrainMap){
+    	return null;
+    }
+    
+    static Direction findDirToMove(RobotController rc){
+    	for(Direction i:allDirections){
+    		if(rc.canMove(i))
+    			return i;
+    	}
+    	
     	return null;
     }
     
