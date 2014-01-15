@@ -1,6 +1,6 @@
 package redux;
 
-import origrestructured.HQ.types;
+import redux.HQ.types;
 import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
