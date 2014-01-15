@@ -180,7 +180,7 @@ public class Util {
 				}
 				else{
 					rc.yield();
-					if (rc.isActive()){
+					if (rc.isActive()&&rc.canMove(toDest)){
 						rc.move(toDest);
 					}
 					System.out.println("Took a nap and then moved toDest");

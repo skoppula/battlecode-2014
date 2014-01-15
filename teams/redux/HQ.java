@@ -7,7 +7,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
+import redux.Util;
 import battlecode.common.Clock;
+import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
@@ -309,7 +311,8 @@ public class HQ {
 		double pstrCowDens[] = new double[idealNumPastures];
 		
 		//Fill default
-		for (int i = 0; i < idealNumPastures; i++) {
+		pstrLocs[0] = findHQpstr();
+		for (int i = 1; i < idealNumPastures; i++) {
 			pstrLocs[i] = new MapLocation(mapX/2, mapY/2);
 		}
 		
@@ -325,7 +328,7 @@ public class HQ {
 				double weight = hq.getLocation().distanceSquaredTo(new MapLocation(j,i));
 				double weight1 = hq.senseEnemyHQLocation().distanceSquaredTo(new MapLocation(j,i));
 				
-				for(int k = 0; k < idealNumPastures; k++){
+				for(int k = 1; k < idealNumPastures; k++){
 					
 					//Balancing profit in pasture productivity vs. distance: (sum-weight/10)
 					if((sum-weight/weight1)>pstrCowDens[k]){
@@ -337,8 +340,27 @@ public class HQ {
 				}
 			}
 		}
-		
+
 		return pstrLocs;
+	}
+		
+	private static MapLocation findHQpstr() {
+		// returns the first pstr location, close to the HQ so it can be defended well
+		MapLocation HQ = hq.senseHQLocation();
+		MapLocation enemyHQ = hq.senseEnemyHQLocation();
+		Direction away_from_enemy = enemyHQ.directionTo(HQ);
+		MapLocation HQpstr = null;
+		
+		if (hq.canMove(away_from_enemy)) { //check to see if that spot exists
+			HQpstr = HQ.add(away_from_enemy);
+		} else { //that spot is probably in a wall, which would be weird, but possible
+			for (Direction i:Util.allDirections) {
+				if (hq.canMove(i)) {
+					return HQ.add(away_from_enemy);
+				}
+			}
+		}
+		return HQpstr;
 	}
 	
 	static void writePSTRLocsToComm(RobotController rc, MapLocation[] pstrLocs){
