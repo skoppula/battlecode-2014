@@ -8,6 +8,7 @@ import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
+import battlecode.common.GameObject;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.Team;
@@ -53,7 +54,7 @@ public class HQ {
 	}
 	
 	//Put into channels correct pasture locations and enemy locations
-	static void assignSquadLocations(RobotController rc) throws GameActionException{
+	static void updateSuads(RobotController rc) throws GameActionException{
 		for(int i = 0; i < desiredPASTRs.length; i++)
 			rc.broadcast(i+2, Util.locToInt(desiredPASTRs[i]));
 		
@@ -66,11 +67,13 @@ public class HQ {
 	static void spawnRobot(RobotController rc) throws GameActionException{
 
 		if(rc.senseRobotCount()<GameConstants.MAX_ROBOTS && rc.isActive()){
-		
+			int squad = nextSquadNum();
 			if(constructNT){
 				rc.spawn(Util.findDirToMove(rc));
 				constructNT = false;
 				HQ.robotTypeCount[3]++;
+				int assignment = Comm.assignmentToInt(squad, 3);
+				rc.broadcast(0, assignment);
 				System.out.println("Spawned a noise tower precursor");
 			 
 			} else if (robotTypeCount[0] < 3*desiredPASTRs.length){
@@ -94,6 +97,24 @@ public class HQ {
 			}
 		 
 		}
+	}
+
+	private static int nextSquadNum() throws GameActionException {
+		// check which squads are completed and which aren't, returns the number of the least incomplete squad
+		for (int i=0;i<desiredPASTRs.length;i++) {
+			MapLocation pstr = desiredPASTRs[i];
+			if (hq.canSenseSquare(pstr)) {
+				GameObject a = hq.senseObjectAtLocation(pstr);
+        		if (a.getTeam()==hq.getTeam() ) {
+        			continue;
+        		} else {
+        			return i;
+        		}
+				
+			}
+			
+		}
+		return 1;
 	}
 
 	public static void initializeGameVars(RobotController rc) throws GameActionException{

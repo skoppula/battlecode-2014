@@ -4,15 +4,12 @@ import battlecode.common.GameActionException;
 import battlecode.common.RobotController;
 import battlecode.common.RobotType;
 
-//GAME NOTES
-//Round ends when rc.yield() or 10000 bytecodes for every robot.
-//Every robot spawned: run() called once
-
 public class RobotPlayer {
     
 	/*
 	 * A value of (-1) implies no writing to channels has occurred.
 	 * Channel 0: Type of robot a spawned robot should be
+	 * Channel 1: Distress channel!
 	 * Channel ID: [occupation #] + destination: AABB
 	 */
 	
@@ -22,29 +19,26 @@ public class RobotPlayer {
     		int id = rc.getRobot().getID();
         	RobotType type = rc.getType();
         	
-			//read from channel 0, get team and type and 9999
+			//read from channel 0: get squad and role
         	int assignment = rc.readBroadcast(0);
-        	//broadcast to channel ID, team[1-5]type[0-3]9999
-        	rc.broadcast(id, assignment);
-        	
+
+        	//broadcast to channel ID the assignment: AABB: A = squad[01-20] and B = type[00-03]
         	if(type != RobotType.HQ)
-        		rc.broadcast(id, rc.readBroadcast(0)*10000+9999);
+        		rc.broadcast(id, assignment);
         	
         	while(true) {
         		
         		if(type == RobotType.HQ)
-                	HQ.runHeadquarters(rc);
+                	HQ.runHeadquarters(rc, assignment);
         		
         		else if (type == RobotType.PASTR)
-        			PASTR.maintainPasture(rc);
+        			PASTR.maintainPasture(rc, assignment);
         		
         		else if(type == RobotType.NOISETOWER)
-        			NOISE.maintainNoiseTower(rc);
+        			NOISE.maintainNoiseTower(rc, assignment);
         		
-        		else {
-        			COWBOY.runSoldier(rc);
-        			
-        		}
+        		else 
+        			COWBOY.runCowboy(rc, assignment);
         		
         		rc.yield();
         	}
@@ -57,8 +51,3 @@ public class RobotPlayer {
 
 }
     
-
-
-
-
-

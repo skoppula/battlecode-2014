@@ -5,16 +5,15 @@ import battlecode.common.RobotController;
 
 public class COWBOY {
 
-	public static void runSoldier(RobotController rc) throws GameActionException {
+	public static void runSoldier(RobotController rc, int assignment) throws GameActionException {
 		// gets memory and executes role
 		
 		int id = rc.getRobot().getID(); //ID will be unique to each soldier
 		
-		int memory = rc.readBroadcast(id); 
-		//Understand the items in the memory integer
-		int team = Comm.getTeam(memory);
-		int role = Comm.getRole(memory);
-		int target_location = Comm.getTargetLocation(memory);
+		//Understand the assignment
+		int team = Comm.getSquad(assignment);
+		int role = Comm.getRole(assignment);
+		MapLocation targetLocation = Comm.getTargetLocation(memory);
 		
 		
 		//ATTACKERS - attack enemy pastrs in a swarm, regroup if necessary
