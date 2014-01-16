@@ -1,6 +1,9 @@
 package redux;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+//import java.util.HashMap;
+//import java.util.Iterator;
 import java.util.Random;
 
 import battlecode.common.Direction;
@@ -16,19 +19,6 @@ public class Util {
 	
     public static Direction allDirections[] = {Direction.NORTH, Direction.SOUTH, Direction.NORTH_EAST, Direction.SOUTH_EAST, Direction.WEST, Direction.SOUTH_WEST, Direction.NORTH_WEST, Direction.EAST};
     static Random rand = new Random();
-	
-    public static Direction dirToMove(MapLocation start, MapLocation goal, int[][] terrainMap){
-    	return null;
-    }
-    
-    static Direction findDirToMove(RobotController rc){
-    	for(Direction i:allDirections){
-    		if(rc.canMove(i))
-    			return i;
-    	}
-    	
-    	return null;
-    }
     
     public static int indexOfMin(int... arr) {
         int idx = -1;
@@ -40,22 +30,6 @@ public class Util {
             }
         return idx;
     }
-    
-    
-    //the A* directions algorithm goes here, preferably implemented with subclasses
-    //public static Direction[] directionsTo(MapLocation start, MapLocation goal)
-	
-	static void cornerMove(RobotController rc) throws GameActionException {
-		//For some reason this shows preference for corners, and random twitching
-		for (int i = 0;i<7;i++) {
-			Random rand = new Random(rc.getRobot().getID());
-    		Direction move = allDirections[(int)(rand.nextDouble()*8)];
-            if(rc.isActive()&&rc.canMove(move)&&rc.senseRobotCount()<GameConstants.MAX_ROBOTS){
-            	rc.move(move);
-            	break;
-            }
-    	}
-	}
 	
 	@SuppressWarnings("incomplete-switch")
 	public static MapLocation valueOf(MapLocation a){
@@ -186,7 +160,7 @@ public class Util {
 				}
 				else{
 					rc.yield();
-					if (rc.isActive()&&rc.canMove(toDest)){
+					if (rc.isActive()){
 						rc.move(toDest);
 					}
 					System.out.println("Took a nap and then moved toDest");
@@ -202,7 +176,10 @@ public class Util {
 		MapLocation laststuck = new MapLocation(0,0);
 		MapLocation beforelaststuck = new MapLocation(0,0);
     	Direction toDest = rc.getLocation().directionTo(dest);
-    	while(rc.getLocation().equals(dest) == false && rc.getLocation().add(Direction.NORTH).equals(dest) == false && rc.getLocation().add(Direction.NORTH_EAST).equals(dest) == false &&rc.getLocation().add(Direction.EAST).equals(dest) == false &&rc.getLocation().add(Direction.SOUTH_EAST).equals(dest) == false &&rc.getLocation().add(Direction.SOUTH).equals(dest) == false &&rc.getLocation().add(Direction.SOUTH_WEST).equals(dest) == false &&rc.getLocation().add(Direction.WEST).equals(dest) == false &&rc.getLocation().add(Direction.NORTH_WEST).equals(dest) == false){
+    	while(rc.getLocation().equals(dest)==false){
+    		if(rc.getType() == RobotType.SOLDIER && rc.getLocation().distanceSquaredTo(dest) < 4){
+    			break;
+    		}
     		if(rc.isActive() && rc.canMove(toDest)){
     			rc.move(toDest);
     			rc.yield();
@@ -242,7 +219,10 @@ public class Util {
 		MapLocation laststuck = new MapLocation(0,0);
 		MapLocation beforelaststuck = new MapLocation(0,0);
     	Direction toDest = rc.getLocation().directionTo(dest);
-    	while(rc.getLocation().equals(dest) == false && rc.getLocation().add(Direction.NORTH).equals(dest) == false && rc.getLocation().add(Direction.NORTH_EAST).equals(dest) == false &&rc.getLocation().add(Direction.EAST).equals(dest) == false &&rc.getLocation().add(Direction.SOUTH_EAST).equals(dest) == false &&rc.getLocation().add(Direction.SOUTH).equals(dest) == false &&rc.getLocation().add(Direction.SOUTH_WEST).equals(dest) == false &&rc.getLocation().add(Direction.WEST).equals(dest) == false &&rc.getLocation().add(Direction.NORTH_WEST).equals(dest) == false){
+    	while(rc.getLocation().equals(dest) == false){
+    		if(rc.getType() == RobotType.SOLDIER && rc.getLocation().distanceSquaredTo(dest) < 4){
+    			break;
+    		}
     		x = rc.readBroadcast(rc.getRobot().getID());
     		team = Util.getTeam(x);
     		dest = Util.intToLoc(rc.readBroadcast(team));
@@ -276,20 +256,6 @@ public class Util {
     		rc.yield();
     		}
     	}//until rc.getLocation.equals(dest)
-	}
-	
-	public static void moveAdjacentTo(RobotController rc, MapLocation dest){
-		for(Direction dir: allDirections){
-			if(HQ.terrainAtLoc(dest.add(dir)) == 10 || HQ.terrainAtLoc(dest.add(dir)) == 3){ //terrain at some point is normal or road
-				try {
-					moveTo(rc, dest.add(dir));
-				} catch (GameActionException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				break;
-			}
-		}
 	}
 	
 	public static void sneakunstick(RobotController rc, Direction toDest, MapLocation dest) throws GameActionException{
@@ -333,6 +299,9 @@ public class Util {
 		MapLocation beforelaststuck = new MapLocation(0,0);
     	Direction toDest = rc.getLocation().directionTo(dest);
     	while(rc.getLocation().equals(dest) == false){
+    		if(rc.getType() == RobotType.SOLDIER && rc.getLocation().distanceSquaredTo(dest) < 4){
+    			break;
+    		}
     		if(rc.isActive() && rc.canMove(toDest)){
     			rc.sneak(toDest);
     			rc.yield();
@@ -373,6 +342,9 @@ public class Util {
 		MapLocation beforelaststuck = new MapLocation(0,0);
     	Direction toDest = rc.getLocation().directionTo(dest);
     	while(rc.getLocation().equals(dest) == false){
+    		if(rc.getType() == RobotType.SOLDIER && rc.getLocation().distanceSquaredTo(dest) < 4){
+    			break;
+    		}
     		x = rc.readBroadcast(rc.getRobot().getID());
     		team = Util.getTeam(x);
     		dest = Util.intToLoc(rc.readBroadcast(team));
