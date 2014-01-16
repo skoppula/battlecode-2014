@@ -41,10 +41,6 @@ public class Util {
         return idx;
     }
     
-    
-    //the A* directions algorithm goes here, preferably implemented with subclasses
-    //public static Direction[] directionsTo(MapLocation start, MapLocation goal)
-	
 	static void cornerMove(RobotController rc) throws GameActionException {
 		//For some reason this shows preference for corners, and random twitching
 		for (int i = 0;i<7;i++) {
