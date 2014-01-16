@@ -14,7 +14,7 @@ public class COWBOY {
 		//Understand the items in the memory integer
 		int team = Comm.getTeam(memory);
 		int role = Comm.getRole(memory);
-		int target_location = Comm.getTargetLocation(memory);
+		MapLocation targetLocation = Comm.getTargetLocation(memory);
 		
 		
 		//ATTACKERS - attack enemy pastrs in a swarm, regroup if necessary
