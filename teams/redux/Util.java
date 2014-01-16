@@ -1,14 +1,14 @@
 package redux;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+//import java.util.Arrays;
 //import java.util.HashMap;
 //import java.util.Iterator;
 import java.util.Random;
 
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
-import battlecode.common.GameConstants;
+//import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.Robot;
 import battlecode.common.RobotController;
@@ -16,10 +16,19 @@ import battlecode.common.RobotInfo;
 import battlecode.common.RobotType;
 
 public class Util {
-	
+
     public static Direction allDirections[] = {Direction.NORTH, Direction.SOUTH, Direction.NORTH_EAST, Direction.SOUTH_EAST, Direction.WEST, Direction.SOUTH_WEST, Direction.NORTH_WEST, Direction.EAST};
     static Random rand = new Random();
     
+    public static void RUNEVERYTURN(RobotController rc){ //PUT STUFF HERE YOU WANT TO RUN ERRY TURN
+    	try {
+			shootNearby(rc);
+		} catch (GameActionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
+   
     public static int indexOfMin(int... arr) {
         int idx = -1;
         int p = Integer.MAX_VALUE;
@@ -142,6 +151,7 @@ public class Util {
 		Direction[] directions = tryDirections(rc, toDest, dest);
 		for(Direction tryDir: directions){ //think of ways that would make sense to try, ordered by likelihood of finding opening
 			while(rc.canMove(tryDir) && rc.canMove(toDest) == false){ //robot moves along wall to try to find way to move in toDest
+				RUNEVERYTURN(rc);
 				if(rc.isActive()){
 					System.out.println("Moving " + tryDir);
 					rc.move(tryDir);
@@ -177,6 +187,7 @@ public class Util {
 		MapLocation beforelaststuck = new MapLocation(0,0);
     	Direction toDest = rc.getLocation().directionTo(dest);
     	while(rc.getLocation().equals(dest)==false){
+    		RUNEVERYTURN(rc);
     		if(rc.getType() == RobotType.SOLDIER && rc.getLocation().distanceSquaredTo(dest) < 4){
     			break;
     		}
@@ -220,6 +231,7 @@ public class Util {
 		MapLocation beforelaststuck = new MapLocation(0,0);
     	Direction toDest = rc.getLocation().directionTo(dest);
     	while(rc.getLocation().equals(dest) == false){
+    		RUNEVERYTURN(rc);
     		if(rc.getType() == RobotType.SOLDIER && rc.getLocation().distanceSquaredTo(dest) < 4){
     			break;
     		}
@@ -263,6 +275,7 @@ public class Util {
 		Direction[] directions = tryDirections(rc, toDest, dest);
 		for(Direction tryDir: directions){ //think of ways that would make sense to try, ordered by likelihood of finding opening
 			while(rc.canMove(tryDir) && rc.canMove(toDest) == false){ //robot moves along wall to try to find way to move in toDest
+				RUNEVERYTURN(rc);
 				if(rc.isActive()){
 					System.out.println("Sneaking " + tryDir);
 					rc.sneak(tryDir);
@@ -299,6 +312,7 @@ public class Util {
 		MapLocation beforelaststuck = new MapLocation(0,0);
     	Direction toDest = rc.getLocation().directionTo(dest);
     	while(rc.getLocation().equals(dest) == false){
+    		RUNEVERYTURN(rc);
     		if(rc.getType() == RobotType.SOLDIER && rc.getLocation().distanceSquaredTo(dest) < 4){
     			break;
     		}
@@ -342,6 +356,7 @@ public class Util {
 		MapLocation beforelaststuck = new MapLocation(0,0);
     	Direction toDest = rc.getLocation().directionTo(dest);
     	while(rc.getLocation().equals(dest) == false){
+    		RUNEVERYTURN(rc);
     		if(rc.getType() == RobotType.SOLDIER && rc.getLocation().distanceSquaredTo(dest) < 4){
     			break;
     		}
