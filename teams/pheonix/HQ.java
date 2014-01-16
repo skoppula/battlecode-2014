@@ -72,7 +72,7 @@ public class HQ {
 				rc.spawn(Util.findDirToMove(rc));
 				constructNT = false;
 				HQ.robotTypeCount[3]++;
-				int assignment = Comm.assignmentToInt(squad, 3, 9999);
+				int assignment = Comm.assignmentToInt(squad, 3);
 				rc.broadcast(0, assignment);
 				System.out.println("Spawned a noise tower precursor");
 			 
