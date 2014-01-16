@@ -1,6 +1,8 @@
 package pheonix;
 
+import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
+import battlecode.common.RobotController;
 
 public class Comm {
 	
@@ -22,12 +24,16 @@ public class Comm {
 		return i%100;
 	}
 
-	public static MapLocation getTargetLocation(int memory) {
-		// TODO Auto-generated method stub
-		// if location==9999
-		//read channel associated with team, get location integer
-		
-		return new MapLocation(0, 0);
+	//In team's channel: AABB|CCDD: (AA,BB) = attack target, (CC, DD) = location to move to
+	
+	public static MapLocation getTargetLocation(RobotController rc, int i) throws GameActionException {
+		int j = rc.readBroadcast(i);
+		return new MapLocation((j/100)%100, j%100);
+	}
+	
+	public static MapLocation getAttackLocation(RobotController rc, int i) throws GameActionException {
+		int j  = rc.readBroadcast(i);
+		return new MapLocation(j/10000,(j/1000)%100);
 	}
 
 }

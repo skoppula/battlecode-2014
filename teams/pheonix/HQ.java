@@ -56,12 +56,12 @@ public class HQ {
 	//Put into channels correct pasture locations and enemy locations
 	static void updateSuads(RobotController rc) throws GameActionException{
 		for(int i = 0; i < desiredPASTRs.length; i++)
-			rc.broadcast(i+2, Util.locToInt(desiredPASTRs[i]));
+			rc.broadcast(i+2, Move.locToInt(desiredPASTRs[i]));
 		
 		MapLocation[] enemyPASTRs = rc.sensePastrLocations(enemy);
 		
 		for(int i = 0; i < enemyPASTRs.length; i++)
-			rc.broadcast(i+11, Util.locToInt(enemyPASTRs[i]));
+			rc.broadcast(i+11, Move.locToInt(enemyPASTRs[i]));
 	}
 	
 	static void spawnRobot(RobotController rc) throws GameActionException{
@@ -69,7 +69,7 @@ public class HQ {
 		if(rc.senseRobotCount()<GameConstants.MAX_ROBOTS && rc.isActive()){
 			int squad = nextSquadNum();
 			if(constructNT){
-				rc.spawn(Util.findDirToMove(rc));
+				rc.spawn(Move.findDirToMove(rc));
 				constructNT = false;
 				HQ.robotTypeCount[3]++;
 				int assignment = Comm.assignmentToInt(squad, 3);
@@ -77,20 +77,20 @@ public class HQ {
 				System.out.println("Spawned a noise tower precursor");
 			 
 			} else if (robotTypeCount[0] < 3*desiredPASTRs.length){
-				rc.spawn(Util.findDirToMove(rc));
+				rc.spawn(Move.findDirToMove(rc));
 				rc.broadcast(0, 0);
 				HQ.robotTypeCount[0]++;
 				System.out.println("Spawned a defender");
 			 
 			} else if(robotTypeCount[2] < desiredPASTRs.length) {
-				rc.spawn(Util.findDirToMove(rc));
+				rc.spawn(Move.findDirToMove(rc));
 				HQ.robotTypeCount[2]++;
 				rc.broadcast(0, 2);
 				constructNT = true;
 				System.out.println("Spawned a pasture precursor");
 			
 			} else {
-				rc.spawn(Util.findDirToMove(rc));
+				rc.spawn(Move.findDirToMove(rc));
 				rc.broadcast(0, 1);
 				HQ.robotTypeCount[1]++;
 				System.out.println("Spawned a attacker");
@@ -188,7 +188,7 @@ public class HQ {
 		if (hq.canMove(away_from_enemy)) { //check to see if that spot exists
 			HQpstr = HQ.add(away_from_enemy);
 		} else { //that spot is probably in a wall, which would be weird, but possible
-			for (Direction i:Util.allDirections) {
+			for (Direction i:Move.allDirections) {
 				if (hq.canMove(i)) {
 					return HQ.add(away_from_enemy);
 				}
