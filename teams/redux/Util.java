@@ -196,7 +196,7 @@ public class Util {
 		MapLocation laststuck = new MapLocation(0,0);
 		MapLocation beforelaststuck = new MapLocation(0,0);
     	Direction toDest = rc.getLocation().directionTo(dest);
-    	while(rc.getLocation().equals(dest) == false){
+    	while(rc.getLocation().equals(dest) == false && rc.getLocation().add(Direction.NORTH).equals(dest) == false && rc.getLocation().add(Direction.NORTH_EAST).equals(dest) == false &&rc.getLocation().add(Direction.EAST).equals(dest) == false &&rc.getLocation().add(Direction.SOUTH_EAST).equals(dest) == false &&rc.getLocation().add(Direction.SOUTH).equals(dest) == false &&rc.getLocation().add(Direction.SOUTH_WEST).equals(dest) == false &&rc.getLocation().add(Direction.WEST).equals(dest) == false &&rc.getLocation().add(Direction.NORTH_WEST).equals(dest) == false){
     		if(rc.isActive() && rc.canMove(toDest)){
     			rc.move(toDest);
     			rc.yield();
@@ -227,6 +227,63 @@ public class Util {
     		rc.yield();
     		}
     	}//until rc.getLocation.equals(dest)
+	}
+	
+	public static void channelMove(RobotController rc) throws GameActionException{
+		int x = rc.readBroadcast(rc.getRobot().getID());
+		int team = Util.getTeam(x);
+		MapLocation dest = Util.intToLoc(rc.readBroadcast(team));
+		MapLocation laststuck = new MapLocation(0,0);
+		MapLocation beforelaststuck = new MapLocation(0,0);
+    	Direction toDest = rc.getLocation().directionTo(dest);
+    	while(rc.getLocation().equals(dest) == false && rc.getLocation().add(Direction.NORTH).equals(dest) == false && rc.getLocation().add(Direction.NORTH_EAST).equals(dest) == false &&rc.getLocation().add(Direction.EAST).equals(dest) == false &&rc.getLocation().add(Direction.SOUTH_EAST).equals(dest) == false &&rc.getLocation().add(Direction.SOUTH).equals(dest) == false &&rc.getLocation().add(Direction.SOUTH_WEST).equals(dest) == false &&rc.getLocation().add(Direction.WEST).equals(dest) == false &&rc.getLocation().add(Direction.NORTH_WEST).equals(dest) == false){
+    		x = rc.readBroadcast(rc.getRobot().getID());
+    		team = Util.getTeam(x);
+    		dest = Util.intToLoc(rc.readBroadcast(team));
+    		if(rc.isActive() && rc.canMove(toDest)){
+    			rc.move(toDest);
+    			rc.yield();
+    			toDest = rc.getLocation().directionTo(dest);
+    		}else{ //robot is either inactive or can't move toDest
+    			if(rc.isActive() && rc.canMove(toDest) == false){ //if robot can't move toDest...
+    				if(laststuck.equals(rc.getLocation()) || beforelaststuck.equals(rc.getLocation())){ //wait, I've been here before
+    					Random randint = new Random();
+    					while(rc.canMove(toDest) == false){
+    						Direction randdir = allDirections[randint.nextInt(7)];
+        					System.out.println("I'm stuck. Trying random direction " + randdir);
+        					while(rc.canMove(randdir)){
+        						if(rc.isActive()){
+        							rc.move(randdir);
+        						}
+        						rc.yield();	
+        					}
+    					}
+    				}
+    				else{
+    					beforelaststuck = valueOf(laststuck);
+    					laststuck = rc.getLocation();
+    					System.out.println("UNSTICKING");
+    					unstick(rc, toDest, dest); //unstick it
+    					toDest = rc.getLocation().directionTo(dest);
+    				}
+    			}
+    		rc.yield();
+    		}
+    	}//until rc.getLocation.equals(dest)
+	}
+	
+	public static void moveAdjacentTo(RobotController rc, MapLocation dest){
+		for(Direction dir: allDirections){
+			if(HQ.terrainAtLoc(dest.add(dir)) == 10 || HQ.terrainAtLoc(dest.add(dir)) == 3){ //terrain at some point is normal or road
+				try {
+					moveTo(rc, dest.add(dir));
+				} catch (GameActionException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				break;
+			}
+		}
 	}
 	
 	public static void sneakunstick(RobotController rc, Direction toDest, MapLocation dest) throws GameActionException{
@@ -270,6 +327,49 @@ public class Util {
 		MapLocation beforelaststuck = new MapLocation(0,0);
     	Direction toDest = rc.getLocation().directionTo(dest);
     	while(rc.getLocation().equals(dest) == false){
+    		if(rc.isActive() && rc.canMove(toDest)){
+    			rc.sneak(toDest);
+    			rc.yield();
+    			toDest = rc.getLocation().directionTo(dest);
+    		}else{ //robot is either inactive or can't move toDest
+    			if(rc.isActive() && rc.canMove(toDest) == false){ //if robot can't move toDest...
+    				if(laststuck.equals(rc.getLocation()) || beforelaststuck.equals(rc.getLocation())){ //wait... I've been here before
+    					Random randint = new Random();
+    					while(rc.canMove(toDest) == false){
+							Direction randdir = allDirections[randint.nextInt(7)]; //try a random direction to go in to break from oscillation
+							System.out.println("I'm stuck. Trying random direction " + randdir);
+							while(rc.canMove(randdir)){
+								if(rc.isActive()){
+									rc.sneak(randdir);
+								}
+								rc.yield();
+							}
+    					}
+    				}
+    				else{
+    					beforelaststuck = valueOf(laststuck);
+    					laststuck = rc.getLocation();
+    					System.out.println("UNSTICKING");
+    					sneakunstick(rc, toDest, dest); //unstick it
+    					toDest = rc.getLocation().directionTo(dest);
+    				}
+    			}
+    		rc.yield();
+    		}
+    	}//until rc.getLocation.equals(dest)
+	}
+	
+	public static void channelSneak(RobotController rc) throws GameActionException{
+		int x = rc.readBroadcast(rc.getRobot().getID());
+		int team = Util.getTeam(x);
+		MapLocation dest = Util.intToLoc(rc.readBroadcast(team));
+		MapLocation laststuck = new MapLocation(0,0);
+		MapLocation beforelaststuck = new MapLocation(0,0);
+    	Direction toDest = rc.getLocation().directionTo(dest);
+    	while(rc.getLocation().equals(dest) == false){
+    		x = rc.readBroadcast(rc.getRobot().getID());
+    		team = Util.getTeam(x);
+    		dest = Util.intToLoc(rc.readBroadcast(team));
     		if(rc.isActive() && rc.canMove(toDest)){
     			rc.sneak(toDest);
     			rc.yield();
@@ -378,6 +478,14 @@ public class Util {
 
 	public static int idRoundToInt(int id, int roundNum) {
 		return id*10000+roundNum;
+	}
+	
+	public static int getTeam(int transmission){
+		return transmission&100;
+	}
+	
+	public static int getType(int transmission){
+		return transmission/1000;
 	}
 	
 	static void shootNearby(RobotController rc) throws GameActionException {
