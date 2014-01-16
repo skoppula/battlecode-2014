@@ -2,8 +2,6 @@ package paulTheConqueror;
 
 import java.util.ArrayList;
 
-import coarsenserPlayer.RobotPlayer;
-
 import battlecode.common.*;
 
 public class BasicPathing{
