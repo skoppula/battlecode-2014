@@ -1,14 +1,10 @@
 package redux;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-//import java.util.HashMap;
-//import java.util.Iterator;
 import java.util.Random;
 
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
-import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.Robot;
 import battlecode.common.RobotController;
