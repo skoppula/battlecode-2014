@@ -1,9 +1,12 @@
 package pheonix;
 
+import battlecode.common.MapLocation;
+
 public class Comm {
 	
-	public static int assignmentToInt(int squad, int type, int loc) {
+	public static int assignmentToInt(int squad, int role) {
 		
+		return 0;
 	}
 	
 	public static int getType(int memory) {
@@ -24,7 +27,8 @@ public class Comm {
 		// TODO Auto-generated method stub
 		// if location==9999
 		//read channel associated with team, get location integer
-		return 0;
+		
+		return new MapLocation(0, 0);
 	}
 
 }

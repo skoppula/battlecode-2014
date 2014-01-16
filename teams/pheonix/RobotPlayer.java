@@ -22,13 +22,11 @@ public class RobotPlayer {
     		int id = rc.getRobot().getID();
         	RobotType type = rc.getType();
         	
-			//read from channel 0, get team and type and 9999
-        	int assignment = rc.readBroadcast(0);
-        	//broadcast to channel ID, team[1-5]type[0-3]9999
-        	rc.broadcast(id, assignment);
-        	
+			//read from channel 0, get squad and role
+        	int memory = rc.readBroadcast(0);
+        	//broadcast to channel ID, squad[1-5]type[0-3]
         	if(type != RobotType.HQ)
-        		rc.broadcast(id, rc.readBroadcast(0)*10000+9999);
+        		rc.broadcast(id, Comm.assignmentToInt(squad, role));
         	
         	while(true) {
         		
