@@ -21,6 +21,7 @@ public class RobotPlayer {
         	
 			//read from channel 0: get squad and role
         	int assignment = rc.readBroadcast(0);
+        	System.out.println("Spawn : " + assignment);
 
         	//broadcast to channel ID the assignment: AABB: A = squad[01-20] and B = type[00-03]
         	if(type != RobotType.HQ)
@@ -29,13 +30,13 @@ public class RobotPlayer {
         	while(true) {
         		
         		if(type == RobotType.HQ)
-                	HQ.runHeadquarters(rc, assignment);
+                	HQ.runHeadquarters(rc);
         		
         		else if (type == RobotType.PASTR)
-        			PASTR.maintainPasture(rc, assignment);
+        			PASTR.maintainPasture(rc);
         		
         		else if(type == RobotType.NOISETOWER)
-        			NOISE.maintainNoiseTower(rc, assignment);
+        			NOISE.maintainNoiseTower(rc);
         		
         		else 
         			COWBOY.runCowboy(rc, assignment);
