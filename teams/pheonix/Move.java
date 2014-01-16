@@ -146,32 +146,32 @@ public class Move {
 	}
 	
 	public static void unstick(RobotController rc, Direction toDest, MapLocation dest) throws GameActionException{
-		System.out.println("Trying to move " + toDest + " towards (" + dest.x + ", " + dest.y + ")");
+		//System.out.println("Trying to move " + toDest + " towards (" + dest.x + ", " + dest.y + ")");
 		Direction[] directions = tryDirections(rc, toDest, dest);
 		for(Direction tryDir: directions){ //think of ways that would make sense to try, ordered by likelihood of finding opening
 			while(rc.canMove(tryDir) && rc.canMove(toDest) == false){ //robot moves along wall to try to find way to move in toDest
 				if(rc.isActive()){
-					System.out.println("Moving " + tryDir);
+					//System.out.println("Moving " + tryDir);
 					rc.move(tryDir);
 				}
 				rc.yield();
 			}
 			if(rc.canMove(tryDir) == false){ //robot couldn't find a way to move in toDest before hitting another wall in tryDir direction (corner case)
-				System.out.println("Can't move " + tryDir);
+				//System.out.println("Can't move " + tryDir);
 				continue;
 			}
 			if(rc.canMove(toDest)){
-				System.out.println("found hole");
+				//System.out.println("found hole");
 				if(rc.isActive()){
 					rc.move(toDest);
-					System.out.println("Moving toDest");
+					//System.out.println("Moving toDest");
 				}
 				else{
 					rc.yield();
 					if (rc.isActive()&&rc.canMove(toDest)){
 						rc.move(toDest);
 					}
-					System.out.println("Took a nap and then moved toDest");
+					//System.out.println("Took a nap and then moved toDest");
 					break;
 				}
 			}
@@ -195,7 +195,7 @@ public class Move {
     					Random randint = new Random();
     					while(rc.canMove(toDest) == false){
     						Direction randdir = allDirections[randint.nextInt(7)];
-        					System.out.println("I'm stuck. Trying random direction " + randdir);
+        					//System.out.println("I'm stuck. Trying random direction " + randdir);
         					while(rc.canMove(randdir)){
         						if(rc.isActive()){
         							rc.move(randdir);
@@ -207,7 +207,7 @@ public class Move {
     				else{
     					beforelaststuck = valueOf(laststuck);
     					laststuck = rc.getLocation();
-    					System.out.println("UNSTICKING");
+    					//System.out.println("UNSTICKING");
     					unstick(rc, toDest, dest); //unstick it
     					toDest = rc.getLocation().directionTo(dest);
     				}
@@ -218,25 +218,25 @@ public class Move {
 	}
 	
 	public static void sneakunstick(RobotController rc, Direction toDest, MapLocation dest) throws GameActionException{
-		System.out.println("Trying to sneak " + toDest + " towards (" + dest.x + ", " + dest.y + ")");
+		//System.out.println("Trying to sneak " + toDest + " towards (" + dest.x + ", " + dest.y + ")");
 		Direction[] directions = tryDirections(rc, toDest, dest);
 		for(Direction tryDir: directions){ //think of ways that would make sense to try, ordered by likelihood of finding opening
 			while(rc.canMove(tryDir) && rc.canMove(toDest) == false){ //robot moves along wall to try to find way to move in toDest
 				if(rc.isActive()){
-					System.out.println("Sneaking " + tryDir);
+					//System.out.println("Sneaking " + tryDir);
 					rc.sneak(tryDir);
 				}
 				rc.yield();
 			}
 			if(rc.canMove(tryDir) == false){ //robot couldn't find a way to move in toDest before hitting another wall in tryDir direction (corner case)
-				System.out.println("Can't sneak " + tryDir);
+				//System.out.println("Can't sneak " + tryDir);
 				continue;
 			}
 			if(rc.canMove(toDest)){
-				System.out.println("found hole");
+				//System.out.println("found hole");
 				if(rc.isActive()){
 					rc.sneak(toDest);
-					System.out.println("Sneaking toDest");
+					//System.out.println("Sneaking toDest");
 				}
 				else{
 					rc.yield();
@@ -244,7 +244,7 @@ public class Move {
 					if (rc.isActive()){
 						rc.sneak(toDest);
 					}
-					System.out.println("Took a nap and then sneaked toDest");
+					//System.out.println("Took a nap and then sneaked toDest");
 					break;
 				}
 			}
@@ -268,7 +268,7 @@ public class Move {
     					Random randint = new Random();
     					while(rc.canMove(toDest) == false){
 							Direction randdir = allDirections[randint.nextInt(7)]; //try a random direction to go in to break from oscillation
-							System.out.println("I'm stuck. Trying random direction " + randdir);
+							//System.out.println("I'm stuck. Trying random direction " + randdir);
 							while(rc.canMove(randdir)){
 								if(rc.isActive()){
 									rc.sneak(randdir);
@@ -280,7 +280,7 @@ public class Move {
     				else{
     					beforelaststuck = valueOf(laststuck);
     					laststuck = rc.getLocation();
-    					System.out.println("UNSTICKING");
+    					//System.out.println("UNSTICKING");
     					sneakunstick(rc, toDest, dest); //unstick it
     					toDest = rc.getLocation().directionTo(dest);
     				}
@@ -302,51 +302,6 @@ public class Move {
     	}
 	}
 	
-	static MapLocation intToLoc(int i){
-		return new MapLocation(i/100,i%100);
-	}
-	
-	static int locToInt(MapLocation m){
-		return (m.x*100 + m.y);
-	}
-	
-    static MapLocation[] commToPSTRLocs(RobotController rc){
-    	
-    	int channel = 51;
-    	ArrayList<MapLocation> locs = new ArrayList<MapLocation>();
-    	
-    	
-    	try {
-    		int val = rc.readBroadcast(channel);
-    		while(val!=-1){
-    			locs.add(Move.intToLoc(val));
-    			channel++;
-    			val = rc.readBroadcast(channel);
-    		}
-    	} catch (GameActionException e){
-    		e.printStackTrace();
-    	}
-    	
-    	
-    	return locs.toArray(new MapLocation[locs.size()]);
-    }
-
-	static int sumArray(int[] arr){
-		int sum = 0;
-
-		for (int i : arr)
-		    sum += i;
-		
-		return sum;
-	}
-	
-	static int idAssignToInt(int id, int j){
-		return id*100+j;
-	}
-
-	public static int idRoundToInt(int id, int roundNum) {
-		return id*10000+roundNum;
-	}
 	
 	static void shootNearby(RobotController rc) throws GameActionException {
 		//shooting
@@ -381,6 +336,18 @@ public class Move {
 			}
 		}
 		return null;
+	}
+	
+	public static void tryToSpawn(RobotController rc) throws GameActionException {
+		if(rc.isActive()&&rc.senseRobotCount()<GameConstants.MAX_ROBOTS){
+			for(int i=0;i<8;i++){
+				Direction trialDir = allDirections[i];
+				if(rc.canMove(trialDir)){
+					rc.spawn(trialDir);
+					break;
+				}
+			}
+		}
 	}
 
 }
