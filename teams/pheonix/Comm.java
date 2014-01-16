@@ -13,14 +13,13 @@ public class Comm {
 		return memory/1000;
 	}
 
-	public static int getTeam(int memory) {
-		// TODO Auto-generated method stub
-		return memory/10000;
+	//broadcast to channel ID the assignment: AABB: A = squad[01-20] and B = type[00-03]
+	public static int getSquad(int i) {
+		return i/100;
 	}
 
-	public static int getRole(int memory) {
-		// TODO Auto-generated method stub
-		return 0;
+	public static int getRole(int i) {
+		return i%100;
 	}
 
 	public static MapLocation getTargetLocation(int memory) {

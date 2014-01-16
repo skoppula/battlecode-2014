@@ -22,7 +22,7 @@ public class RobotPlayer {
 			//read from channel 0: get squad and role
         	int assignment = rc.readBroadcast(0);
 
-        	//broadcast to channel ID, squad[1-5]type[0-3]
+        	//broadcast to channel ID the assignment: AABB: A = squad[01-20] and B = type[00-03]
         	if(type != RobotType.HQ)
         		rc.broadcast(id, assignment);
         	
