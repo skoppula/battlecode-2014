@@ -1,4 +1,4 @@
-package dragon;
+package integrated;
 
 //things to do:
 //defend pastrs that are under attack, or at least consider defending them
