@@ -3,6 +3,7 @@ package dragon;
 import java.util.ArrayList;
 import java.util.Random;
 
+import dragon.RobotPlayer;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
@@ -59,14 +60,25 @@ public class Util {
 				MapLocation closestEnemyLoc = VectorFunctions.findClosest(enemyRobotLocations, rc.getLocation());
 				boolean closeEnoughToShoot = closestEnemyLoc.distanceSquaredTo(rc.getLocation())<=rc.getType().attackRadiusMaxSquared;
 				if((alliedRobots.length+1)>=enemyRobots.length){//attack when you have superior numbers
-					Attacker.attackClosest(closestEnemyLoc);
+					attackClosest(closestEnemyLoc);
 				}else{//otherwise regroup
-					Attacker.regroup(enemyRobots,alliedRobots,closestEnemyLoc);
+					regroup(enemyRobots,alliedRobots,closestEnemyLoc);
 				}
 			}
 			rc.yield();
 		}
     }
+	
+	private static void regroup(Robot[] enemyRobots, Robot[] alliedRobots,
+			MapLocation closestEnemyLoc) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private static void attackClosest(MapLocation closestEnemyLoc) {
+		// TODO Auto-generated method stub
+		
+	}
 
 	@SuppressWarnings("incomplete-switch")
 	public static Direction[] tryDirections(RobotController rc, Direction toDest, MapLocation dest){ //this method basically just returns a list of directions i think it should try when stuck. just logic'ed it out here.
@@ -212,7 +224,7 @@ public class Util {
 		MapLocation beforelaststuck = new MapLocation(0,0);
     	Direction toDest = rc.getLocation().directionTo(dest);
 
-    	while(rc.getLocation().equals(dest)==false&&rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent()).length==0){
+    	while(rc.getLocation().equals(dest)==false){
     		RUNEVERYTURN(rc);
     		if(rc.getType() == RobotType.SOLDIER && rc.getLocation().distanceSquaredTo(dest) < 4){
     			break;
