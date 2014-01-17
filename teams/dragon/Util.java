@@ -187,7 +187,7 @@ public class Util {
 
 		for(Direction tryDir: directions){ //think of ways that would make sense to try, ordered by likelihood of finding opening
 			
-			while(rc.canMove(tryDir) && rc.canMove(toDest) == false && rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent()).length==0){ //robot moves along wall to try to find way to move in toDest
+			while(rc.canMove(tryDir) && rc.canMove(toDest) == false){ //robot moves along wall to try to find way to move in toDest
 				RUNEVERYTURN(rc);
 				if(rc.isActive()){
 					System.out.println("Moving " + tryDir);
