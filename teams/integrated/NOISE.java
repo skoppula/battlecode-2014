@@ -1,4 +1,4 @@
-package dragon;
+package integrated;
 
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
