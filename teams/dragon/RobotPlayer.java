@@ -48,7 +48,7 @@ public class RobotPlayer{
     		rc.broadcast(id, assignment);
     	else {
     		//spawns a robot on the first round and makes sure that it's a defender on squad 3
-    		Move.tryToSpawn(rc);
+    		Util.tryToSpawn(rc);
     		rc.broadcast(0, 300);
     	}
 		
@@ -151,7 +151,7 @@ public class RobotPlayer{
 			MapLocation[] enemyRobotLocations = VectorFunctions.robotsToLocations(enemyRobots, rc, true);
 			if(enemyRobotLocations.length==0){//only HQ is in view
 				//navigateByPath(alliedRobots);
-				Move.moveTo(rc, rc.senseEnemyHQLocation());
+				Util.moveTo(rc, rc.senseEnemyHQLocation());
 			}else{//shootable robots are in view
 				MapLocation closestEnemyLoc = VectorFunctions.findClosest(enemyRobotLocations, rc.getLocation());
 				boolean closeEnoughToShoot = closestEnemyLoc.distanceSquaredTo(rc.getLocation())<=rc.getType().attackRadiusMaxSquared;
@@ -170,7 +170,7 @@ public class RobotPlayer{
 				targetedPastr = getNextTargetPastr(enemyPastrs,startPoint);
 				//broadcast it
 				System.out.println("Move to " + targetedPastr);
-				Move.moveTo(rc, targetedPastr);
+				Util.moveTo(rc, targetedPastr);
 			}
 		}
 	}

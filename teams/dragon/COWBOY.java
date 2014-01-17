@@ -37,7 +37,8 @@ public class COWBOY {
 		if (squad>10&&enemyPSTR.length > 0) {
 			Attacker.runAttacker(enemyPSTR[0]);
 		} else {
-			Defender.runDefender(rc, squad, role);
+			//Defender.runDefender(rc, squad, role);
+			Attacker.runAttacker(rc.senseEnemyHQLocation());
 			
 		}
 //		switch(role){                              

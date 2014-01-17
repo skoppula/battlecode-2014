@@ -32,7 +32,7 @@ public class Defender {
 		
 		if(rc.isActive()) {
 			//defense first
-			Move.shootNearby(rc);
+			Util.shootNearby(rc);
 			
 			//try to move toward desired pasture
 			MapLocation loc = rc.getLocation();
@@ -53,7 +53,7 @@ public class Defender {
 				
 			}
 			else
-				Move.moveTo(rc, target);
+				Util.moveTo(rc, target);
 		}
 		
 	}

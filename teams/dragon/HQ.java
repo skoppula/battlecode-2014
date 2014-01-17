@@ -86,27 +86,27 @@ public class HQ {
 //			System.out.println("Spawned a attacker");
 			
 			if(constructNT){
-				Move.tryToSpawn(rc);
+				Util.tryToSpawn(rc);
 				HQ.robotTypeCount[3]++;
 				rc.broadcast(0, Comms.assignmentToInt(squad, 3));
 				System.out.println("Spawned a noise tower precursor");
 				constructNT = false;
 			 
 			} else if (robotTypeCount[0] < 2*desiredPASTRs.length){
-				Move.tryToSpawn(rc);
+				Util.tryToSpawn(rc);
 				rc.broadcast(0, Comms.assignmentToInt(squad, 0));
 				HQ.robotTypeCount[0]++;
 				System.out.println("Spawned a defender");
 			 
 			} else if(robotTypeCount[2] < desiredPASTRs.length) {
-				Move.tryToSpawn(rc);
+				Util.tryToSpawn(rc);
 				HQ.robotTypeCount[2]++;
 				rc.broadcast(0, Comms.assignmentToInt(squad, 2));
 				constructNT = true;
 				System.out.println("Spawned a pasture precursor");
 			
 			} else {
-				Move.tryToSpawn(rc);
+				Util.tryToSpawn(rc);
 				rc.broadcast(0, Comms.assignmentToInt(squad, 1));
 				System.out.println("Attacker : " + Comms.assignmentToInt(squad, 1));
 				HQ.robotTypeCount[1]++;
@@ -203,7 +203,7 @@ public class HQ {
 		if (hq.canMove(away_from_enemy)) { //check to see if that spot exists
 			HQpstr = HQ.add(away_from_enemy);
 		} else { //that spot is probably in a wall, which would be weird, but possible
-			for (Direction i:Move.allDirections) {
+			for (Direction i:Util.allDirections) {
 				if (hq.canMove(i)) {
 					return HQ.add(away_from_enemy);
 				}

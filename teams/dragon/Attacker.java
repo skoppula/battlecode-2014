@@ -27,7 +27,7 @@ public class Attacker {
 			MapLocation[] enemyRobotLocations = VectorFunctions.robotsToLocations(enemyRobots, rc, true);
 			if(enemyRobotLocations.length==0){//only HQ is in view
 				//navigateByPath(alliedRobots);
-				Move.moveTo(rc, rc.senseEnemyHQLocation());
+				Util.moveTo(rc, rc.senseEnemyHQLocation());
 			}else{//shootable robots are in view
 				MapLocation closestEnemyLoc = VectorFunctions.findClosest(enemyRobotLocations, rc.getLocation());
 				
@@ -41,7 +41,7 @@ public class Attacker {
 			MapLocation[] enemyPastrs = rc.sensePastrLocations(rc.getTeam().opponent());
 			if(enemyPastrs.length>0&&alliedRobots.length>7){
 				System.out.println("Move to " + targetedPastr);
-				Move.moveTo(rc, targetedPastr);
+				Util.moveTo(rc, targetedPastr);
 			}
 		}
 	}
@@ -86,7 +86,7 @@ public class Attacker {
 		}
 	}
 
-	private static void regroup(Robot[] enemyRobots, Robot[] alliedRobots,MapLocation closestEnemyLoc) throws GameActionException {
+	static void regroup(Robot[] enemyRobots, Robot[] alliedRobots,MapLocation closestEnemyLoc) throws GameActionException {
 		int enemyAttackRangePlusBuffer = (int) Math.pow((Math.sqrt(rc.getType().attackRadiusMaxSquared)+1),2);
 		if(closestEnemyLoc.distanceSquaredTo(rc.getLocation())<=enemyAttackRangePlusBuffer){//if within attack range, back up
 			Direction awayFromEnemy = rc.getLocation().directionTo(closestEnemyLoc).opposite();
@@ -99,7 +99,7 @@ public class Attacker {
 		}
 	}
 
-	private static void attackClosest(MapLocation closestEnemyLoc) throws GameActionException {
+	static void attackClosest(MapLocation closestEnemyLoc) throws GameActionException {
 		//attacks the closest enemy or moves toward it, if it is out of range
 		if(closestEnemyLoc.distanceSquaredTo(rc.getLocation())<=rc.getType().attackRadiusMaxSquared){//close enough to shoot
 			if(rc.isActive()){
