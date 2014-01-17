@@ -161,7 +161,7 @@ public class HQ {
 		}
 		
 		//The first pasture will be right next to the HQ
-		PstrLocs[0] = findHQpstr();
+		pstrLocs[0] = findHQpstr();
 		
 		//The next pastures are decided based on cow density
 		//Slides a 3x3 window across the entire map, intervals of three and returns windows with highest 
