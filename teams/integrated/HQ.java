@@ -1,4 +1,4 @@
-package dragon;
+package intgrated;
 
 import java.util.ArrayList;
 import java.util.Arrays;
