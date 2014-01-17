@@ -32,93 +32,60 @@ public class RobotPlayer{
 	
 	public static void run(RobotController rcIn) throws GameActionException{
 		rc=rcIn;
-		Comms.rc = rcIn;
+		Attacker.rc = rcIn;
+		Defender.rc = rcIn;
 		randall.setSeed(rc.getRobot().getID());
 		enemyHQ = rc.senseEnemyHQLocation();
 		
-		if(rc.getType()==RobotType.HQ){
-			//When HQ is spawned, this information is set
-			rc.broadcast(101,VectorFunctions.locToInt(VectorFunctions.mldivide(rc.senseHQLocation(),bigBoxSize)));//this tells soldiers to stay near HQ to start
-			rc.broadcast(102,-1);//and to remain in squad 1
-			tryToSpawn();
-			BreadthFirst.init(rc, bigBoxSize);
-			rallyPoint = VectorFunctions.mladd(VectorFunctions.mldivide(VectorFunctions.mlsubtract(rc.senseEnemyHQLocation(),rc.senseHQLocation()),3),rc.senseHQLocation());
-		}else{
-			BreadthFirst.rc=rcIn;//slimmed down init
-		}
-		//MapLocation goal = getRandomLocation();
-		//path = BreadthFirst.pathTo(VectorFunctions.mldivide(rc.getLocation(),bigBoxSize), VectorFunctions.mldivide(goal,bigBoxSize), 100000);
-		//VectorFunctions.printPath(path,bigBoxSize);
-		
+		int id = rc.getRobot().getID();
+    	RobotType type = rc.getType();
+    	
+		//read from channel 0: get squad and role
+    	int assignment = rc.readBroadcast(0);
 
-		while(true){
-			try{
-				if(rc.getType()==RobotType.HQ){
-					runHQ();
-					if(die)
-						break;
-				}else if(rc.getType()==RobotType.SOLDIER){
-					runSoldier();
-				}
-				
-				
-//				int id = rc.getRobot().getID();
-//	        	RobotType type = rc.getType();
-//	        	
-//				//read from channel 0: get squad and role
-//	        	int assignment = rc.readBroadcast(0);
-//	        	System.out.println("Spawn : " + assignment);
-//
-//	        	//broadcast to channel ID the assignment: AABB: A = squad[01-20] and B = type[00-03]
-//	        	if(type != RobotType.HQ)
-//	        		rc.broadcast(id, assignment);
-//	        	
-//	        	while(true) {
-//	        		
-//	        		if(type == RobotType.HQ)
-//	                	HQ.runHeadquarters(rc);
-//	        		
-//	        		else if (type == RobotType.PASTR)
-//	        			PASTR.maintainPasture(rc);
-//	        		
-//	        		else if(type == RobotType.NOISETOWER)
-//	        			NOISE.maintainNoiseTower(rc);
-//	        		
-//	        		else 
-//	        			COWBOY.runCowboy(rc, assignment);
-//	        		
-//	        		rc.yield();
-//	        	}
-			}catch (Exception e){
+    	//broadcast to channel ID the assignment: AABB: A = squad[01-20] and B = type[00-03]
+    	if(type != RobotType.HQ)
+    		rc.broadcast(id, assignment);
+    	else {
+    		//spawns a robot on the first round and makes sure that it's a defender on squad 3
+    		Move.tryToSpawn(rc);
+    		rc.broadcast(0, 300);
+    	}
+		
+		try {
+        	while(true) {
+        		
+        		if(type == RobotType.HQ)
+                	HQ.runHeadquarters(rc);
+        			//runHQ();
+        		
+        		else if (type == RobotType.PASTR)
+        			//PASTR.maintainPasture(rc);
+        			System.out.println("we have a pastr!");
+        		
+        		else if(type == RobotType.NOISETOWER)
+        			//NOISE.maintainNoiseTower(rc);
+        			System.out.println("we have a noisetower!");
+        		
+        		else {
+        			COWBOY.runCowboy(rc, assignment);
+        			
+        		}
+        		
+        		rc.yield();
+        	}
+		}catch (Exception e){
 				e.printStackTrace();
-			}
-			rc.yield();
 		}
+			
 	}
+	
 	
 	private static void runHQ() throws GameActionException {
 		//TODO consider updating the rally point to an allied pastr 
 
 		Robot[] alliedRobots = rc.senseNearbyGameObjects(Robot.class,100000000,rc.getTeam());
 		
-		//if my team is defeated, regroup at main base:
-		if(Clock.getRoundNum()>400&&alliedRobots.length<5){//call a retreat
-			MapLocation startPoint = findAverageAllyLocation(alliedRobots);
-			Comms.findPathAndBroadcast(2,startPoint,rc.senseHQLocation(),bigBoxSize,2);
-			rallyPoint = rc.senseHQLocation();
-		}else{//not retreating
-			//tell them to go to the rally point
-			Comms.findPathAndBroadcast(1,rc.getLocation(),rallyPoint,bigBoxSize,2);
-
-			//if the enemy builds a pastr, tell sqaud 2 to go there.
-			MapLocation[] enemyPastrs = rc.sensePastrLocations(rc.getTeam().opponent());
-			if(enemyPastrs.length>0){
-				MapLocation startPoint = findAverageAllyLocation(alliedRobots);
-				targetedPastr = getNextTargetPastr(enemyPastrs,startPoint);
-				//broadcast it
-				Comms.findPathAndBroadcast(2,startPoint,targetedPastr,bigBoxSize,2);
-			}
-		}
 		
 		//consider attacking
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent());
@@ -129,8 +96,9 @@ public class RobotPlayer{
 				rc.attackSquare(closestEnemyLoc);
 		}
 		
-		//after telling them where to go, consider spawning
+		//consider spawning
 		tryToSpawn();
+		rc.broadcast(0, 300);
 	}
 
 	
@@ -175,12 +143,15 @@ public class RobotPlayer{
 	
 	private static void runSoldier() throws GameActionException {
 		//follow orders from HQ
+		
+		
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent());
 		Robot[] alliedRobots = rc.senseNearbyGameObjects(Robot.class,rc.getType().sensorRadiusSquared*2,rc.getTeam());//was 
 		if(enemyRobots.length>0){//SHOOT AT, OR RUN TOWARDS, ENEMIES
 			MapLocation[] enemyRobotLocations = VectorFunctions.robotsToLocations(enemyRobots, rc, true);
 			if(enemyRobotLocations.length==0){//only HQ is in view
-				navigateByPath(alliedRobots);
+				//navigateByPath(alliedRobots);
+				Move.moveTo(rc, rc.senseEnemyHQLocation());
 			}else{//shootable robots are in view
 				MapLocation closestEnemyLoc = VectorFunctions.findClosest(enemyRobotLocations, rc.getLocation());
 				boolean closeEnoughToShoot = closestEnemyLoc.distanceSquaredTo(rc.getLocation())<=rc.getType().attackRadiusMaxSquared;
@@ -198,40 +169,9 @@ public class RobotPlayer{
 				MapLocation startPoint = findAverageAllyLocation(alliedRobots);
 				targetedPastr = getNextTargetPastr(enemyPastrs,startPoint);
 				//broadcast it
-				System.out.println("Move");
+				System.out.println("Move to " + targetedPastr);
 				Move.moveTo(rc, targetedPastr);
 			}
-		//Direction towardEnemy = rc.getLocation().directionTo(rc.senseEnemyHQLocation());
-		//BasicPathing.tryToMove(towardEnemy, true, rc, directionalLooks, allDirections);//was Direction.SOUTH_EAST
-		
-		//Direction towardEnemy = rc.getLocation().directionTo(rc.senseEnemyHQLocation());
-		//simpleMove(towardEnemy);
-		}
-	}
-	
-	static void navigateByPath(Robot[] alliedRobots) throws GameActionException{
-		if(path.size()<=1){//
-			//check if a new path is available
-			int broadcastCreatedRound = rc.readBroadcast(myBand);
-			if(pathCreatedRound<broadcastCreatedRound){//download new place to go
-				pathCreatedRound = broadcastCreatedRound;
-				path = Comms.downloadPath();
-			}else{//just waiting around. Consider building a pastr
-				considerBuildingPastr(alliedRobots);
-			}
-		}
-		if(path.size()>0){
-			//follow breadthFirst path...
-			Direction bdir = BreadthFirst.getNextDirection(path, bigBoxSize);
-			//...except if you are getting too far from your allies
-			MapLocation[] alliedRobotLocations = VectorFunctions.robotsToLocations(alliedRobots, rc, true);
-			if(alliedRobotLocations.length>0){
-				MapLocation allyCenter = VectorFunctions.meanLocation(alliedRobotLocations);
-				if(rc.getLocation().distanceSquaredTo(allyCenter)>16){
-					bdir = rc.getLocation().directionTo(allyCenter);
-				}
-			}
-			BasicPathing.tryToMove(bdir, true,true, false);
 		}
 	}
 

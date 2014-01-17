@@ -2,41 +2,96 @@ package dragon;
 
 import java.util.ArrayList;
 
-import battlecode.common.*;
+import battlecode.common.GameActionException;
+import battlecode.common.MapLocation;
+import battlecode.common.RobotController;
 
-public class Comms{
+public class Comms {
 	
-	static RobotController rc;
-	static int[] lengthOfEachPath = new int[100];
-
-	public static ArrayList<MapLocation> downloadPath() throws GameActionException {
-		ArrayList<MapLocation> downloadedPath = new ArrayList<MapLocation>();
-		int locationInt = rc.readBroadcast(RobotPlayer.myBand+1);
-		while(locationInt>=0){
-			downloadedPath.add(VectorFunctions.intToLoc(locationInt));
-			locationInt = rc.readBroadcast(RobotPlayer.myBand+1+downloadedPath.size());
-		}
-		rc.setIndicatorString(0, "path length "+downloadedPath.size()+", written round "+Clock.getRoundNum());
-		RobotPlayer.myBand = -locationInt*100;
-		return downloadedPath;
+	static MapLocation intToLoc(int i){
+		return new MapLocation(i/100,i%100);
 	}
 	
-
-	public static void findPathAndBroadcast(int bandID,MapLocation start, MapLocation goal, int bigBoxSize, int joinSquadNo) throws GameActionException{
-		//tell robots where to go
-		//the unit will not pathfind if the broadcast goal (for this band ID) is the same as the one currently on the message channel
-		int band = bandID*100;
-		MapLocation pathGoesTo = VectorFunctions.intToLoc(rc.readBroadcast(band+lengthOfEachPath[bandID]));
-		if(!pathGoesTo.equals(BreadthFirst.trimGoal(VectorFunctions.mldivide(goal,bigBoxSize)))){
-			//rc.setIndicatorString(0,"sending from "+start+" to "+goal+" on round "+Clock.getRoundNum());
-			ArrayList<MapLocation> foundPath = BreadthFirst.pathTo(VectorFunctions.mldivide(start,bigBoxSize), VectorFunctions.mldivide(goal,bigBoxSize), 100000);
-			for(int i=foundPath.size()-1;i>=0;i--){
-				rc.broadcast(band+i+1, VectorFunctions.locToInt(foundPath.get(i)));
-			}
-			lengthOfEachPath[bandID]= foundPath.size();
-			rc.broadcast(band+lengthOfEachPath[bandID]+1, -joinSquadNo);
-			rc.broadcast(band, Clock.getRoundNum());
+	static int locToInt(MapLocation m){
+		return (m.x*100 + m.y);
+	}
+	
+	static void PSTRLocsToComm(RobotController rc, MapLocation[] pstr) throws GameActionException {
+		for (int i=0;i<pstr.length;i++) {
+			int channel = 3;
+			rc.broadcast(channel+i, locToInt(pstr[i]));
 		}
 	}
 	
+    static MapLocation[] commToPSTRLocs(RobotController rc){
+    	
+    	int channel = 3;
+    	ArrayList<MapLocation> locs = new ArrayList<MapLocation>();
+    	
+    	
+    	try {
+    		int val = rc.readBroadcast(channel);
+    		while(val!=0){
+    			locs.add(Comms.intToLoc(val));
+    			channel++;
+    			val = rc.readBroadcast(channel);
+    		}
+    	} catch (GameActionException e){
+    		e.printStackTrace();
+    	}
+    	
+    	
+    	return locs.toArray(new MapLocation[locs.size()]);
+    }
+
+	static int sumArray(int[] arr){
+		int sum = 0;
+
+		for (int i : arr)
+		    sum += i;
+		
+		return sum;
+	}
+	
+	static int idAssignToInt(int id, int j){
+		return id*100+j;
+	}
+
+	public static int idRoundToInt(int id, int roundNum) {
+		return id*10000+roundNum;
+	}
+	
+	
+	public static int assignmentToInt(int squad, int role) {
+		
+		return squad*100+role;
+	}
+
+	//broadcast to channel ID the assignment: AABB: A = squad[01-20] and B = type[00-03]
+	public static int getSquad(int i) {
+		return (i/100)%100;
+	}
+
+	public static int getRole(int i) {
+		return i%100;
+	}
+
+	//In team's channel: AABB|CCDD: (AA,BB) = attack target, (CC, DD) = location to move to
+	
+	public static MapLocation getTargetLocation(RobotController rc, int i) throws GameActionException {
+		int j = 0;
+		if (i<10) {
+			j = rc.readBroadcast(i+3);
+		} else {
+			j = rc.readBroadcast(i);
+		}
+		
+		return new MapLocation((j/100)%100, j%100);
+	}
+	
+	public static MapLocation getAttackLocation(RobotController rc, int i) throws GameActionException {
+		int j  = rc.readBroadcast(i);
+		return new MapLocation(j/10000,(j/1000)%100);
+	}
+
 }
