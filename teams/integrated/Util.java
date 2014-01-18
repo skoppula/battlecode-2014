@@ -1,9 +1,6 @@
 package integrated;
-
-import java.util.ArrayList;
 import java.util.Random;
 
-import dragon.RobotPlayer;
 import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
@@ -31,11 +28,6 @@ public class Util {
 		return null;
 	}
 	
-	static void tryToSpawn(RobotController rc) throws GameActionException {
-		if(rc.isActive() && rc.senseRobotCount() < GameConstants.MAX_ROBOTS)
-			rc.spawn(findDirToMove(rc));
-	}
-	
 	//Shoots any *all* nearby robots: does not coordinate shooting with other robots
 	static void indivShootNearby(RobotController rc, Robot[] enemyRobots) throws GameActionException {
 
@@ -47,7 +39,15 @@ public class Util {
 			}
 		}
 	}
+	
+	public static int assignmentToInt(int squad, int role) {
+		return squad*100+role;
+	}
 
+	static int locToInt(MapLocation m){
+		return (m.x*100 + m.y);
+	}
+	
 	/***************************/
 	
 	

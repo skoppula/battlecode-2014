@@ -5,6 +5,15 @@ package integrated;
 //battlecry when charging into battle -> concerted effort
 //something like the opposite of a battlecry, when you're sure you're outnumbered
 
+/*
+ * Channel 0: spawning signal: squad*100+type
+ * Channel 1: distress
+ * Channel 2: [null]
+ * Channel 3-10: defensive squad locations & corresponding pastr/NT locations: [A][XX][YY], A = count robots in squad
+ * Channel 11-20: offensive squad locations & corresponding pasr/NT locations
+ * 
+ */
+
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -45,7 +54,7 @@ public class RobotPlayer{
 		//read from channel 0: get squad and role
     	int assignment = rc.readBroadcast(0);
 
-    	//broadcast to channel ID the assignment: AABB: A = squad[01-20] and B = type[00-03]
+   
     	if(type != RobotType.HQ)
     		rc.broadcast(id, assignment);
 		
@@ -56,8 +65,7 @@ public class RobotPlayer{
                 	HQ.runHeadquarters(rc);
         		
         		else if (type == RobotType.PASTR)
-        			//PASTR.maintainPasture(rc);
-        			System.out.println("we have a pastr!");
+        			System.out.println("A PASTR is running...");
         		
         		else if(type == RobotType.NOISETOWER)
         			NOISE.maintainNoiseTower(rc);
