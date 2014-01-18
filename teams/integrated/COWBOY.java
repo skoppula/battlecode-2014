@@ -8,13 +8,6 @@ import battlecode.common.Robot;
 import battlecode.common.RobotController;
 
 public class COWBOY {
-	
-	static MapLocation rallyPoint;
-	static MapLocation targetedPastr;
-	static boolean coastIsClear = true;
-	static boolean buildNT = false;
-
-	static Random rand = new Random();
 
 	public static void runCowboy(RobotController rc, int assignment) throws GameActionException {
 		
@@ -43,40 +36,41 @@ public class COWBOY {
 		//NOISETOWER precursor - goes right next to PASTR, checks if PASTR doesn't have noisetower, construct
 
 		switch(role){                              
-	        case 0: COWBOY.runDefender(rc, squad, role); break;
-	        case 1: COWBOY.runAttacker(rc, squad, role); break;
-	        case 2: PASTR.runPastureCreator(rc, squad, role); break;
-	        case 3: NOISE.runNoiseCreator(rc, squad, role);
+	    //    case 0: COWBOY.runDefender(rc, squad, role); break;
+	        case 1: COWBOY.runAttacker(rc, squad); break;
+	    //    case 2: PASTR.runPastureCreator(rc, squad, role); break;
+	        //double numberOfCows = rc.senseCowsAtLocation(checkLoc);
+	    //    case 3: NOISE.runNoiseCreator(rc, squad, role);
 		}
 	}
 		
-		static void runAttacker(RoboController rc, int squad, int role) throws GameActionException {
+	static void runAttacker(RobotController rc, int squad) throws GameActionException {
+		
+		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, 10000, rc.getTeam().opponent());
+		MapLocation loc = rc.getLocation();
+		
+		//Keep a running average location of swarm
+		int squadInfo = rc.readBroadcast(squad);
+		int targetX = (squadInfo/100)%100, targetY = squadInfo%100;
+		int currX = (squadInfo/10000000), currY = (squadInfo/100000)%100;
+		int x = (loc.x+currX)/2, y = (loc.y+currY)/2;
+		
+		if(enemyRobots.length>0){
 			
-			Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, 10000, rc.getTeam().opponent());
-			Robot[] alliedRobots = rc.senseNearbyGameObjects(Robot.class,rc.getType().sensorRadiusSquared*2,rc.getTeam());//was 
+			Util.moveToward(rc, new MapLocation(x, y)); //Regroup
 			
-			if(enemyRobots.length>0){//SHOOT AT, OR RUN TOWARDS, ENEMIES
-				MapLocation[] enemyRobotLocations = VectorFunctions.robotsToLocations(enemyRobots, rc, true);
-				if(enemyRobotLocations.length==0){//only HQ is in view
-					//navigateByPath(alliedRobots);
-					Util.moveTo(rc, rc.senseEnemyHQLocation());
-				} else {//shootable robots are in view
-					MapLocation closestEnemyLoc = VectorFunctions.findClosest(enemyRobotLocations, rc.getLocation());
-					
-					if((alliedRobots.length+1)>=enemyRobots.length){//attack when you have superior numbers
-						attackClosest(closestEnemyLoc);
-					}else{//otherwise regroup
-						regroup(enemyRobots,alliedRobots,closestEnemyLoc);
-					}
+			MapLocation eloc = Util.nearestEnemyLoc(rc, enemyRobots, loc); //SHOULD NOT OUTPUT AN HQ LOCATION
+			
+			int maxAttackRad = rc.getType().attackRadiusMaxSquared;
+			
+			if(rc.isActive() && eloc.distanceSquaredTo(rc.getLocation())<=maxAttackRad)
+				rc.attackSquare(eloc);
+			else if(rc.isActive() && rc.canMove(eloc.directionTo(loc)))
+				rc.move(eloc.directionTo(loc));
+			
+		} else
+			Util.moveTo(rc, new MapLocation(targetX, targetY));
 
-				}
-				
-			} else {//NAVIGATION BY DOWNLOADED PATH
-				MapLocation[] enemyPastrs = rc.sensePastrLocations(rc.getTeam().opponent());
-				if(enemyPastrs.length>0&&alliedRobots.length>7){
-					System.out.println("Move to " + targetedPastr);
-					Util.moveTo(rc, targetedPastr);
-				}
-			}
-		}
+	}
+	
 }

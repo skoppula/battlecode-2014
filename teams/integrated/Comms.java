@@ -27,11 +27,6 @@ public class Comms {
 		return id*10000+roundNum;
 	}
 	
-	
-
-
-
-
 	//In team's channel: AABB|CCDD: (AA,BB) = attack target, (CC, DD) = location to move to
 	
 	public static MapLocation getTargetLocation(RobotController rc, int i) throws GameActionException {

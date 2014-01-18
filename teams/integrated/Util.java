@@ -18,7 +18,13 @@ public class Util {
 	public static int directionalLooks[] = new int[]{0,1,-1,2,-2,3,-3,4};
 	static boolean coastIsClear = true;
     
-	/***********SKANDA APPROVED FUNCTIONS****************/
+	/***********SKANDA APPROVED FUNCTIONS ****************/
+	
+	static void moveToward(RobotController rc, MapLocation m) throws GameActionException{
+		MapLocation loc = rc.getLocation();
+		if(rc.isActive() && rc.canMove(loc.directionTo(m)))
+			rc.move(loc.directionTo(m));
+	}
 	
 	static Direction findDirToMove(RobotController rc){
 		for(Direction dir:allDirections){
@@ -30,12 +36,18 @@ public class Util {
 	
 	//Shoots any *all* nearby robots: does not coordinate shooting with other robots
 	static void indivShootNearby(RobotController rc, Robot[] enemyRobots) throws GameActionException {
-
+		MapLocation enemyHQ = rc.senseEnemyHQLocation();
+		
 		for(Robot enemy:enemyRobots){
-			RobotInfo info = rc.senseRobotInfo(enemy);
-			if(rc.isActive() && info.type != RobotType.HQ && info.location.distanceSquaredTo(rc.getLocation()) < rc.getType().attackRadiusMaxSquared && Clock.getBytecodeNum()<2000){
-				rc.attackSquare(info.location);
-				rc.attackSquare(info.location);
+			if(rc.isActive()) {
+				RobotInfo info = rc.senseRobotInfo(enemy);
+				
+				if(info.location.equals(enemyHQ))
+					continue;
+				
+				if(info.location.distanceSquaredTo(rc.getLocation()) < rc.getType().attackRadiusMaxSquared && Clock.getBytecodeNum()<2000){
+					rc.attackSquare(info.location);
+				}
 			}
 		}
 	}
@@ -55,6 +67,36 @@ public class Util {
 
 	public static int getRole(int i) {
 		return i%100;
+	}
+	
+	public static MapLocation nearestEnemyLoc(RobotController rc, Robot[] enemyRobots, MapLocation loc) throws GameActionException {
+		
+		int minDist = HQ.mapX*HQ.mapY;
+		MapLocation bestLoc = null;
+		MapLocation enemyHQ = rc.senseEnemyHQLocation();
+		
+		if(rc.canSenseObject(enemyRobots[0]))
+			bestLoc = rc.senseRobotInfo(enemyRobots[0]).location;
+		
+		for(Robot robot:enemyRobots){
+			
+			if(!rc.canSenseObject(robot))
+				continue;
+			
+			RobotInfo info = rc.senseRobotInfo(robot);
+
+			if(info.location.equals(enemyHQ))
+				continue;
+			
+			MapLocation m = info.location;
+			int dist = m.distanceSquaredTo(loc);
+			if(minDist < dist){
+				minDist = dist;
+				bestLoc = m;
+			}
+		}
+		
+		return bestLoc;
 	}
 	
 	/***************************/
@@ -92,38 +134,40 @@ public class Util {
 		return new MapLocation(a.x, a.y);
 	}
 	
-	public static void RUNEVERYTURN(RobotController rc) throws GameActionException{ //PUT STUFF HERE YOU WANT TO RUN ERRY TURN
-		System.out.println("Move run" + coastIsClear);
-		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent());
-		Robot[] alliedRobots = rc.senseNearbyGameObjects(Robot.class,rc.getType().sensorRadiusSquared*2,rc.getTeam());//was 
+	public static void toDoWhileMoving (RobotController rc) throws GameActionException{
+		
+		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared, rc.getTeam().opponent());
+		MapLocation loc = rc.getLocation();
+		
+		int val = rc.readBroadcast(rc.getRobot().getID());
+		int squad = val/100;
+		
+		//Keep a running average location of swarm
+		int squadInfo = rc.readBroadcast(squad);
+		int currX = (squadInfo/10000000), currY = (squadInfo/100000)%100;
+		int x = (loc.x+currX)/2, y = (loc.y+currY)/2;
+		
 		while(enemyRobots.length>0){//SHOOT AT, OR RUN TOWARDS, ENEMIES
-			coastIsClear = false;
-			MapLocation[] enemyRobotLocations = VectorFunctions.robotsToLocations(enemyRobots, rc, true);
-			if(enemyRobotLocations.length==0){//only HQ is in view
-				//ok no problem
-			}else{//shootable robots are in view
-				MapLocation closestEnemyLoc = VectorFunctions.findClosest(enemyRobotLocations, rc.getLocation());
-				boolean closeEnoughToShoot = closestEnemyLoc.distanceSquaredTo(rc.getLocation())<=rc.getType().attackRadiusMaxSquared;
-				if((alliedRobots.length+1)>=enemyRobots.length){//attack when you have superior numbers
-					attackClosest(closestEnemyLoc);
-				}else{//otherwise regroup
-					regroup(enemyRobots,alliedRobots,closestEnemyLoc);
-				}
+			
+			Util.moveToward(rc, new MapLocation(x, y)); //Regroup
+			loc = rc.getLocation();
+			
+			MapLocation eloc = Util.nearestEnemyLoc(rc, enemyRobots, loc); //SHOULD NOT OUTPUT AN HQ LOCATION
+			if(eloc == null) {
+				System.out.println("ENEMY LOCATION IS NULL");
+				break;
 			}
+			
+			int maxAttackRad = rc.getType().attackRadiusMaxSquared;
+			
+			if(rc.isActive() && eloc.distanceSquaredTo(rc.getLocation())<=maxAttackRad)
+				rc.attackSquare(eloc);
+			else if(rc.isActive() && rc.canMove(eloc.directionTo(loc)))
+				rc.move(eloc.directionTo(loc));
+			
 			rc.yield();
 		}
     }
-	
-	private static void regroup(Robot[] enemyRobots, Robot[] alliedRobots,
-			MapLocation closestEnemyLoc) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	private static void attackClosest(MapLocation closestEnemyLoc) {
-		// TODO Auto-generated method stub
-		
-	}
 
 	@SuppressWarnings("incomplete-switch")
 	public static Direction[] tryDirections(RobotController rc, Direction toDest, MapLocation dest){ //this method basically just returns a list of directions i think it should try when stuck. just logic'ed it out here.
@@ -233,7 +277,7 @@ public class Util {
 		for(Direction tryDir: directions){ //think of ways that would make sense to try, ordered by likelihood of finding opening
 			
 			while(rc.canMove(tryDir) && rc.canMove(toDest) == false){ //robot moves along wall to try to find way to move in toDest
-				RUNEVERYTURN(rc);
+				toDoWhileMoving(rc);
 				if(rc.isActive()){
 					System.out.println("Moving " + tryDir);
 					rc.move(tryDir);
@@ -270,7 +314,7 @@ public class Util {
     	Direction toDest = rc.getLocation().directionTo(dest);
 
     	while(rc.getLocation().equals(dest)==false){
-    		RUNEVERYTURN(rc);
+    		toDoWhileMoving(rc);
     		if(rc.getType() == RobotType.SOLDIER && rc.getLocation().distanceSquaredTo(dest) < 4){
     			break;
     		}
@@ -315,7 +359,7 @@ public class Util {
 		MapLocation beforelaststuck = new MapLocation(0,0);
     	Direction toDest = rc.getLocation().directionTo(dest);
     	while(rc.getLocation().equals(dest) == false){
-    		RUNEVERYTURN(rc);
+    		toDoWhileMoving(rc);
     		if(rc.getType() == RobotType.SOLDIER && rc.getLocation().distanceSquaredTo(dest) < 4){
     			break;
     		}
@@ -359,7 +403,7 @@ public class Util {
 		Direction[] directions = tryDirections(rc, toDest, dest);
 		for(Direction tryDir: directions){ //think of ways that would make sense to try, ordered by likelihood of finding opening
 			while(rc.canMove(tryDir) && rc.canMove(toDest) == false){ //robot moves along wall to try to find way to move in toDest
-				RUNEVERYTURN(rc);
+				toDoWhileMoving(rc);
 				if(rc.isActive()){
 					System.out.println("Sneaking " + tryDir);
 					rc.sneak(tryDir);
@@ -396,7 +440,7 @@ public class Util {
 		MapLocation beforelaststuck = new MapLocation(0,0);
     	Direction toDest = rc.getLocation().directionTo(dest);
     	while(rc.getLocation().equals(dest) == false){
-    		RUNEVERYTURN(rc);
+    		toDoWhileMoving(rc);
     		if(rc.getType() == RobotType.SOLDIER && rc.getLocation().distanceSquaredTo(dest) < 4){
     			break;
     		}
@@ -440,7 +484,7 @@ public class Util {
 		MapLocation beforelaststuck = new MapLocation(0,0);
     	Direction toDest = rc.getLocation().directionTo(dest);
     	while(rc.getLocation().equals(dest) == false){
-    		RUNEVERYTURN(rc);
+    		toDoWhileMoving(rc);
     		if(rc.getType() == RobotType.SOLDIER && rc.getLocation().distanceSquaredTo(dest) < 4){
     			break;
     		}
