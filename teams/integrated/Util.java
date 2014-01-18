@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import dragon.RobotPlayer;
+import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
@@ -20,6 +21,41 @@ public class Util {
 	public static int directionalLooks[] = new int[]{0,1,-1,2,-2,3,-3,4};
 	static boolean coastIsClear = true;
     
+	/***********SKANDA APPROVED FUNCTIONS****************/
+	
+	static Direction findDirToMove(RobotController rc){
+		for(Direction dir:allDirections){
+			if(rc.canMove(dir))
+				return dir;
+		}
+		return null;
+	}
+	
+	static void tryToSpawn(RobotController rc) throws GameActionException {
+		if(rc.isActive() && rc.senseRobotCount() < GameConstants.MAX_ROBOTS)
+			rc.spawn(findDirToMove(rc));
+	}
+	
+	//Shoots any *all* nearby robots: does not coordinate shooting with other robots
+	static void indivShootNearby(RobotController rc, Robot[] enemyRobots) throws GameActionException {
+
+		for(Robot enemy:enemyRobots){
+			RobotInfo info = rc.senseRobotInfo(enemy);
+			if(rc.isActive() && info.type != RobotType.HQ && info.location.distanceSquaredTo(rc.getLocation()) < rc.getType().attackRadiusMaxSquared && Clock.getBytecodeNum()<2000){
+				rc.attackSquare(info.location);
+				rc.attackSquare(info.location);
+			}
+		}
+	}
+
+	/***************************/
+	
+	
+	
+	
+	
+	
+	
     public static int indexOfMin(int... arr) {
         int idx = -1;
         int p = Integer.MAX_VALUE;
@@ -444,54 +480,6 @@ public class Util {
             	break;
             }
     	}
-	}
-	
-	
-	static void shootNearby(RobotController rc) throws GameActionException {
-		//shooting
-		Robot[] enemyRobots = null;
-		Robot[] enemyThings = rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent()); //senses all enemy units (including HQ) on map
-		ArrayList<Robot> enemyUnits = new ArrayList<Robot>();
-		for(Robot unit: enemyThings){ //for every unit...
-			RobotInfo enemyInfo = rc.senseRobotInfo(unit);
-			if(enemyInfo.type != RobotType.HQ){ //if the unit is not a HQ
-				enemyUnits.add(unit); //add it to an arraylist of things to attack
-			}
-		enemyRobots = enemyUnits.toArray(new Robot[enemyUnits.size()]); //add it to the array of things to attack
-			
-		}
-		
-		if(enemyRobots !=null){//if there are enemies
-			Robot anEnemy = enemyRobots[0];
-			RobotInfo anEnemyInfo;
-			anEnemyInfo = rc.senseRobotInfo(anEnemy);
-			if(anEnemyInfo.location.distanceSquaredTo(rc.getLocation())<rc.getType().attackRadiusMaxSquared){
-				if(rc.isActive()){
-					rc.attackSquare(anEnemyInfo.location);
-				}
-			}
-		}
-	}
-
-	static Direction findDirToMove(RobotController rc){
-		for(Direction dir:allDirections){
-			if(rc.canMove(dir)){
-				return dir;
-			}
-		}
-		return null;
-	}
-	
-	public static void tryToSpawn(RobotController rc) throws GameActionException {
-		if(rc.isActive()&&rc.senseRobotCount()<GameConstants.MAX_ROBOTS){
-			for(int i=0;i<8;i++){
-				Direction trialDir = allDirections[i];
-				if(rc.canMove(trialDir)){
-					rc.spawn(trialDir);
-					break;
-				}
-			}
-		}
 	}
 	
 	static void tryToMove(RobotController rc) throws GameActionException {

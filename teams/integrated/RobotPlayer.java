@@ -30,6 +30,8 @@ public class RobotPlayer{
 	static int pathCreatedRound = -1;
     static boolean constructNT = false;
 	
+    
+    
 	public static void run(RobotController rcIn) throws GameActionException{
 		
 		rc=rcIn; //FLAGGED FOR REMOVAL
@@ -46,11 +48,6 @@ public class RobotPlayer{
     	//broadcast to channel ID the assignment: AABB: A = squad[01-20] and B = type[00-03]
     	if(type != RobotType.HQ)
     		rc.broadcast(id, assignment);
-    	else {
-    		//spawns a robot on the first round and makes sure that it's a defender on squad 3
-    		Util.tryToSpawn(rc);
-    		rc.broadcast(0, 300);
-    	}
 		
 		try {
         	while(true) {
@@ -63,8 +60,7 @@ public class RobotPlayer{
         			System.out.println("we have a pastr!");
         		
         		else if(type == RobotType.NOISETOWER)
-        			//NOISE.maintainNoiseTower(rc);
-        			System.out.println("we have a noisetower!");
+        			NOISE.maintainNoiseTower(rc);
         		
         		else {
         			COWBOY.runCowboy(rc, assignment);

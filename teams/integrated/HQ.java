@@ -1,4 +1,4 @@
-package intgrated;
+package integrated;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,7 +23,9 @@ public class HQ {
     static Team enemy;
     static int idealNumPastures;
     static boolean constructNT = false;
-	static MapLocation enemyHQ = rc.senseEnemyHQLocation();
+	static MapLocation enemyHQ;
+	static MapLocation teamHQ;
+	static boolean rush = false;
     
     static int[] squads = new int[20];
     
@@ -42,90 +44,26 @@ public class HQ {
 
 	public static void runHeadquarters(RobotController rc) throws GameActionException {
 		
-		//This costs 8 rounds and tons of bytecodes - don't do it at first
-		if(!initializerRun)
+		if(!initializerRun) {
+    		//spawns a robot on the first round: defender on squad 3
+    		tryToSpawn(rc, 0);
+    		rc.broadcast(0, 300);
+    	
 			initializeGameVars(rc);
+		}
 		
-		updateSquads(rc);
+		updateSquadLocs(rc);
 		//updateRobotDistro(rc);
 		
-		//Move.shootNearby(rc);
-		//consider attacking
-		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent());
-		if(rc.isActive()&&enemyRobots.length>0){
-			MapLocation[] enemyRobotLocations = VectorFunctions.robotsToLocations(enemyRobots, rc, true);
-			MapLocation closestEnemyLoc = VectorFunctions.findClosest(enemyRobotLocations, rc.getLocation());
-			if(rc.canAttackSquare(closestEnemyLoc))
-				rc.attackSquare(closestEnemyLoc);
-		} else {
+		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared, enemy);
+		if(enemyRobots.length > 0)
+			Util.indivShootNearby(rc, enemyRobots);
+		else
 			spawnRobot(rc);
-		}
 		
 		rc.yield();
 	}
 	
-	//Put into channels correct pasture locations and enemy locations
-	static void updateSquads(RobotController rc) throws GameActionException{
-		for(int i = 0; i < desiredPASTRs.length; i++)
-			rc.broadcast(i+3, Comms.locToInt(desiredPASTRs[i]));
-		
-		MapLocation[] enemyPASTRs = rc.sensePastrLocations(enemy);
-		
-		for(int i = 0; i < enemyPASTRs.length; i++)
-			rc.broadcast(i+11, Comms.locToInt(enemyPASTRs[i]));
-	}
-	
-	static void spawnRobot(RobotController rc) throws GameActionException{
-
-		if(rc.senseRobotCount()<GameConstants.MAX_ROBOTS && rc.isActive()){
-			int squad = nextSquadNum();
-			//int squad = 11;
-//			Move.tryToSpawn(rc);
-//			rc.broadcast(0, Comm.assignmentToInt(squad, 1));
-//			System.out.println("Attacker : " + Comm.assignmentToInt(squad, 1));
-//			HQ.robotTypeCount[1]++;
-//			System.out.println("Spawned a attacker");
-			
-			if(constructNT){
-				Util.tryToSpawn(rc);
-				HQ.robotTypeCount[3]++;
-				rc.broadcast(0, Comms.assignmentToInt(squad, 3));
-				System.out.println("Spawned a noise tower precursor");
-				constructNT = false;
-			 
-			} else if (robotTypeCount[0] < 2*desiredPASTRs.length){
-				Util.tryToSpawn(rc);
-				rc.broadcast(0, Comms.assignmentToInt(squad, 0));
-				HQ.robotTypeCount[0]++;
-				System.out.println("Spawned a defender");
-			 
-			} else if(robotTypeCount[2] < desiredPASTRs.length) {
-				Util.tryToSpawn(rc);
-				HQ.robotTypeCount[2]++;
-				rc.broadcast(0, Comms.assignmentToInt(squad, 2));
-				constructNT = true;
-				System.out.println("Spawned a pasture precursor");
-			
-			} else {
-				Util.tryToSpawn(rc);
-				rc.broadcast(0, Comms.assignmentToInt(squad, 1));
-				System.out.println("Attacker : " + Comms.assignmentToInt(squad, 1));
-				HQ.robotTypeCount[1]++;
-				System.out.println("Spawned a attacker");
-			}
-		}
-	}
-
-	private static int nextSquadNum() throws GameActionException {
-		// decides offensive or defensive strategy
-		int ally = hq.sensePastrLocations(team).length;
-		int enemy = hq.sensePastrLocations(hq.getTeam().opponent()).length;
-		
-		//If there are more ally pastures than enemy ones, keep on building pastures.
-		//Otherwise, start attacking enemy pastures
-		return ally>=enemy?ally+3:enemy+10;
-	}
-
 	public static void initializeGameVars(RobotController rc) throws GameActionException{
     	hq = rc;
     	
@@ -135,6 +73,8 @@ public class HQ {
     	mapY = cowDensMap.length;
     	mapX = cowDensMap[0].length;
     	idealNumPastures = computeNumPastures();
+    	enemyHQ = rc.senseEnemyHQLocation();
+    	teamHQ = rc.senseHQLocation();
     	
     	desiredPASTRs = findPastureLocs();
     	System.out.println("Desired pastures : " +Arrays.deepToString(desiredPASTRs));
@@ -142,11 +82,84 @@ public class HQ {
     	createTerrainMap();
     	initializerRun = true;
     	
+    	boolean rush = startRush(rc);
+    	
     	rand = new Random(17);
     }
 	
+	//Put into channels correct pasture locations and enemy locations
+	static void updateSquadLocs(RobotController rc) throws GameActionException{
+		for(int i = 0; i < desiredPASTRs.length; i++)
+			rc.broadcast(i+3, Comms.locToInt(desiredPASTRs[i]));
+		
+		MapLocation[] enemyPASTRs = rc.sensePastrLocations(enemy);
+		
+		for(int i = 0; i < enemyPASTRs.length; i++)
+			rc.broadcast(i+11, Comms.locToInt(enemyPASTRs[i]));
+	}
+	
+	static boolean startRush(RobotController rc){
+		if(enemyHQ.distanceSquaredTo(teamHQ) < 1800){
+			System.out.println("START-OF-GAME RUSHING THE OTHER TEAM");
+			return true;
+		} else {
+			System.out.println("STARTING ECONOMY DEVELOPMENT PREFERRED");
+			return false;
+		}
+	}
+	
+	static void spawnRobot(RobotController rc) throws GameActionException{
+
+		if(rc.senseRobotCount()<GameConstants.MAX_ROBOTS && rc.isActive()){
+			int squad = nextSquadNum();
+			
+			if(constructNT){
+				tryToSpawn(rc, 3);
+				rc.broadcast(0, Comms.assignmentToInt(squad, 3));
+				System.out.println("Spawned a noise tower precursor");
+				constructNT = false;
+			 
+			} else if (robotTypeCount[0] < 2*desiredPASTRs.length){
+				tryToSpawn(rc, 0);
+				rc.broadcast(0, Comms.assignmentToInt(squad, 0));
+				
+				System.out.println("Spawned a defender");
+			 
+			} else if(robotTypeCount[2] < desiredPASTRs.length) {
+				tryToSpawn(rc, 2);
+				rc.broadcast(0, Comms.assignmentToInt(squad, 2));
+				constructNT = true;
+				System.out.println("Spawned a pasture precursor");
+			
+			} else {
+				tryToSpawn(rc, 1);
+				rc.broadcast(0, Comms.assignmentToInt(squad, 1));
+				System.out.println("Attacker : " + Comms.assignmentToInt(squad, 1));
+				System.out.println("Spawned a attacker");
+			}
+		}
+	}
+	
+	//Determines type of robot to by spawned next and hence spawning strategy
+	//Crux of logic deciding whether to prepare for rush or not
+	private static int nextSquadNum() throws GameActionException {
+		// decides offensive or defensive strategy
+		int ally = hq.sensePastrLocations(team).length;
+		int foe = hq.sensePastrLocations(enemy).length;
+		
+		//If there are more ally pastures than enemy ones, keep on building pastures.
+		//Otherwise, start attacking enemy pastures
+		return ally>=enemy?ally+3:enemy+10;
+	}
+
+	static void tryToSpawn(RobotController rc, int type) throws GameActionException {
+		if(rc.isActive() && rc.senseRobotCount() < GameConstants.MAX_ROBOTS) {
+			rc.spawn(Util.findDirToMove(rc));
+			HQ.robotTypeCount[type]++;
+		}
+	}
+	
 	private static int computeNumPastures() {
-		// TODO Auto-generated method stub
 		return 2;
 	}
 
