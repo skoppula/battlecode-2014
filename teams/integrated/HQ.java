@@ -101,7 +101,7 @@ public class HQ {
 	
 	static boolean startRush(RobotController rc){
 		double mapDensity = findMapDensity();
-		if(enemyHQ.distanceSquaredTo(teamHQ) < 1800 ||mapDensity < .5){
+		if(enemyHQ.distanceSquaredTo(teamHQ) < 900 &&mapDensity < .5){
 			System.out.println("START-OF-GAME RUSHING THE OTHER TEAM");
 			return true;
 		} else {
@@ -262,7 +262,7 @@ public class HQ {
 	        //double numberOfCows = rc.senseCowsAtLocation(checkLoc);
 		
 		//The first pasture will be right next to the HQ
-		pstrLocs[0] = findHQpstr();
+		//pstrLocs[0] = findHQpstr();
 		
 		//The next pastures are decided based on cow density
 		//Slides a 3x3 window across the entire map, intervals of three and returns windows with highest 
