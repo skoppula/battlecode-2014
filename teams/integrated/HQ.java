@@ -23,6 +23,7 @@ public class HQ {
     static Team enemy;
     static int idealNumPastures;
     static boolean constructNT = false;
+	static MapLocation enemyHQ = rc.senseEnemyHQLocation();
     
     static int[] squads = new int[20];
     

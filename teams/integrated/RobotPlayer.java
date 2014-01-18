@@ -31,11 +31,11 @@ public class RobotPlayer{
     static boolean constructNT = false;
 	
 	public static void run(RobotController rcIn) throws GameActionException{
-		rc=rcIn;
-		Attacker.rc = rcIn;
-		Defender.rc = rcIn;
-		randall.setSeed(rc.getRobot().getID());
-		enemyHQ = rc.senseEnemyHQLocation();
+		
+		rc=rcIn; //FLAGGED FOR REMOVAL
+		Attacker.rc = rcIn; //FLAGGED FOR REMOVAL
+		Defender.rc = rcIn; //FLAGGED FOR REMOVAL
+		randall.setSeed(rc.getRobot().getID()); //FLAGGED FOR REMOVAL
 		
 		int id = rc.getRobot().getID();
     	RobotType type = rc.getType();
@@ -57,7 +57,6 @@ public class RobotPlayer{
         		
         		if(type == RobotType.HQ)
                 	HQ.runHeadquarters(rc);
-        			//runHQ();
         		
         		else if (type == RobotType.PASTR)
         			//PASTR.maintainPasture(rc);
@@ -69,39 +68,17 @@ public class RobotPlayer{
         		
         		else {
         			COWBOY.runCowboy(rc, assignment);
-        			
         		}
         		
         		rc.yield();
         	}
-		}catch (Exception e){
+		} catch (Exception e){
 				e.printStackTrace();
 		}
 			
 	}
 	
-	
-	private static void runHQ() throws GameActionException {
-		//TODO consider updating the rally point to an allied pastr 
 
-		Robot[] alliedRobots = rc.senseNearbyGameObjects(Robot.class,100000000,rc.getTeam());
-		
-		
-		//consider attacking
-		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent());
-		if(rc.isActive()&&enemyRobots.length>0){
-			MapLocation[] enemyRobotLocations = VectorFunctions.robotsToLocations(enemyRobots, rc, true);
-			MapLocation closestEnemyLoc = VectorFunctions.findClosest(enemyRobotLocations, rc.getLocation());
-			if(rc.canAttackSquare(closestEnemyLoc))
-				rc.attackSquare(closestEnemyLoc);
-		}
-		
-		//consider spawning
-		tryToSpawn();
-		rc.broadcast(0, 300);
-	}
-
-	
 	private static MapLocation findAverageAllyLocation(Robot[] alliedRobots) throws GameActionException {
 		//find average soldier location
 		MapLocation[] alliedRobotLocations = VectorFunctions.robotsToLocations(alliedRobots, rc, true);
@@ -154,7 +131,6 @@ public class RobotPlayer{
 				Util.moveTo(rc, rc.senseEnemyHQLocation());
 			}else{//shootable robots are in view
 				MapLocation closestEnemyLoc = VectorFunctions.findClosest(enemyRobotLocations, rc.getLocation());
-				boolean closeEnoughToShoot = closestEnemyLoc.distanceSquaredTo(rc.getLocation())<=rc.getType().attackRadiusMaxSquared;
 				if((alliedRobots.length+1)>=enemyRobots.length){//attack when you have superior numbers
 					attackClosest(closestEnemyLoc);
 				}else{//otherwise regroup
@@ -172,46 +148,6 @@ public class RobotPlayer{
 				System.out.println("Move to " + targetedPastr);
 				Util.moveTo(rc, targetedPastr);
 			}
-		}
-	}
-
-	private static void considerBuildingPastr(Robot[] alliedRobots) throws GameActionException {
-		if(alliedRobots.length>4){//there must be allies nearby for defense
-			MapLocation[] alliedPastrs =rc.sensePastrLocations(rc.getTeam());
-			if(alliedPastrs.length<5&&(rc.readBroadcast(50)+60<Clock.getRoundNum())){//no allied robot can be building a pastr at the same time
-				for(int i=0;i<20;i++){
-					MapLocation checkLoc = VectorFunctions.mladd(rc.getLocation(),new MapLocation(randall.nextInt(8)-4,randall.nextInt(8)-4));
-					if(rc.canSenseSquare(checkLoc)){
-						double numberOfCows = rc.senseCowsAtLocation(checkLoc);
-						if(numberOfCows>1000){//there must be a lot of cows there
-							if(alliedPastrs.length==0){//there must not be another pastr nearby
-								buildPastr(checkLoc);
-							}else{
-								MapLocation closestAlliedPastr = VectorFunctions.findClosest(alliedPastrs, checkLoc);
-								if(closestAlliedPastr.distanceSquaredTo(checkLoc)>GameConstants.PASTR_RANGE*5){
-									buildPastr(checkLoc);
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	private static void buildPastr(MapLocation checkLoc) throws GameActionException {
-		rc.broadcast(50, Clock.getRoundNum());
-		for(int i=0;i<100;i++){//for 100 rounds, try to build a pastr
-			if(rc.isActive()){
-				if(rc.getLocation().equals(checkLoc)){
-					rc.construct(RobotType.PASTR);
-					constructNT = true;
-				}else{
-					Direction towardCows = rc.getLocation().directionTo(checkLoc);
-					BasicPathing.tryToMove(towardCows, true,true, true);
-				}
-			}
-			rc.yield();
 		}
 	}
 
@@ -241,21 +177,5 @@ public class RobotPlayer{
 		}
 	}
 
-	private static MapLocation getRandomLocation() {
-		return new MapLocation(randall.nextInt(rc.getMapWidth()),randall.nextInt(rc.getMapHeight()));
-	}
-
-	private static void simpleMove(Direction chosenDirection) throws GameActionException{
-		if(rc.isActive()){
-			for(int directionalOffset:directionalLooks){
-				int forwardInt = chosenDirection.ordinal();
-				Direction trialDir = allDirections[(forwardInt+directionalOffset+8)%8];
-				if(rc.canMove(trialDir)){
-					rc.move(trialDir);
-					break;
-				}
-			}
-		}
-	}
 	
 }
