@@ -277,7 +277,7 @@ public class HQ {
 				double weight = hq.getLocation().distanceSquaredTo(new MapLocation(j,i));
 				double weight1 = hq.senseEnemyHQLocation().distanceSquaredTo(new MapLocation(j,i));
 				
-				for(int k = 1; k < idealNumPastures; k++){
+				for(int k = 0; k < idealNumPastures; k++){
 					
 					//Balancing profit in pasture productivity vs. distance: (sum-weight/10)
 					if((sum-weight/weight1)>pstrCowDens[k]){
@@ -290,7 +290,8 @@ public class HQ {
 			}
 		}
 
-		System.out.println(pstrLocs);
+		System.out.println(pstrLocs[0] + "and" + pstrLocs[1]);
+		
 		return pstrLocs;
 	}
 		

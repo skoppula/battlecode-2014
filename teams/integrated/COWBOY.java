@@ -54,6 +54,7 @@ public class COWBOY {
 		//Keep a running average location of swarm
 		int squadInfo = rc.readBroadcast(squad);
 		int targetX = (squadInfo/100)%100, targetY = squadInfo%100;
+		MapLocation target = new MapLocation(targetX, targetY);
 		int currX = (squadInfo/10000000), currY = (squadInfo/100000)%100;
 		int x = (loc.x+currX)/2, y = (loc.y+currY)/2;
 		
@@ -65,10 +66,11 @@ public class COWBOY {
 		int diff = squad > 10 ? 11 : 3;
 		
 		int status = (in/(int) Math.pow(10, squad-diff)) % 10; // should be 0, 1, or 2
-//		System.out.println(in + " " + squad + " " + status + " " + diff);
-		
+		System.out.println(in + " " + squad + " " + status + " " + diff);
+		System.out.println(squadInfo + " " + targetX + " " + targetY + " ");
 		
 		if(t==types.DEFENDER && loc.distanceSquaredTo(new MapLocation(targetX, targetY))<2){
+			System.out.println("running defender!");
 				Robot[] allies = rc.senseNearbyGameObjects(Robot.class, 7, team);
 				
 				if(allies.length>2 && status==0 && rc.isActive()) {
@@ -87,6 +89,7 @@ public class COWBOY {
 					System.out.println("Constructing a NT...");
 				}
 		}
+		System.out.println((loc.x-targetX)+(loc.y-targetY));
 		
 		if(enemyRobots.length>0){
 			
@@ -104,8 +107,9 @@ public class COWBOY {
 			else if(rc.isActive() && rc.canMove(eloc.directionTo(loc)))
 				rc.move(eloc.directionTo(loc));
 			
-		} else if(!((loc.x-targetX)+(loc.y-targetY)>4))
+		} else if(loc.distanceSquaredTo(target) > 9)
 			Util.moveTo(rc, new MapLocation(targetX, targetY));
+		
 		
 	//	else
 			rc.yield();
