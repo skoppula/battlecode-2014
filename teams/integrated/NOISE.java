@@ -25,11 +25,12 @@ public class NOISE {
 
 	public static void maintainNoiseTower(RobotController rc) throws GameActionException {
 		while(true){
-			int r = rc.getType().attackRadiusMaxSquared;
+			int r = (int) Math.sqrt(rc.getType().attackRadiusMaxSquared);
 			int s = (int) (r/Math.sqrt(2));
 			//North Pull
-			print("NT is pulling cows");
 			for(int i = 0; i<r; i++){
+				print("Pulling North");
+				rc.yield();
 				if(rc.isActive()){
 					rc.attackSquare(rc.getLocation().add(0, r-i));
 					rc.yield();
@@ -38,6 +39,8 @@ public class NOISE {
 			
 			//North_east pull
 			for(int i = 0; i<s; i++){
+				print("Pulling Northeast");
+				rc.yield();
 				if(rc.isActive()){
 					rc.attackSquare(rc.getLocation().add(s-i, s-i));
 					rc.yield();
@@ -46,6 +49,8 @@ public class NOISE {
 			
 			//East pull
 			for(int i = 0; i<r; i++){
+				print("Pulling East");
+				rc.yield();
 				if(rc.isActive()){
 					rc.attackSquare(rc.getLocation().add(r-i, 0));
 					rc.yield();
@@ -54,6 +59,8 @@ public class NOISE {
 			
 			//South_east pull
 			for(int i = 0; i<s; i++){
+				print("Pulling Southeast");
+				rc.yield();
 				if(rc.isActive()){
 					rc.attackSquare(rc.getLocation().add(14-s, -(14-s)));
 					rc.yield();
@@ -62,6 +69,8 @@ public class NOISE {
 			
 			//South pull
 			for(int i = 0; i<r; i++){
+				print("Pulling South");
+				rc.yield();
 				if(rc.isActive()){
 					rc.attackSquare(rc.getLocation().add(0, -(r-i)));
 					rc.yield();
@@ -70,6 +79,8 @@ public class NOISE {
 			
 			//South_west pull
 			for(int i = 0; i<s; i++){
+				print("Pulling Southwest");
+				rc.yield();
 				if(rc.isActive()){
 					rc.attackSquare(rc.getLocation().add(-(s-i), -(s-i)));
 					rc.yield();
@@ -78,6 +89,8 @@ public class NOISE {
 			
 			//West pull
 			for(int i = 0; i<r; i++){
+				print("Pulling West");
+				rc.yield();
 				if(rc.isActive()){
 					rc.attackSquare(rc.getLocation().add(-(r-i), 0));
 					rc.yield();
@@ -86,6 +99,8 @@ public class NOISE {
 			
 			//North_west pull
 			for(int i = 0; i<s; i++){
+				print("Pulling Northwest");
+				rc.yield();
 				if(rc.isActive()){
 					rc.attackSquare(rc.getLocation().add(-(s-i), s-i));
 					rc.yield();
