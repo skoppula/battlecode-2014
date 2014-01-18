@@ -4,7 +4,6 @@ import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.Robot;
 import battlecode.common.RobotController;
-import battlecode.common.RobotInfo;
 import battlecode.common.RobotType;
 import battlecode.common.Team;
 
@@ -62,23 +61,31 @@ public class COWBOY {
 		rc.broadcast(squad, x*10000000+y*100000+squadInfo%100000);
 		
 		//PASTR and NT creation
+		int in = rc.readBroadcast(2);
+		int diff = squad > 10 ? 11 : 3;
+		
+		int status = (in/(int) Math.pow(10, squad-diff)) % 10; // should be 0, 1, or 2
+//		System.out.println(in + " " + squad + " " + status + " " + diff);
+		
+		
 		if(t==types.DEFENDER && loc.distanceSquaredTo(new MapLocation(targetX, targetY))<2){
-
-				Robot[] allies = rc.senseNearbyGameObjects(Robot.class, 5, team);
+				Robot[] allies = rc.senseNearbyGameObjects(Robot.class, 7, team);
 				
-				int numPASTRs = 0, numNT = 0;
-				for(Robot ally:allies){
-					RobotInfo info = rc.senseRobotInfo(ally);
-					if(info.type == RobotType.NOISETOWER)
-						numNT++;
-					else if(info.type == RobotType.PASTR)
-						numPASTRs++;
-				}
-				
-				if(allies.length>2 && numPASTRs==0 && rc.isActive())
+				if(allies.length>2 && status==0 && rc.isActive()) {
 					rc.construct(RobotType.PASTR);
-				else if (allies.length>2 && numNT==0 && rc.isActive())
+					int left = (int) ((in/Math.pow(10, squad-diff)+1)*Math.pow(10, squad-diff));
+					int right = in % (int) Math.pow(10, squad-diff);
+//					System.out.println("LEFT LEFT LEFT: " + left + " " + right);
+					rc.broadcast(2, left + right);
+					System.out.println("Constructing a PASTR...");
+					
+				} else if (allies.length>2 && status==1 && rc.isActive()) {
 					rc.construct(RobotType.NOISETOWER);
+					int left = (int) ((in/Math.pow(10, squad-diff)+1)*Math.pow(10, squad-diff));
+					int right = in % (int) Math.pow(10, squad-diff);
+					rc.broadcast(2, left + right);
+					System.out.println("Constructing a NT...");
+				}
 		}
 		
 		if(enemyRobots.length>0){

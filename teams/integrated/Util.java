@@ -15,8 +15,6 @@ public class Util {
 	
     public static Direction allDirections[] = {Direction.NORTH, Direction.SOUTH, Direction.NORTH_EAST, Direction.SOUTH_EAST, Direction.WEST, Direction.SOUTH_WEST, Direction.NORTH_WEST, Direction.EAST};
     static Random rand = new Random();
-	public static int directionalLooks[] = new int[]{0,1,-1,2,-2,3,-3,4};
-	static boolean coastIsClear = true;
     
 	/***********SKANDA APPROVED FUNCTIONS ****************/
 	
@@ -152,14 +150,13 @@ public class Util {
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared, rc.getTeam().opponent());
 		MapLocation loc = rc.getLocation();
 		
-		int val = rc.readBroadcast(rc.getRobot().getID());
-		int squad = val/100;
+//		int val = rc.readBroadcast(rc.getRobot().getID());
+//		int squad = val/100;
 		
 		//Keep a running average location of swarm
-		int squadInfo = rc.readBroadcast(squad);
-		int targetX = (squadInfo/100)%100, targetY = squadInfo%100;
-		int currX = (squadInfo/10000000), currY = (squadInfo/100000)%100;
-		int x = (loc.x+currX)/2, y = (loc.y+currY)/2;
+//		int squadInfo = rc.readBroadcast(squad);
+//		int currX = (squadInfo/10000000), currY = (squadInfo/100000)%100;
+//		int x = (loc.x+currX)/2, y = (loc.y+currY)/2;
 		
 		while(enemyRobots.length>0){//SHOOT AT, OR RUN TOWARDS, ENEMIES
 			
@@ -557,19 +554,6 @@ public class Util {
             	break;
             }
     	}
-	}
-	
-	static void simpleMove(RobotController rc, Direction chosenDirection) throws GameActionException{
-		if(rc.isActive()){
-			for(int directionalOffset:directionalLooks){
-				int forwardInt = chosenDirection.ordinal();
-				Direction trialDir = allDirections[(forwardInt+directionalOffset+8)%8];
-				if(rc.canMove(trialDir)){
-					rc.move(trialDir);
-					break;
-				}
-			}
-		}
 	}
 	
 	

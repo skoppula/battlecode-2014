@@ -90,7 +90,7 @@ public class HQ {
 		
 		if(rush)
 			rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(enemyHQ));
-		else
+		else if(enemyPASTRs.length>0)
 			rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(enemyPASTRs[0]));
 		
 		for(int i = 0; i < enemyPASTRs.length; i++) {
