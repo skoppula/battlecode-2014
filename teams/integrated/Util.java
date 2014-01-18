@@ -22,8 +22,11 @@ public class Util {
 	
 	static void moveToward(RobotController rc, MapLocation m) throws GameActionException{
 		MapLocation loc = rc.getLocation();
-		if(rc.isActive() && rc.canMove(loc.directionTo(m)))
-			rc.move(loc.directionTo(m));
+		Direction dir = loc.directionTo(m);
+		if(dir.equals(Direction.NONE) || dir.equals(Direction.NONE))
+			return;
+		else if(rc.isActive() && rc.canMove(loc.directionTo(m)))
+			rc.move(dir);
 	}
 	
 	static Direction findDirToMove(RobotController rc){
@@ -32,6 +35,16 @@ public class Util {
 				return dir;
 		}
 		return null;
+	}
+	
+	public static void randomMove(RobotController rc) throws GameActionException {
+		for (int i = 0; i<7; i++) {
+    		Direction move = allDirections[(int)(rand.nextDouble()*8)];
+            if(rc.canMove(move)){
+            	rc.move(move);
+            	break;
+            }
+    	}
 	}
 	
 	//Shoots any *all* nearby robots: does not coordinate shooting with other robots
@@ -154,7 +167,7 @@ public class Util {
 			
 			MapLocation eloc = Util.nearestEnemyLoc(rc, enemyRobots, loc); //SHOULD NOT OUTPUT AN HQ LOCATION
 			if(eloc == null) {
-				System.out.println("ENEMY LOCATION IS NULL");
+//				System.out.println("ENEMY LOCATION IS NULL");
 				break;
 			}
 			
@@ -271,7 +284,7 @@ public class Util {
 	}
 	
 	public static void unstick(RobotController rc, Direction toDest, MapLocation dest) throws GameActionException{
-		System.out.println("Trying to move " + toDest + " towards (" + dest.x + ", " + dest.y + ")");
+//		System.out.println("Trying to move " + toDest + " towards (" + dest.x + ", " + dest.y + ")");
 		Direction[] directions = tryDirections(rc, toDest, dest);
 
 		for(Direction tryDir: directions){ //think of ways that would make sense to try, ordered by likelihood of finding opening
@@ -279,27 +292,27 @@ public class Util {
 			while(rc.canMove(tryDir) && rc.canMove(toDest) == false){ //robot moves along wall to try to find way to move in toDest
 				toDoWhileMoving(rc);
 				if(rc.isActive()){
-					System.out.println("Moving " + tryDir);
+//					System.out.println("Moving " + tryDir);
 					rc.move(tryDir);
 				}
 				rc.yield();
 			}
 			if(rc.canMove(tryDir) == false){ //robot couldn't find a way to move in toDest before hitting another wall in tryDir direction (corner case)
-				System.out.println("Can't move " + tryDir);
+//				System.out.println("Can't move " + tryDir);
 				continue;
 			}
 			if(rc.canMove(toDest)){
-				System.out.println("found hole");
+//				System.out.println("found hole");
 				if(rc.isActive()&&rc.canMove(toDest)){
 					rc.move(toDest);
-					System.out.println("Moving toDest");
+//					System.out.println("Moving toDest");
 				}
 				else{
 					rc.yield();
 					if (rc.isActive()&&rc.canMove(toDest)){
 						rc.move(toDest);
 					}
-					System.out.println("Took a nap and then moved toDest");
+//					System.out.println("Took a nap and then moved toDest");
 					break;
 				}
 			}
@@ -329,7 +342,7 @@ public class Util {
 
     					while(rc.canMove(toDest) == false&& rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent()).length==0){
     						Direction randdir = allDirections[randint.nextInt(7)];
-        					System.out.println("I'm stuck. Trying random direction " + randdir);
+//        					System.out.println("I'm stuck. Trying random direction " + randdir);
         					while(rc.canMove(randdir)&&rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent()).length==0){
         						if(rc.isActive()){
         							rc.move(randdir);
@@ -341,7 +354,7 @@ public class Util {
     				else{
     					beforelaststuck = valueOf(laststuck);
     					laststuck = rc.getLocation();
-    					System.out.println("UNSTICKING");
+//    					System.out.println("UNSTICKING");
     					unstick(rc, toDest, dest); //unstick it
     					toDest = rc.getLocation().directionTo(dest);
     				}
@@ -376,7 +389,7 @@ public class Util {
     					Random randint = new Random();
     					while(rc.canMove(toDest) == false){
     						Direction randdir = allDirections[randint.nextInt(7)];
-        					System.out.println("I'm stuck. Trying random direction " + randdir);
+//        					System.out.println("I'm stuck. Trying random direction " + randdir);
         					while(rc.canMove(randdir)){
         						if(rc.isActive()){
         							rc.move(randdir);
@@ -388,7 +401,7 @@ public class Util {
     				else{
     					beforelaststuck = valueOf(laststuck);
     					laststuck = rc.getLocation();
-    					System.out.println("UNSTICKING");
+//    					System.out.println("UNSTICKING");
     					unstick(rc, toDest, dest); //unstick it
     					toDest = rc.getLocation().directionTo(dest);
     				}
@@ -524,16 +537,7 @@ public class Util {
 	}
 	
 
-	public static void randomMove(RobotController rc) throws GameActionException {
-		// TODO Auto-generated method stub
-		for (int i = 0;i<7;i++) {
-    		Direction move = allDirections[(int)(rand.nextDouble()*8)];
-            if(rc.isActive()&&rc.canMove(move)){
-            	rc.move(move);
-            	break;
-            }
-    	}
-	}
+
 	
 	static void tryToMove(RobotController rc) throws GameActionException {
 		// TODO Auto-generated method stub

@@ -143,7 +143,7 @@ public class HQ {
 				if(spawnSuccess) {
 					int j = Util.assignmentToInt(squad, 1);
 					rc.broadcast(0, j);
-					System.out.println("Spawned an attacker:" + j);
+					System.out.println("Spawned an attacker: " + j);
 				}
 				
 			} else if (squad < 11 && robotTypeCount[0] < 3*desiredPASTRs.length) {
