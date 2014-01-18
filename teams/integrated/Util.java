@@ -238,10 +238,11 @@ public class Util {
     				if(laststuck.equals(rc.getLocation()) || beforelaststuck.equals(rc.getLocation())){ //wait, I've been here before
     					Random randint = new Random();
 
-    					while(rc.canMove(toDest) == false&& rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent()).length==0){
+    					while(rc.canMove(toDest) == false){
     						Direction randdir = allDirections[randint.nextInt(7)];
         					System.out.println("I'm stuck. Trying random direction " + randdir);
-        					while(rc.canMove(randdir)&&rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent()).length==0){
+        					while(rc.canMove(randdir){
+							RUNEVERYTURN(rc);
         						if(rc.isActive()){
         							rc.move(randdir);
         						}
@@ -289,6 +290,7 @@ public class Util {
     						Direction randdir = allDirections[randint.nextInt(7)];
         					System.out.println("I'm stuck. Trying random direction " + randdir);
         					while(rc.canMove(randdir)){
+							RUNEVERYTURN(rc);
         						if(rc.isActive()){
         							rc.move(randdir);
         						}
@@ -367,6 +369,7 @@ public class Util {
 							Direction randdir = allDirections[randint.nextInt(7)]; //try a random direction to go in to break from oscillation
 							System.out.println("I'm stuck. Trying random direction " + randdir);
 							while(rc.canMove(randdir)){
+								RUNEVERYTURN(rc);
 								if(rc.isActive()){
 									rc.sneak(randdir);
 								}
@@ -414,6 +417,7 @@ public class Util {
 							Direction randdir = allDirections[randint.nextInt(7)]; //try a random direction to go in to break from oscillation
 							System.out.println("I'm stuck. Trying random direction " + randdir);
 							while(rc.canMove(randdir)){
+								RUNEVERYTURN(rc);
 								if(rc.isActive()){
 									rc.sneak(randdir);
 								}

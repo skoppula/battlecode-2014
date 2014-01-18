@@ -62,17 +62,15 @@ public class Move {
 				if((alliedRobots.length+1)>=enemyRobots.length){//attack when you have superior numbers
 					attackClosest(closestEnemyLoc);
 				}else{//otherwise regroup
-					regroup(enemyRobots,alliedRobots,closestEnemyLoc);
+					regroup(rc);
 				}
 			}
 			rc.yield();
 		}
     }
 	
-	private static void regroup(Robot[] enemyRobots, Robot[] alliedRobots,
-			MapLocation closestEnemyLoc) {
-		// TODO Auto-generated method stub
-		
+	private static void regroup(RobotController rc){
+		//rc.channel
 	}
 
 	private static void attackClosest(MapLocation closestEnemyLoc) {
@@ -187,7 +185,7 @@ public class Move {
 
 		for(Direction tryDir: directions){ //think of ways that would make sense to try, ordered by likelihood of finding opening
 			
-			while(rc.canMove(tryDir) && rc.canMove(toDest) == false && rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent()).length==0){ //robot moves along wall to try to find way to move in toDest
+			while(rc.canMove(tryDir) && rc.canMove(toDest) == false){ //robot moves along wall to try to find way to move in toDest
 				RUNEVERYTURN(rc);
 				if(rc.isActive()){
 					System.out.println("Moving " + tryDir);
@@ -224,7 +222,7 @@ public class Move {
 		MapLocation beforelaststuck = new MapLocation(0,0);
     	Direction toDest = rc.getLocation().directionTo(dest);
 
-    	while(rc.getLocation().equals(dest)==false&&rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent()).length==0){
+    	while(rc.getLocation().equals(dest)==false){
     		RUNEVERYTURN(rc);
     		if(rc.getType() == RobotType.SOLDIER && rc.getLocation().distanceSquaredTo(dest) < 4){
     			break;
@@ -238,10 +236,11 @@ public class Move {
     				if(laststuck.equals(rc.getLocation()) || beforelaststuck.equals(rc.getLocation())){ //wait, I've been here before
     					Random randint = new Random();
 
-    					while(rc.canMove(toDest) == false&& rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent()).length==0){
+    					while(rc.canMove(toDest) == false){
     						Direction randdir = allDirections[randint.nextInt(7)];
         					System.out.println("I'm stuck. Trying random direction " + randdir);
-        					while(rc.canMove(randdir)&&rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent()).length==0){
+        					while(rc.canMove(randdir) && rc.canMove(toDest) == false){
+							RUNEVERYTURN(rc);
         						if(rc.isActive()){
         							rc.move(randdir);
         						}
@@ -288,7 +287,8 @@ public class Move {
     					while(rc.canMove(toDest) == false){
     						Direction randdir = allDirections[randint.nextInt(7)];
         					System.out.println("I'm stuck. Trying random direction " + randdir);
-        					while(rc.canMove(randdir)){
+        					while(rc.canMove(randdir) && rc.canMove(toDest) == false){
+							RUNEVERYTURN(rc);
         						if(rc.isActive()){
         							rc.move(randdir);
         						}
@@ -366,7 +366,8 @@ public class Move {
     					while(rc.canMove(toDest) == false){
 							Direction randdir = allDirections[randint.nextInt(7)]; //try a random direction to go in to break from oscillation
 							System.out.println("I'm stuck. Trying random direction " + randdir);
-							while(rc.canMove(randdir)){
+							while(rc.canMove(randdir) && rc.canMove(toDest) == false){
+								RUNEVERYTURN(rc);
 								if(rc.isActive()){
 									rc.sneak(randdir);
 								}
@@ -413,7 +414,8 @@ public class Move {
     					while(rc.canMove(toDest) == false){
 							Direction randdir = allDirections[randint.nextInt(7)]; //try a random direction to go in to break from oscillation
 							System.out.println("I'm stuck. Trying random direction " + randdir);
-							while(rc.canMove(randdir)){
+							while(rc.canMove(randdir) && rc.canMove(toDest) == false){
+								RUNEVERYTURN(rc);
 								if(rc.isActive()){
 									rc.sneak(randdir);
 								}
@@ -505,18 +507,6 @@ public class Move {
     	}
 	}
 	
-	static void simpleMove(RobotController rc, Direction chosenDirection) throws GameActionException{
-		if(rc.isActive()){
-			for(int directionalOffset:directionalLooks){
-				int forwardInt = chosenDirection.ordinal();
-				Direction trialDir = allDirections[(forwardInt+directionalOffset+8)%8];
-				if(rc.canMove(trialDir)){
-					rc.move(trialDir);
-					break;
-				}
-			}
-		}
-	}
 	
 	
 
