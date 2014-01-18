@@ -80,14 +80,15 @@ public class HQ {
     	rand = new Random(17);
     }
 	
-	//Put into channels correct pasture locations and enemy locations
+	//Put team and enemy team pasture, squad, and role info into channels
 	static void updateSquadLocs(RobotController rc) throws GameActionException{
-
+		//DEFENDER CHANNELS - 3 to about 8
+		//format: [N][XXYY] where N is robot count in the squad and XXYY are coordinates
 		for(int i = 0; i < desiredPASTRs.length; i++)
 			rc.broadcast(i+3, (rc.readBroadcast(i+3)/10000)*10000 + Util.locToInt(desiredPASTRs[i]));
 		
+		//RUSH CHANNEL - 11
 		MapLocation[] enemyPASTRs = rc.sensePastrLocations(enemy);
-		
 		if(rush)
 			rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(enemyHQ));
 		else if(enemyPASTRs.length>0)
@@ -99,7 +100,8 @@ public class HQ {
 	}
 	
 	static boolean startRush(RobotController rc){
-		if(enemyHQ.distanceSquaredTo(teamHQ) < 1800){
+		double mapDensity = findMapDensity();
+		if(enemyHQ.distanceSquaredTo(teamHQ) < 1800 ||mapDensity < .5){
 			System.out.println("START-OF-GAME RUSHING THE OTHER TEAM");
 			return true;
 		} else {
@@ -108,6 +110,50 @@ public class HQ {
 		}
 	}
 	
+	private static double findMapDensity() {
+		//what's the map density
+		//what's the wall count between HQ's?
+		//how easy is it to navigate to enemyHQ? (guess? maybe?)
+		int normal = 0;
+		int wall = 0;
+		int road = 0;
+		int tileType;
+		
+		int Ystart = 0, Yend = 0, Xstart = 0, Xend=0;
+		//only focus on range between HQ's
+		if (teamHQ.y < enemyHQ.y) { //If our team HQ is north of enemy HQ
+			Ystart = teamHQ.y;
+			Yend = enemyHQ.y;
+		} else {
+			Ystart = enemyHQ.y;
+			Yend = teamHQ.y+3;
+		}
+		if (teamHQ.x < enemyHQ.x) { //If our team HQ is left of enemy HQ
+			Xstart = teamHQ.x;
+			Xend = enemyHQ.x;
+		} else {
+			Xstart = enemyHQ.y;
+			Xend = teamHQ.y;
+		}
+		
+		for (int i=Ystart;i<Yend;i++) {
+			for (int j=Xstart;j<Xend;j++) {
+				tileType = terrainMap[j][i];
+				if (tileType==NORMAL) {
+					normal+=1;
+				} else if (tileType==ROAD) {
+					road+=1;
+				} else if (tileType==WALL) {
+					wall+=1;
+				}
+			}
+		}
+		double density = (double) (wall)/(normal+road+wall);
+		
+		return density;
+		
+	}
+
 	//Keep track of deaths
 	static void updateRobotDistro(RobotController rc) throws GameActionException{
 		
