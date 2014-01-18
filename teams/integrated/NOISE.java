@@ -25,8 +25,9 @@ public class NOISE {
 
 	public static void maintainNoiseTower(RobotController rc) throws GameActionException {
 		while(true){
+
 			//North Pull
-			print("pulling north");
+			print("NT is pulling cows");
 			for(int i = 0; i<20; i++){
 				if(rc.isActive()){
 					rc.attackSquare(rc.getLocation().add(0, 20-i));
