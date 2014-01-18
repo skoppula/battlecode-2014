@@ -23,7 +23,7 @@ public class Util {
 	static void moveToward(RobotController rc, MapLocation m) throws GameActionException{
 		MapLocation loc = rc.getLocation();
 		Direction dir = loc.directionTo(m);
-		if(dir.equals(Direction.NONE) || dir.equals(Direction.NONE))
+		if(dir.equals(Direction.NONE) || dir.equals(Direction.OMNI))
 			return;
 		else if(rc.isActive() && rc.canMove(loc.directionTo(m)))
 			rc.move(dir);
@@ -40,7 +40,7 @@ public class Util {
 	public static void randomMove(RobotController rc) throws GameActionException {
 		for (int i = 0; i<7; i++) {
     		Direction move = allDirections[(int)(rand.nextDouble()*8)];
-            if(rc.canMove(move)){
+            if(rc.isActive() && rc.canMove(move)){
             	rc.move(move);
             	break;
             }
@@ -157,12 +157,17 @@ public class Util {
 		
 		//Keep a running average location of swarm
 		int squadInfo = rc.readBroadcast(squad);
+		int targetX = (squadInfo/100)%100, targetY = squadInfo%100;
 		int currX = (squadInfo/10000000), currY = (squadInfo/100000)%100;
 		int x = (loc.x+currX)/2, y = (loc.y+currY)/2;
 		
 		while(enemyRobots.length>0){//SHOOT AT, OR RUN TOWARDS, ENEMIES
 			
-			Util.moveToward(rc, new MapLocation(x, y)); //Regroup
+//			if(Math.random()>0.05)
+//				Util.moveToward(rc, new MapLocation(x, y)); //Regroup
+//			else
+//				Util.moveToward(rc, new MapLocation(targetX, targetY));
+			
 			loc = rc.getLocation();
 			
 			MapLocation eloc = Util.nearestEnemyLoc(rc, enemyRobots, loc); //SHOULD NOT OUTPUT AN HQ LOCATION
@@ -175,8 +180,8 @@ public class Util {
 			
 			if(rc.isActive() && eloc.distanceSquaredTo(rc.getLocation())<=maxAttackRad)
 				rc.attackSquare(eloc);
-			else if(rc.isActive() && rc.canMove(eloc.directionTo(loc)))
-				rc.move(eloc.directionTo(loc));
+//			else if(rc.isActive() && rc.canMove(eloc.directionTo(loc)))
+//				rc.move(eloc.directionTo(loc));
 			
 			rc.yield();
 		}
@@ -366,8 +371,8 @@ public class Util {
 	
 	public static void channelMove(RobotController rc) throws GameActionException{
 		int x = rc.readBroadcast(rc.getRobot().getID());
-		int team = VectorFunctions.getSquad(x); //Ash test
-		MapLocation dest = VectorFunctions.intToLoc(rc.readBroadcast(team));
+		int team = getSquad(x); //Ash test
+		MapLocation dest = intToLoc(rc.readBroadcast(team));
 		MapLocation laststuck = new MapLocation(0,0);
 		MapLocation beforelaststuck = new MapLocation(0,0);
     	Direction toDest = rc.getLocation().directionTo(dest);
@@ -377,8 +382,8 @@ public class Util {
     			break;
     		}
     		x = rc.readBroadcast(rc.getRobot().getID());
-    		team = VectorFunctions.getSquad(x); //Ash test
-    		dest = VectorFunctions.intToLoc(rc.readBroadcast(team));
+    		team = getSquad(x); //Ash test
+    		dest = intToLoc(rc.readBroadcast(team));
     		if(rc.isActive() && rc.canMove(toDest)){
     			rc.move(toDest);
     			rc.yield();
@@ -489,10 +494,14 @@ public class Util {
     	}//until rc.getLocation.equals(dest)
 	}
 	
+	public static MapLocation intToLoc(int i){
+		return new MapLocation(i/100,i%100);
+	}
+	
 	public static void channelSneak(RobotController rc) throws GameActionException{
 		int x = rc.readBroadcast(rc.getRobot().getID());
-		int team = VectorFunctions.getSquad(x); //Ash test
-		MapLocation dest = VectorFunctions.intToLoc(rc.readBroadcast(team));
+		int team = getSquad(x); //Ash test
+		MapLocation dest = intToLoc(rc.readBroadcast(team));
 		MapLocation laststuck = new MapLocation(0,0);
 		MapLocation beforelaststuck = new MapLocation(0,0);
     	Direction toDest = rc.getLocation().directionTo(dest);
@@ -502,8 +511,8 @@ public class Util {
     			break;
     		}
     		x = rc.readBroadcast(rc.getRobot().getID());
-    		team = VectorFunctions.getSquad(x); //Ash test
-    		dest = VectorFunctions.intToLoc(rc.readBroadcast(team));
+    		team = getSquad(x); //Ash test
+    		dest = intToLoc(rc.readBroadcast(team));
     		if(rc.isActive() && rc.canMove(toDest)){
     			rc.sneak(toDest);
     			rc.yield();

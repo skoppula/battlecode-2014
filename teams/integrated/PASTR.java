@@ -1,111 +1,47 @@
 package integrated;
 
-import battlecode.common.Clock;
-import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
+import battlecode.common.Robot;
 import battlecode.common.RobotController;
-import battlecode.common.RobotType;
 
 public class PASTR {
 
 
-    public static void spawnPASTR(RobotController rc){
+	static void runPastureCreator (RobotController rc, int squad) throws GameActionException {
 		
-		for (Direction i:Util.allDirections) {
-			if(rc.canMove(i)) {
-				try {
-					rc.broadcast(0, 2);
-					rc.spawn(i);
-					HQ.robotTypeCount[2]++;
-				} catch (GameActionException e) {
-					e.printStackTrace();
-				}
-				break;
-			}
-		}
+		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, 10000, rc.getTeam().opponent());
+		MapLocation loc = rc.getLocation();
 		
-		System.out.println("Spawned PASTR precursor");
-    }
-    
-
-    
-	public static void runPastureCreator(RobotController rc) {
+		//Keep a running average location of swarm
+		int squadInfo = rc.readBroadcast(squad);
+		int targetX = (squadInfo/100)%100, targetY = squadInfo%100;
+		int currX = (squadInfo/10000000), currY = (squadInfo/100000)%100;
+		int x = (loc.x+currX)/2, y = (loc.y+currY)/2;
 		
-		try {
-			Util.shootNearby(rc);
+		if(enemyRobots.length>0){
 			
-			for(int i = 101; i < 130; i++){
-				if(rc.readBroadcast(i)%10000!=Clock.getRoundNum()){
-					rc.broadcast(i, Util.idRoundToInt(rc.getRobot().getID(), Clock.getRoundNum()));
-					break;
-				}
-			}
+			Util.moveToward(rc, new MapLocation(x, y)); //Regroup
+			
+			MapLocation eloc = Util.nearestEnemyLoc(rc, enemyRobots, loc); //SHOULD NOT OUTPUT AN HQ LOCATION
+			
+			int maxAttackRad = rc.getType().attackRadiusMaxSquared;
+			
+			if(rc.isActive() && eloc.distanceSquaredTo(rc.getLocation())<=maxAttackRad)
+				rc.attackSquare(eloc);
+			else if(rc.isActive() && rc.canMove(eloc.directionTo(loc)))
+				rc.move(eloc.directionTo(loc));
+			
+		} else if(!((loc.x-targetX)+(loc.y-targetY)>3))
+			Util.moveTo(rc, new MapLocation(targetX, targetY));
 		
-		
-			MapLocation[] desiredPASTRs = Util.commToPSTRLocs(rc);
-
-			if(rc.isActive()) {
-				
-				
-				
-				int id = rc.getRobot().getID();
-				
-				int idx = -1;
-				for(int i = 26; i < 51; i++){
-					int val = rc.readBroadcast(i);
-					if((val-val%100)/100==id)
-						idx = val%100;
-				}
-				
-				
-				if(idx > -1) {
-						MapLocation target = desiredPASTRs[idx];
-						
-						rc.setIndicatorString(1, target.toString());
-						
-						if(rc.getLocation().distanceSquaredTo(target)<3) {
-							rc.construct(RobotType.PASTR);
-							System.out.println("Converted PASTR");
-						}
-						else
-							Util.moveTo(rc, target);
-						
-				} else
-					Util.moveTo(rc, desiredPASTRs[0]);
-				
-			}
-		} catch (GameActionException e) {
-			e.printStackTrace();
-		}
+		else
+			rc.yield();
 		
 	}
 
 	public static void maintainPasture(RobotController rc) {
 		
-		
-		//IF health is low and rc.isActive()
-		//suicide
-		//update currPASTRs[] and roboPSTRsAssignment
-		
-		try {
-			for(int i = 101; i < 130; i++){
-				if(rc.readBroadcast(i)%10000!=Clock.getRoundNum()){
-					rc.broadcast(i, Util.idRoundToInt(rc.getRobot().getID(), Clock.getRoundNum()));
-					break;
-				}
-			}
-		} catch (GameActionException e) {
-			e.printStackTrace();
-		}
-		
-		try {
-			if(rc.getHealth()<3 && rc.isActive())
-				rc.selfDestruct();
-		} catch (GameActionException e) {
-			e.printStackTrace();
-		}
-		
-	}
 
+	}
 }

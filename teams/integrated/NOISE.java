@@ -6,28 +6,13 @@ import battlecode.common.RobotController;
 import battlecode.common.RobotType;
 
 public class NOISE {
-
-	public static void print(String str){
-		System.out.println(str);
-	}
 	
     public static Direction allDirections[] = {Direction.NORTH, Direction.SOUTH, Direction.NORTH_EAST, Direction.SOUTH_EAST, Direction.WEST, Direction.SOUTH_WEST, Direction.NORTH_WEST, Direction.EAST};
-
-	public static void runNoiseCreator(RobotController rc) throws GameActionException {
-		Util.channelMove(rc);
-		rc.yield();
-		if(rc.isActive()){
-			System.out.print("constructing noise tower...");
-			rc.construct(RobotType.NOISETOWER);
-		}
-		rc.yield();
-	}
 
 	public static void maintainNoiseTower(RobotController rc) throws GameActionException {
 		while(true){
 
 			//North Pull
-			print("NT is pulling cows");
 			for(int i = 0; i<20; i++){
 				if(rc.isActive()){
 					rc.attackSquare(rc.getLocation().add(0, 20-i));

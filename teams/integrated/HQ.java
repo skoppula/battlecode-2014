@@ -20,7 +20,7 @@ public class HQ {
     static MapLocation desiredPASTRs[];
     static  Team team;
     static Team enemy;
-    static int idealNumPastures;
+    static int idealNumPastures = 2;
     static int storedCurrNumPastures = 0;
     static boolean constructNT = false;
 	static MapLocation enemyHQ;
@@ -38,17 +38,12 @@ public class HQ {
 	static RobotController hq;
 	static Random rand;
 
-    static int[] robotTypeCount = {0,0,0,0};
+    static int[] robotTypeCount = {0,0};
 
 	public static void runHeadquarters(RobotController rc) throws GameActionException {
 		
-		if(!initializerRun) {
-    		//spawns a robot on the first round: defender on squad 3
-    		tryToSpawn(rc, 0);
-    		rc.broadcast(0, 300);
-    	
+		if(!initializerRun)
 			initializeGameVars(rc);
-		}
 		
 		updateSquadLocs(rc);
 		updateRobotDistro(rc);
@@ -87,18 +82,19 @@ public class HQ {
 	
 	//Put into channels correct pasture locations and enemy locations
 	static void updateSquadLocs(RobotController rc) throws GameActionException{
+
 		for(int i = 0; i < desiredPASTRs.length; i++)
-			rc.broadcast(i+3, (rc.readBroadcast(i)%10000)*10000 + Util.locToInt(desiredPASTRs[i]));
+			rc.broadcast(i+3, (rc.readBroadcast(i+3)/10000)*10000 + Util.locToInt(desiredPASTRs[i]));
 		
 		MapLocation[] enemyPASTRs = rc.sensePastrLocations(enemy);
 		
 		if(rush)
-			rc.broadcast(11, (rc.readBroadcast(11)%10000)*10000 + Util.locToInt(enemyHQ));
+			rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(enemyHQ));
 		else
-			rc.broadcast(11, (rc.readBroadcast(11)%10000)*10000 + Util.locToInt(enemyPASTRs[0]));
+			rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(enemyPASTRs[0]));
 		
 		for(int i = 0; i < enemyPASTRs.length; i++) {
-			rc.broadcast(i+12, (rc.readBroadcast(i)%10000)*10000 + Util.locToInt(enemyPASTRs[i]));	
+			rc.broadcast(i+12, (rc.readBroadcast(i+12)/10000)*10000 + Util.locToInt(enemyPASTRs[i]));	
 		}
 	}
 	
@@ -125,6 +121,7 @@ public class HQ {
 			int squad = j/10;
 			
 			//subtract from squad count signal and robot type count
+			System.out.println("ROBOT DIED from SQUAD: " + squad);
 			robotTypeCount[type]--;
 			int k = rc.readBroadcast(squad);
 			rc.broadcast(squad,(k/10000-1)*10000+k%10000);
@@ -146,7 +143,7 @@ public class HQ {
 					System.out.println("Spawned an attacker: " + j);
 				}
 				
-			} else if (squad < 11 && robotTypeCount[0] < 3*desiredPASTRs.length) {
+			} else if (squad < 11 && robotTypeCount[0] < 5*desiredPASTRs.length) {
 				spawnSuccess = tryToSpawn(rc, 0);
 				if(spawnSuccess){
 					int j = Util.assignmentToInt(squad, 0);
@@ -154,29 +151,11 @@ public class HQ {
 					System.out.println("Spawned a defender: " + j);
 				}
 				
-			} else if(constructNT){
-				spawnSuccess = tryToSpawn(rc, 3);
-				if(spawnSuccess){
-					int j = Util.assignmentToInt(squad, 3);
-					rc.broadcast(0, j);
-					System.out.println("Spawned a NT precursor: " + j);
-					constructNT = false;
-				}
-				
-			} else if (squad < 11 && robotTypeCount[2] < desiredPASTRs.length) {
-				spawnSuccess = tryToSpawn(rc, 2);
-				if(spawnSuccess){
-					int j = Util.assignmentToInt(squad, 2);
-					rc.broadcast(0, j);
-					System.out.println("Spawned a pasture precursor: " + j);
-					constructNT = true;
-				}
-
-
 			}
 			
-			if(spawnSuccess)
+			if(spawnSuccess){
 				rc.broadcast(squad, rc.readBroadcast(squad)+10000);
+			}
 		}
 	}
 	
@@ -184,26 +163,23 @@ public class HQ {
 	private static int nextSquadNum(RobotController rc) throws GameActionException {
 		
 		//If starting out a rush, spawn enough attacking squads.
-		if(rush && robotTypeCount[1] < 6) {
-			System.out.println("Going to spawn rush attacker");
-			for(int i = 11; i < 21; i++){
+		if(rush) {
+			for(int i = 11; i < 12; i++){
 				if((rc.readBroadcast(i)/10000)%10<6)
 					return i;
 			}
 		} 
 		
 		//Else if didn't establish pastures yet, need defensive squads
-		if(robotTypeCount[2] < desiredPASTRs.length) {
-			for(int i = 3; i < 10; i++){
-				if((rc.readBroadcast(i)/10000)%10<5)
-					return i;
-			}
+		for(int i = 3; i < 3+desiredPASTRs.length; i++){
+			if((rc.readBroadcast(i)/10000)%10<5)
+				return i;
+		}
 			
-		} else { //else spawn attackers
-			for(int i = 11; i < 21; i++){
-				if((rc.readBroadcast(i)/10000)%10<6)
-					return i;
-			}
+		//else spawn attackers
+		for(int i = 11; i < 21; i++){
+			if((rc.readBroadcast(i)/10000)%10<6)
+				return i;
 		}
 		
 		return 3;
@@ -235,6 +211,9 @@ public class HQ {
 		for (int i = 0; i < idealNumPastures; i++) {
 			pstrLocs[i] = new MapLocation(mapX/2, mapY/2);
 		}
+		
+		
+	        //double numberOfCows = rc.senseCowsAtLocation(checkLoc);
 		
 		//The first pasture will be right next to the HQ
 		pstrLocs[0] = findHQpstr();

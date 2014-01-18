@@ -4,12 +4,17 @@ import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.Robot;
 import battlecode.common.RobotController;
+import battlecode.common.RobotInfo;
+import battlecode.common.RobotType;
+import battlecode.common.Team;
 
 public class COWBOY {
-
+	
+	enum types {ATTACKER, DEFENDER}
+	
 	public static void runCowboy(RobotController rc, int assignment) throws GameActionException {
 		
-		int id = rc.getRobot().getID(); //ID will be unique to each soldier
+		int id = rc.getRobot().getID(); 
 		
 		if (assignment==0) {
 			assignment = rc.readBroadcast(id);
@@ -34,17 +39,17 @@ public class COWBOY {
 		//NOISETOWER precursor - goes right next to PASTR, checks if PASTR doesn't have noisetower, construct
 
 		switch(role){                              
-	        case 0: COWBOY.runDefender(rc, squad); break;
-	        case 1: COWBOY.runAttacker(rc, squad); break;
-	    //    case 2: PASTR.runPastureCreator(rc, squad, role); break;
-	        //double numberOfCows = rc.senseCowsAtLocation(checkLoc);
-	    //    case 3: NOISE.runNoiseCreator(rc, squad, role);
+	        case 0: COWBOY.runSoldier (rc, squad, types.DEFENDER); break;
+	        case 1: COWBOY.runSoldier(rc, squad, types.ATTACKER); break;
 		}
 	}
 	
-	static void runDefender(RobotController rc, int squad) throws GameActionException {
+	static void runSoldier (RobotController rc, int squad, types t) throws GameActionException {
 		
-		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, 10000, rc.getTeam().opponent());
+		Team team = rc.getTeam();
+		Team enemy = team.opponent();
+		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, 10000, enemy);
+		
 		MapLocation loc = rc.getLocation();
 		
 		//Keep a running average location of swarm
@@ -53,9 +58,35 @@ public class COWBOY {
 		int currX = (squadInfo/10000000), currY = (squadInfo/100000)%100;
 		int x = (loc.x+currX)/2, y = (loc.y+currY)/2;
 		
+		//broadcast the new average
+		rc.broadcast(squad, x*10000000+y*100000+squadInfo%100000);
+		
+		//PASTR and NT creation
+		if(t==types.DEFENDER && loc.distanceSquaredTo(new MapLocation(targetX, targetY))<2){
+
+				Robot[] allies = rc.senseNearbyGameObjects(Robot.class, 5, team);
+				
+				int numPASTRs = 0, numNT = 0;
+				for(Robot ally:allies){
+					RobotInfo info = rc.senseRobotInfo(ally);
+					if(info.type == RobotType.NOISETOWER)
+						numNT++;
+					else if(info.type == RobotType.PASTR)
+						numPASTRs++;
+				}
+				
+				if(allies.length>2 && numPASTRs==0 && rc.isActive())
+					rc.construct(RobotType.PASTR);
+				else if (allies.length>2 && numNT==0 && rc.isActive())
+					rc.construct(RobotType.NOISETOWER);
+		}
+		
 		if(enemyRobots.length>0){
 			
-			Util.moveToward(rc, new MapLocation(x, y)); //Regroup
+//			if(Math.random()>0.05)
+//				Util.moveToward(rc, new MapLocation(x, y)); //Regroup
+//			else
+//				Util.moveToward(rc, new MapLocation(targetX, targetY));
 			
 			MapLocation eloc = Util.nearestEnemyLoc(rc, enemyRobots, loc); //SHOULD NOT OUTPUT AN HQ LOCATION
 			
@@ -66,41 +97,13 @@ public class COWBOY {
 			else if(rc.isActive() && rc.canMove(eloc.directionTo(loc)))
 				rc.move(eloc.directionTo(loc));
 			
-		} else if(!((loc.x-targetX)+(loc.y-targetY)>3))
+		} else if(!((loc.x-targetX)+(loc.y-targetY)>4))
 			Util.moveTo(rc, new MapLocation(targetX, targetY));
 		
-		else
+	//	else
 			rc.yield();
 		
 	}
 		
-	static void runAttacker(RobotController rc, int squad) throws GameActionException {
-		
-		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, 10000, rc.getTeam().opponent());
-		MapLocation loc = rc.getLocation();
-		
-		//Keep a running average location of swarm
-		int squadInfo = rc.readBroadcast(squad);
-		int targetX = (squadInfo/100)%100, targetY = squadInfo%100;
-		int currX = (squadInfo/10000000), currY = (squadInfo/100000)%100;
-		int x = (loc.x+currX)/2, y = (loc.y+currY)/2;
-		
-		if(enemyRobots.length>0){
-			
-			Util.moveToward(rc, new MapLocation(x, y)); //Regroup
-			
-			MapLocation eloc = Util.nearestEnemyLoc(rc, enemyRobots, loc); //SHOULD NOT OUTPUT AN HQ LOCATION
-			
-			int maxAttackRad = rc.getType().attackRadiusMaxSquared;
-			
-			if(rc.isActive() && eloc.distanceSquaredTo(rc.getLocation())<=maxAttackRad)
-				rc.attackSquare(eloc);
-			else if(rc.isActive() && rc.canMove(eloc.directionTo(loc)))
-				rc.move(eloc.directionTo(loc));
-			
-		} else
-			Util.moveTo(rc, new MapLocation(targetX, targetY));
-
-	}
 	
 }
