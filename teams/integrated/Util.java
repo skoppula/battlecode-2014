@@ -48,6 +48,15 @@ public class Util {
 		return (m.x*100 + m.y);
 	}
 	
+	//broadcast to channel ID the assignment: AABB: A = squad[01-20] and B = type[00-03]
+	public static int getSquad(int i) {
+		return (i/100)%100;
+	}
+
+	public static int getRole(int i) {
+		return i%100;
+	}
+	
 	/***************************/
 	
 	

@@ -7,7 +7,7 @@ package integrated;
 
 /*
  * Channel 0: spawning signal: squad*100+type
- * Channel 1: distress
+ * Channel 1: distress: [SS][T][SS][T]...SS=squad, and T = type of distressed robots
  * Channel 2: [null]
  * Channel 3-10: defensive squad locations & corresponding pastr/NT locations: [A][XX][YY], A = count robots in squad
  * Channel 11-20: offensive squad locations & corresponding pasr/NT locations

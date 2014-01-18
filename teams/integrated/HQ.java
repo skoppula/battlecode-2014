@@ -22,6 +22,7 @@ public class HQ {
     static  Team team;
     static Team enemy;
     static int idealNumPastures;
+    static int storedCurrNumPastures = 0;
     static boolean constructNT = false;
 	static MapLocation enemyHQ;
 	static MapLocation teamHQ;
@@ -53,7 +54,7 @@ public class HQ {
 		}
 		
 		updateSquadLocs(rc);
-		//updateRobotDistro(rc);
+		updateRobotDistro(rc);
 		
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared, enemy);
 		if(enemyRobots.length > 0)
@@ -77,12 +78,12 @@ public class HQ {
     	teamHQ = rc.senseHQLocation();
     	
     	desiredPASTRs = findPastureLocs();
-    	System.out.println("Desired pastures : " +Arrays.deepToString(desiredPASTRs));
+    	System.out.println("Desired pastures : " + Arrays.deepToString(desiredPASTRs));
     	
     	createTerrainMap();
     	initializerRun = true;
     	
-    	boolean rush = startRush(rc);
+    	rush = startRush(rc);
     	
     	rand = new Random(17);
     }
@@ -90,12 +91,18 @@ public class HQ {
 	//Put into channels correct pasture locations and enemy locations
 	static void updateSquadLocs(RobotController rc) throws GameActionException{
 		for(int i = 0; i < desiredPASTRs.length; i++)
-			rc.broadcast(i+3, rc.readBroadcast(i+3)/10000+Util.locToInt(desiredPASTRs[i]));
+			rc.broadcast(i+3, Util.locToInt(desiredPASTRs[i]));
 		
 		MapLocation[] enemyPASTRs = rc.sensePastrLocations(enemy);
 		
-		for(int i = 0; i < enemyPASTRs.length; i++)
-			rc.broadcast(i+11, rc.readBroadcast(i+11)/10000+Util.locToInt(enemyPASTRs[i]));
+		if(rush)
+			rc.broadcast(11, Util.locToInt(enemyHQ));
+		else
+			rc.broadcast(11, Util.locToInt(enemyPASTRs[0]));
+		
+		for(int i = 0; i < enemyPASTRs.length; i++) {
+			rc.broadcast(i+12, Util.locToInt(enemyPASTRs[i]));	
+		}
 	}
 	
 	static boolean startRush(RobotController rc){
@@ -108,11 +115,30 @@ public class HQ {
 		}
 	}
 	
+	//Keep track of deaths
+	static void updateRobotDistro(RobotController rc) throws GameActionException{
+		
+		//Channel 1: distress: [SS][T][SS][T]...SS=squad, and T = type of distressed robots
+		int in  = rc.readBroadcast(1);
+		int numRobots = (int) (Math.log10(in)+1)/3;
+		
+		for(int i = 0; i < numRobots; i++){
+			int j = (int) (in/Math.pow(1000,i))%1000;
+			int type = j%10;
+			int squad = j/10;
+			
+			//subtract from squad count signal and robot type count
+			robotTypeCount[type]--;
+			int k = rc.readBroadcast(squad);
+			rc.broadcast(squad,(k/10000-1)+k%10000);
+		}
+	}
+	
 	static void spawnRobot(RobotController rc) throws GameActionException{
 
 		if(rc.senseRobotCount()<GameConstants.MAX_ROBOTS && rc.isActive()){
 			
-			int squad = nextSquadNum();
+			int squad = nextSquadNum(rc);
 			
 			if(squad > 10) {
 				tryToSpawn(rc, 1);
@@ -144,10 +170,10 @@ public class HQ {
 		}
 	}
 	
-	//Determines type of robot to by spawned next 
+	//Determines squad of robot to by spawned next 
 	private static int nextSquadNum(RobotController rc) throws GameActionException {
 		
-		//If starting out a rush, spawn enough attackers.
+		//If starting out a rush, spawn enough attacking squads.
 		if(rush && robotTypeCount[1] < 6) {
 			System.out.println("Going to spawn rush attacker");
 			for(int i = 11; i < 21; i++){
@@ -156,7 +182,7 @@ public class HQ {
 			}
 		} 
 		
-		//Else if didn't establish pastures yet, establish those
+		//Else if didn't establish pastures yet, need defensive squads
 		if(robotTypeCount[2] < desiredPASTRs.length) {
 			for(int i = 3; i < 10; i++){
 				if(rc.readBroadcast(i)/10000<5)
@@ -223,7 +249,7 @@ public class HQ {
 				}
 			}
 		}
-		Comms.PSTRLocsToComm(hq, pstrLocs);
+
 		System.out.println(pstrLocs);
 		return pstrLocs;
 	}
