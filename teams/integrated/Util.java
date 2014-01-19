@@ -146,8 +146,8 @@ public class Util {
 	}
 	
 	public static void toDoWhileMoving (RobotController rc) throws GameActionException{
-		
-		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared, rc.getTeam().opponent());
+		//Sense nearby game objects, 200 bytecode
+		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, rc.getTeam().opponent());
 		MapLocation loc = rc.getLocation();
 		
 		int id = rc.getRobot().getID(); 
@@ -158,7 +158,7 @@ public class Util {
 		int role = Util.getRole(assignment);
 			
 		//if low on health send distress
-		if(rc.getHealth() == rc.getType().maxHealth*0.1){
+		if(rc.getHealth() < rc.getType().maxHealth*0.4){
 			int in = rc.readBroadcast(1);
 			//int len = (int) (Math.log10(in+1)+1)/3;
 			int len = String.valueOf(in).length()/3;
@@ -167,9 +167,11 @@ public class Util {
 			System.out.println(in+ (int) Math.pow(10, len)*(10*squad+role));
 		}
 		
-		while(enemyRobots.length>0){//SHOOT AT, OR RUN TOWARDS, ENEMIES
-			System.out.println("ENEMY DETECTCED BY ROBOT " + rc.getRobot().getID());
-			
+		//hot fix, broadcast sensed enemy location to channel 60, so other defenders respond to rush
+		int defend = rc.readBroadcast(60); //Ash test
+		while(enemyRobots.length>0||defend>0){//SHOOT AT, OR RUN TOWARDS, ENEMIES
+
+			System.out.println(defend + "defending number??");
 			loc = rc.getLocation();
 			MapLocation eHQloc = rc.senseEnemyHQLocation();
 			if (loc.distanceSquaredTo(eHQloc) < 20) {
@@ -179,22 +181,63 @@ public class Util {
 				}
 			}
 			
-			MapLocation eloc = Util.nearestEnemyLoc(rc, enemyRobots, loc); //SHOULD NOT OUTPUT AN HQ LOCATION
-			if(eloc == null) {
-//				System.out.println("ENEMY LOCATION IS NULL");
-				break;
+			//Ash test all of line 184 to 208
+			MapLocation eloc = eHQloc; //probably a bad decision, but it's a hot fix.
+			if (defend > 0) { //Ash test
+
+				System.out.println(defend + "defending =??");
+				eloc = Util.intToLoc(defend);
+				if (eloc.distanceSquaredTo(rc.getLocation()) > 10) {
+					rc.broadcast(60, 0); //The robot broadcasted a wrong location, nothing to do with you. hot fix
+				} else {
+					//attack closest
+					attackClosest(rc, eloc);
+					rc.broadcast(60, 0);
+				}
 			}
+			else {
+				eloc = Util.nearestEnemyLoc(rc, enemyRobots, loc); //SHOULD NOT OUTPUT AN HQ LOCATION
+				if (eloc !=null) { //Ash test 199 - 206
+					rc.broadcast(60, Util.locToInt(eloc));  //maybe only do this once?
+					attackClosest(rc, eloc);
+				} else {
+					//I'd like to have this structure, but if you want to return it, delete all the Ash test commented lines
+					System.out.println("ENEMY LOCATION IS NULL");
+					break;
+				}
+			}
+				
+			//to return to original state, uncomment below
+			//eloc = Util.nearestEnemyLoc(rc, enemyRobots, loc); //SHOULD NOT OUTPUT AN HQ LOCATION
+//			if(eloc == null) {
+//				System.out.println("ENEMY LOCATION IS NULL");
+//				break;
+//			}
 			
-			int maxAttackRad = rc.getType().attackRadiusMaxSquared;
+//			int maxAttackRad = rc.getType().attackRadiusMaxSquared;
+//			
+//			//I'd like to put all this in a new function, attackClosest or something
+//			if(rc.isActive() && eloc.distanceSquaredTo(rc.getLocation())<=maxAttackRad)
+//				rc.attackSquare(eloc);
+//			else if(rc.isActive() && rc.canMove(loc.directionTo(eloc)))
+//				rc.move(loc.directionTo(eloc));
 			
-			if(rc.isActive() && eloc.distanceSquaredTo(rc.getLocation())<=maxAttackRad)
-				rc.attackSquare(eloc);
-			else if(rc.isActive() && rc.canMove(loc.directionTo(eloc)))
-				rc.move(loc.directionTo(eloc));
 			
 			rc.yield();
 		}
     }
+
+	private static void attackClosest(RobotController rc, MapLocation eloc) throws GameActionException {
+		int maxAttackRad = rc.getType().attackRadiusMaxSquared;
+		MapLocation loc = rc.getLocation();
+		//I'd like to put all this in a new function, attackClosest or something
+		if(rc.isActive() && eloc.distanceSquaredTo(rc.getLocation())<=maxAttackRad)
+			rc.attackSquare(eloc);
+		else if(rc.isActive() && rc.canMove(loc.directionTo(eloc)))
+			rc.move(loc.directionTo(eloc));
+		
+		
+	}
 
 	@SuppressWarnings("incomplete-switch")
 	public static Direction[] tryDirections(RobotController rc, Direction toDest, MapLocation dest){ //this method basically just returns a list of directions i think it should try when stuck. just logic'ed it out here.

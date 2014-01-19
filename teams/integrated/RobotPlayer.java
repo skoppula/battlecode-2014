@@ -25,10 +25,14 @@ public class RobotPlayer{
     	
 		//read from channel 0: get squad and role
     	int assignment = rc.readBroadcast(0);
-
-   
-    	if(type != RobotType.HQ)
+    	
+    	if(type == RobotType.HQ)
+    		//HQ.spawnRobot(rc); //maybe this one can be a spy??? hot fix
+    		System.out.println("you could spawn a spy here!");
+    	else if (type == RobotType.SOLDIER)
     		rc.broadcast(id, assignment);
+    	else if (type==RobotType.PASTR);
+    		rc.broadcast(id, Clock.getRoundNum());
 		
 		try {
         	while(true) {

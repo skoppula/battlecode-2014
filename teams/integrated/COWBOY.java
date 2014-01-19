@@ -50,8 +50,8 @@ public class COWBOY {
 		
 		Team team = rc.getTeam();
 		Team enemy = team.opponent();
-		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, 10000, enemy);
-		Robot[] allies = rc.senseNearbyGameObjects(Robot.class, 100, team);
+		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, enemy);
+		Robot[] allies = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, team);
 		
 		MapLocation loc = rc.getLocation();
 		
@@ -73,44 +73,25 @@ public class COWBOY {
 //		System.out.println(in + " " + squad + " " + status + " " + diff);
 //		System.out.println(squadInfo + " " + targetX + " " + targetY + " ");
 		
-		
 
-		if(t==types.DEFENDER && loc.distanceSquaredTo(new MapLocation(targetX, targetY))<16){
-	
-			if( (allies.length>3) && status==0 && rc.isActive()) {
-				rc.construct(RobotType.PASTR);
-				int left = (int) ((in/Math.pow(10, squad-diff)+1)*Math.pow(10, squad-diff));
-				int right = in % (int) Math.pow(10, squad-diff);
-//					System.out.println("LEFT LEFT LEFT: " + left + " " + right);
-				rc.broadcast(2, left + right);
-				System.out.println("Constructing a PASTR..." + allies.length + HQ.rush);
-				
-			} else if (allies.length>2 && status==1 && rc.isActive()) {
-				rc.construct(RobotType.NOISETOWER);
-				int left = (int) ((in/Math.pow(10, squad-diff)+1)*Math.pow(10, squad-diff));
-				int right = in % (int) Math.pow(10, squad-diff);
-				rc.broadcast(2, left + right);
-				System.out.println("Constructing a NT...");
-			}
-		}
-		
 		if(enemyRobots.length>0){
-			System.out.println("ENEMY DETECTCED BY ROBOT " + rc.getRobot().getID());
-			
-//			if(Math.random()>0.05)
-//				Util.moveToward(rc, new MapLocation(x, y)); //Regroup
-//			else
-//				Util.moveToward(rc, new MapLocation(targetX, targetY));
-			
-			MapLocation eloc = Util.nearestEnemyLoc(rc, enemyRobots, loc); //SHOULD NOT OUTPUT AN HQ LOCATION
-			
-			int maxAttackRad = rc.getType().attackRadiusMaxSquared;
-			
-			if(rc.isActive() && eloc.distanceSquaredTo(rc.getLocation())<=maxAttackRad)
-				rc.attackSquare(eloc);
-			else if(rc.isActive() && rc.canMove(eloc.directionTo(loc)))
-				rc.move(eloc.directionTo(loc));
-			
+//			System.out.println("ENEMY DETECTCED BY " + rc.getRobot().getID());
+//			
+////			if(Math.random()>0.05)
+////				Util.moveToward(rc, new MapLocation(x, y)); //Regroup
+////			else
+////				Util.moveToward(rc, new MapLocation(targetX, targetY));
+//			
+//			MapLocation eloc = Util.nearestEnemyLoc(rc, enemyRobots, loc); //SHOULD NOT OUTPUT AN HQ LOCATION
+//			
+//			int maxAttackRad = rc.getType().attackRadiusMaxSquared;
+//			
+//			if(rc.isActive() && eloc.distanceSquaredTo(rc.getLocation())<=maxAttackRad)
+//				rc.attackSquare(eloc);
+//			else if(rc.isActive() && rc.canMove(loc.directionTo(eloc))&&allies.length>enemyRobots.length)
+//				rc.move(loc.directionTo(eloc));
+//			
+			Util.toDoWhileMoving(rc);
 		} else if(loc.distanceSquaredTo(target) > 9) {
 			if (t==types.ATTACKER) {
 				if (allies.length > 3||Clock.getRoundNum() > 100) {
@@ -120,6 +101,30 @@ public class COWBOY {
 				Util.moveTo(rc, new MapLocation(targetX, targetY));
 			}
 			
+		}
+		
+		//hot fix until skanda can explain status method and how to change it
+		int a = rc.readBroadcast(51);
+
+		if(t==types.DEFENDER && loc.distanceSquaredTo(new MapLocation(targetX, targetY))<100){
+	
+			if( (allies.length>7) && status==0 && rc.isActive()) { //6 is threshold for valve, 7 beat Paul's rush
+				rc.construct(RobotType.PASTR);
+				int left = (int) ((in/Math.pow(10, squad-diff)+1)*Math.pow(10, squad-diff));
+				int right = in % (int) Math.pow(10, squad-diff);
+//					System.out.println("LEFT LEFT LEFT: " + left + " " + right);
+				rc.broadcast(2, left + right);
+				System.out.println("Constructing a PASTR..." + allies.length + HQ.rush);
+			} else if (allies.length>2 && (status==1||a > 0) && rc.isActive()) {
+				rc.construct(RobotType.NOISETOWER);
+				int left = (int) ((in/Math.pow(10, squad-diff)+1)*Math.pow(10, squad-diff));
+				int right = in % (int) Math.pow(10, squad-diff);
+				rc.broadcast(2, left + right);
+				System.out.println("Constructing a NT...");
+				//Communicates to the pastr that a NT was created, so if it is destroyed, pastr can tell
+				rc.broadcast(50, Clock.getRoundNum());
+				rc.broadcast(51, 0);
+			}
 		}
 		
 		
