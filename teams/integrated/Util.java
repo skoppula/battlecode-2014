@@ -150,22 +150,34 @@ public class Util {
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared, rc.getTeam().opponent());
 		MapLocation loc = rc.getLocation();
 		
-//		int val = rc.readBroadcast(rc.getRobot().getID());
-//		int squad = val/100;
+		int id = rc.getRobot().getID(); 
+		int assignment = rc.readBroadcast(id);
 		
-		//Keep a running average location of swarm
-//		int squadInfo = rc.readBroadcast(squad);
-//		int currX = (squadInfo/10000000), currY = (squadInfo/100000)%100;
-//		int x = (loc.x+currX)/2, y = (loc.y+currY)/2;
+		//Understand the assignment
+		int squad = Util.getSquad(assignment);
+		int role = Util.getRole(assignment);
+			
+		//if low on health send distress
+		if(rc.getHealth() == rc.getType().maxHealth*0.1){
+			int in = rc.readBroadcast(1);
+			//int len = (int) (Math.log10(in+1)+1)/3;
+			int len = String.valueOf(in).length()/3;
+			System.out.println("Sending distress signal! ID: " + id + " Squad: " + squad + " Role: " + role);
+			rc.broadcast(1, in+ (int) Math.pow(10, len)*(10*squad+role));
+			System.out.println(in+ (int) Math.pow(10, len)*(10*squad+role));
+		}
 		
 		while(enemyRobots.length>0){//SHOOT AT, OR RUN TOWARDS, ENEMIES
-			
-//			if(Math.random()>0.05)
-//				Util.moveToward(rc, new MapLocation(x, y)); //Regroup
-//			else
-//				Util.moveToward(rc, new MapLocation(targetX, targetY));
+			System.out.println("ENEMY DETECTCED BY ROBOT " + rc.getRobot().getID());
 			
 			loc = rc.getLocation();
+			MapLocation eHQloc = rc.senseEnemyHQLocation();
+			if (loc.distanceSquaredTo(eHQloc) < 20) {
+				Direction awayfromHQ = eHQloc.directionTo(rc.getLocation());
+				if (rc.isActive()&&rc.canMove(awayfromHQ)){
+					rc.move(awayfromHQ);
+				}
+			}
 			
 			MapLocation eloc = Util.nearestEnemyLoc(rc, enemyRobots, loc); //SHOULD NOT OUTPUT AN HQ LOCATION
 			if(eloc == null) {
@@ -177,8 +189,8 @@ public class Util {
 			
 			if(rc.isActive() && eloc.distanceSquaredTo(rc.getLocation())<=maxAttackRad)
 				rc.attackSquare(eloc);
-//			else if(rc.isActive() && rc.canMove(eloc.directionTo(loc)))
-//				rc.move(eloc.directionTo(loc));
+			else if(rc.isActive() && rc.canMove(loc.directionTo(eloc)))
+				rc.move(loc.directionTo(eloc));
 			
 			rc.yield();
 		}

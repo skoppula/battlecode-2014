@@ -159,19 +159,30 @@ public class HQ {
 		
 		//Channel 1: distress: [SS][T][SS][T]...SS=squad, and T = type of distressed robots
 		int in  = rc.readBroadcast(1);
-		int numRobots = (int) (Math.log10(in)+1)/3;
+		//int numRobots = (int) (Math.log10(in)+1)/3;
+		int numRobots = String.valueOf(in).length()/3;
 		
+		//System.out.println(numRobots + "this is the casualty num");
 		for(int i = 0; i < numRobots; i++){
 			int j = (int) (in/Math.pow(1000,i))%1000;
 			int type = j%10;
 			int squad = j/10;
+			//System.out.println(type + "and " + squad);
 			
 			//subtract from squad count signal and robot type count
 			System.out.println("ROBOT DIED from SQUAD: " + squad);
+			System.out.println(Arrays.toString(robotTypeCount));
 			robotTypeCount[type]--;
+			System.out.println(Arrays.toString(robotTypeCount));
 			int k = rc.readBroadcast(squad);
 			rc.broadcast(squad,(k/10000-1)*10000+k%10000);
 		}
+		
+		//reset the distress channel
+		rc.broadcast(1, 0);
+		
+		//System.out.println(in);
+		
 	}
 	
 	static void spawnRobot(RobotController rc) throws GameActionException{
@@ -181,7 +192,7 @@ public class HQ {
 			int squad = nextSquadNum(rc);
 			boolean spawnSuccess = false;
 			
-			if(squad > 10) {
+			if(squad > 10 ||rush) {
 				spawnSuccess = tryToSpawn(rc, 1);
 				if(spawnSuccess) {
 					int j = Util.assignmentToInt(squad, 1);
@@ -258,12 +269,6 @@ public class HQ {
 			pstrLocs[i] = new MapLocation(mapX/2, mapY/2);
 		}
 		
-		
-	        //double numberOfCows = rc.senseCowsAtLocation(checkLoc);
-		
-		//The first pasture will be right next to the HQ
-		//pstrLocs[0] = findHQpstr();
-		
 		//The next pastures are decided based on cow density
 		//Slides a 3x3 window across the entire map, intervals of three and returns windows with highest 
 		for(int i = 0; i < mapY-3; i+=4){
@@ -288,6 +293,10 @@ public class HQ {
 					}
 				}
 			}
+		}
+		//The first pasture will be right next to the HQ
+		if (rush) {
+			pstrLocs[0] = findHQpstr();
 		}
 
 		System.out.println(pstrLocs[0] + "and" + pstrLocs[1]);

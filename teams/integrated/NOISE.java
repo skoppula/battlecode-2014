@@ -8,7 +8,7 @@ import battlecode.common.RobotType;
 public class NOISE {
 
 	public static void print(String str){
-		System.out.println(str);
+		//System.out.println(str);
 	}
 	
     public static Direction allDirections[] = {Direction.NORTH, Direction.SOUTH, Direction.NORTH_EAST, Direction.SOUTH_EAST, Direction.WEST, Direction.SOUTH_WEST, Direction.NORTH_WEST, Direction.EAST};
@@ -17,7 +17,7 @@ public class NOISE {
 		Util.channelMove(rc);
 		rc.yield();
 		if(rc.isActive()){
-			System.out.print("constructing noise tower...");
+			//System.out.print("constructing noise tower...");
 			rc.construct(RobotType.NOISETOWER);
 		}
 		rc.yield();
