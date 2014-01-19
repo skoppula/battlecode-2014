@@ -104,11 +104,11 @@ public class COWBOY {
 		}
 		
 		//hot fix until skanda can explain status method and how to change it
-		int a = rc.readBroadcast(51);
+		int a = rc.readBroadcast(51); //if a is more than 0, the noisetower has been killed, make a new one
 
-		if(t==types.DEFENDER && loc.distanceSquaredTo(new MapLocation(targetX, targetY))<100){
+		if(t==types.DEFENDER && loc.distanceSquaredTo(new MapLocation(targetX, targetY))<25){
 	
-			if( (allies.length>7) && status==0 && rc.isActive()) { //6 is threshold for valve, 7 beat Paul's rush
+			if( (allies.length>6) && status==0 && rc.isActive()) { //6 is threshold for valve, 7 beat Paul's rush
 				rc.construct(RobotType.PASTR);
 				int left = (int) ((in/Math.pow(10, squad-diff)+1)*Math.pow(10, squad-diff));
 				int right = in % (int) Math.pow(10, squad-diff);
@@ -125,6 +125,10 @@ public class COWBOY {
 				rc.broadcast(50, Clock.getRoundNum());
 				rc.broadcast(51, 0);
 			}
+//			else {
+//				//sense chokepoints (utopia) and block those off
+//				Util.randomSneak(rc);
+//			}
 		}
 		
 		

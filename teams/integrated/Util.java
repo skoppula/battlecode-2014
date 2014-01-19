@@ -45,6 +45,16 @@ public class Util {
     	}
 	}
 	
+	public static void randomSneak(RobotController rc) throws GameActionException {
+		for (int i = 0; i<7; i++) {
+    		Direction move = allDirections[(int)(rand.nextDouble()*8)];
+            if(rc.isActive() && rc.canMove(move)){
+            	rc.sneak(move);
+            	
+            }
+    	}
+	}
+	
 	//Shoots any *all* nearby robots: does not coordinate shooting with other robots
 	static void indivShootNearby(RobotController rc, Robot[] enemyRobots) throws GameActionException {
 		MapLocation enemyHQ = rc.senseEnemyHQLocation();
@@ -114,10 +124,6 @@ public class Util {
 	
 	
 	
-	
-	
-	
-	
     public static int indexOfMin(int... arr) {
         int idx = -1;
         int p = Integer.MAX_VALUE;
@@ -168,59 +174,42 @@ public class Util {
 		}
 		
 		//hot fix, broadcast sensed enemy location to channel 60, so other defenders respond to rush
-		int defend = rc.readBroadcast(60); //Ash test
-		while(enemyRobots.length>0||defend>0){//SHOOT AT, OR RUN TOWARDS, ENEMIES
+		int defend = rc.readBroadcast(60); //Ash test //could be a global variable in this class...
+		
+		//prepare against sneak attack from behind or out of range
+		if (defend > 0) { //Ash test
 
-			System.out.println(defend + "defending number??");
-			loc = rc.getLocation();
-			MapLocation eHQloc = rc.senseEnemyHQLocation();
-			if (loc.distanceSquaredTo(eHQloc) < 20) {
-				Direction awayfromHQ = eHQloc.directionTo(rc.getLocation());
-				if (rc.isActive()&&rc.canMove(awayfromHQ)){
-					rc.move(awayfromHQ);
-				}
+			System.out.println(defend + "Defend signal reached, going to the rescue!!");
+			MapLocation eloc = Util.intToLoc(defend);
+			if (eloc.distanceSquaredTo(loc) > 100) {
+				rc.broadcast(60, 0); //The robot broadcasted a wrong location, nothing to do with you. hot fix
+			} else {
+				//attack closest
+				//attackClosest(rc, eloc);
+				moveTo(rc, eloc);
+				rc.broadcast(60, 0);
 			}
+		}
+		
+		while(enemyRobots.length>0){//SHOOT AT, OR RUN TOWARDS, ENEMIES
+//			//Sense nearby game objects, 200 bytecode
+//			enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, rc.getTeam().opponent());
+//			loc = rc.getLocation();
 			
-			//Ash test all of line 184 to 208
-			MapLocation eloc = eHQloc; //probably a bad decision, but it's a hot fix.
-			if (defend > 0) { //Ash test
-
-				System.out.println(defend + "defending =??");
-				eloc = Util.intToLoc(defend);
-				if (eloc.distanceSquaredTo(rc.getLocation()) > 10) {
-					rc.broadcast(60, 0); //The robot broadcasted a wrong location, nothing to do with you. hot fix
-				} else {
-					//attack closest
-					attackClosest(rc, eloc);
-					rc.broadcast(60, 0);
-				}
-			}
-			else {
-				eloc = Util.nearestEnemyLoc(rc, enemyRobots, loc); //SHOULD NOT OUTPUT AN HQ LOCATION
-				if (eloc !=null) { //Ash test 199 - 206
-					rc.broadcast(60, Util.locToInt(eloc));  //maybe only do this once?
-					attackClosest(rc, eloc);
-				} else {
-					//I'd like to have this structure, but if you want to return it, delete all the Ash test commented lines
-					System.out.println("ENEMY LOCATION IS NULL");
-					break;
-				}
-			}
-				
 			//to return to original state, uncomment below
-			//eloc = Util.nearestEnemyLoc(rc, enemyRobots, loc); //SHOULD NOT OUTPUT AN HQ LOCATION
-//			if(eloc == null) {
-//				System.out.println("ENEMY LOCATION IS NULL");
-//				break;
-//			}
+			MapLocation eloc = Util.nearestEnemyLoc(rc, enemyRobots, loc); //SHOULD NOT OUTPUT AN HQ LOCATION
+			if(eloc == null) {
+				System.out.println("ENEMY LOCATION IS NULL");
+				break;
+			}
 			
-//			int maxAttackRad = rc.getType().attackRadiusMaxSquared;
-//			
-//			//I'd like to put all this in a new function, attackClosest or something
-//			if(rc.isActive() && eloc.distanceSquaredTo(rc.getLocation())<=maxAttackRad)
-//				rc.attackSquare(eloc);
-//			else if(rc.isActive() && rc.canMove(loc.directionTo(eloc)))
-//				rc.move(loc.directionTo(eloc));
+			int maxAttackRad = rc.getType().attackRadiusMaxSquared;
+			
+			//I'd like to put all this in a new function, attackClosest or something
+			if(rc.isActive() && eloc.distanceSquaredTo(rc.getLocation())<=maxAttackRad)
+				rc.attackSquare(eloc);
+			else if(rc.isActive() && rc.canMove(loc.directionTo(eloc)))
+				rc.move(loc.directionTo(eloc));
 			
 			
 			rc.yield();
@@ -235,7 +224,6 @@ public class Util {
 			rc.attackSquare(eloc);
 		else if(rc.isActive() && rc.canMove(loc.directionTo(eloc)))
 			rc.move(loc.directionTo(eloc));
-		
 		
 	}
 
@@ -385,7 +373,7 @@ public class Util {
 
     	while(rc.getLocation().equals(dest)==false){
     		toDoWhileMoving(rc);
-    		if(rc.getType() == RobotType.SOLDIER && rc.getLocation().distanceSquaredTo(dest) < 4){
+    		if(rc.getType() == RobotType.SOLDIER && rc.getLocation().distanceSquaredTo(dest) < 9){
     			break;
     		}
     		if(rc.isActive() && rc.canMove(toDest)){
@@ -430,7 +418,7 @@ public class Util {
     	Direction toDest = rc.getLocation().directionTo(dest);
     	while(rc.getLocation().equals(dest) == false){
     		toDoWhileMoving(rc);
-    		if(rc.getType() == RobotType.SOLDIER && rc.getLocation().distanceSquaredTo(dest) < 4){
+    		if(rc.getType() == RobotType.SOLDIER && rc.getLocation().distanceSquaredTo(dest) < 9){
     			break;
     		}
     		x = rc.readBroadcast(rc.getRobot().getID());

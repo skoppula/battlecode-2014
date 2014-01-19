@@ -50,7 +50,7 @@ public class HQ {
 		
 		Robot[] allies = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared, team);
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared, enemy);
-		if(allies.length < enemyRobots.length)
+		if(enemyRobots.length > 0)
 			Util.indivShootNearby(rc, enemyRobots);
 		else
 			spawnRobot(rc);
@@ -201,7 +201,9 @@ public class HQ {
 					System.out.println("Spawned an attacker: " + j);
 				}
 				
-			} else if (squad < 11 && robotTypeCount[0] < 8*desiredPASTRs.length) {
+			//} else if (squad < 11 && robotTypeCount[0] < 8*desiredPASTRs.length) {
+				//because our robot death count isn't working, this part is not working, so I hacked it
+			} else if (squad < 11 && rc.senseRobotCount() < 8*desiredPASTRs.length) {
 				spawnSuccess = tryToSpawn(rc, 0);
 				if(spawnSuccess){
 					int j = Util.assignmentToInt(squad, 0);
