@@ -36,7 +36,7 @@ public class COWBOY {
 			//System.out.println(in+ (int) Math.pow(10, len)*(10*squad+role));
 			
 			if(squad == 0)
-				rc.broadcast(10, 1);
+				rc.broadcast(10, squad);
 		}
 		
 		//ATTACKERS - attack enemy pastrs in a swarm, regroup if necessary

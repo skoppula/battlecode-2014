@@ -10,6 +10,7 @@ import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.Robot;
 import battlecode.common.RobotController;
+import battlecode.common.RobotType;
 import battlecode.common.Team;
 import battlecode.common.TerrainTile;
 
@@ -196,18 +197,17 @@ public class HQ {
 			
 			int squad = nextSquadNum(rc);
 			boolean spawnSuccess = false;
+			Robot[] allies = rc.senseNearbyGameObjects(Robot.class, RobotType.SOLDIER.attackRadiusMaxSquared/2, team);
 			
-			if(squad > 10 || rush) {
+			if(squad > 10) {
 				spawnSuccess = tryToSpawn(rc, 1);
 				if(spawnSuccess) {
 					int j = Util.assignmentToInt(squad, 1);
 					rc.broadcast(0, j);
 					System.out.println("Spawned an attacker: " + j);
 				}
-				
-			//} else if (squad < 11 && robotTypeCount[0] < 8*desiredPASTRs.length) {
-				//because our robot death count isn't working, this part is not working, so I hacked it
-			} else if (squad < 11 && rc.senseRobotCount() < 8*desiredPASTRs.length) {
+			
+			} else if (squad < 11) {
 				spawnSuccess = tryToSpawn(rc, 0);
 				if(spawnSuccess){
 					int j = Util.assignmentToInt(squad, 0);
@@ -226,20 +226,27 @@ public class HQ {
 	//Determines squad of robot to by spawned next 
 	private static int nextSquadNum(RobotController rc) throws GameActionException {
 		
+		//If it reads that defensive robots are dying from channel 10
+		int squad = rc.readBroadcast(10);
+		if(squad>0){
+			rc.broadcast(10, 0); //reset value
+			return squad;
+		}
+		
 		//If starting out a rush, spawn enough attacking squads.
-		if(rush) {
+		if(rush && Clock.getRoundNum() < 1000) {
 			for(int i = 11; i < 12; i++){
-				if((rc.readBroadcast(i)/10000)%10<10)
+				if((rc.readBroadcast(i)/10000)%10<8)
 					return i;
 			}
 		} 
 		
 		//Else if didn't establish pastures yet, need defensive squads
 		for(int i = 3; i < 3+desiredPASTRs.length; i++){
-			if((rc.readBroadcast(i)/10000)%10<10)
+			if((rc.readBroadcast(i)/10000)%10<6)
 				return i;
 		}
-			
+		
 		//else spawn attackers
 		for(int i = 11; i < 21; i++){
 			if((rc.readBroadcast(i)/10000)%10<6)
