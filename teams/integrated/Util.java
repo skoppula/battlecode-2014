@@ -45,6 +45,16 @@ public class Util {
     	}
 	}
 	
+	public static void randomSneak(RobotController rc) throws GameActionException {
+		for (int i = 0; i<7; i++) {
+    		Direction move = allDirections[(int)(rand.nextDouble()*8)];
+            if(rc.isActive() && rc.canMove(move)){
+            	rc.sneak(move);
+            	
+            }
+    	}
+	}
+	
 	//Shoots any *all* nearby robots: does not coordinate shooting with other robots
 	static void indivShootNearby(RobotController rc, Robot[] enemyRobots) throws GameActionException {
 		MapLocation enemyHQ = rc.senseEnemyHQLocation();
@@ -114,10 +124,6 @@ public class Util {
 	
 	
 	
-	
-	
-	
-	
     public static int indexOfMin(int... arr) {
         int idx = -1;
         int p = Integer.MAX_VALUE;
@@ -146,43 +152,80 @@ public class Util {
 	}
 	
 	public static void toDoWhileMoving (RobotController rc) throws GameActionException{
-		
-		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared, rc.getTeam().opponent());
+		//Sense nearby game objects, 200 bytecode
+		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, rc.getTeam().opponent());
 		MapLocation loc = rc.getLocation();
 		
-//		int val = rc.readBroadcast(rc.getRobot().getID());
-//		int squad = val/100;
+		int id = rc.getRobot().getID(); 
+		int assignment = rc.readBroadcast(id);
 		
-		//Keep a running average location of swarm
-//		int squadInfo = rc.readBroadcast(squad);
-//		int currX = (squadInfo/10000000), currY = (squadInfo/100000)%100;
-//		int x = (loc.x+currX)/2, y = (loc.y+currY)/2;
+		//Understand the assignment
+		int squad = Util.getSquad(assignment);
+		int role = Util.getRole(assignment);
+			
+		//if low on health send distress
+		if(rc.getHealth() < rc.getType().maxHealth*0.4){
+			int in = rc.readBroadcast(1);
+			//int len = (int) (Math.log10(in+1)+1)/3;
+			int len = String.valueOf(in).length()/3;
+			System.out.println("Sending distress signal! ID: " + id + " Squad: " + squad + " Role: " + role);
+			rc.broadcast(1, in+ (int) Math.pow(10, len)*(10*squad+role));
+			System.out.println(in+ (int) Math.pow(10, len)*(10*squad+role));
+		}
+		
+		//hot fix, broadcast sensed enemy location to channel 60, so other defenders respond to rush
+		int defend = rc.readBroadcast(60); //Ash test //could be a global variable in this class...
+		
+		//prepare against sneak attack from behind or out of range
+		if (defend > 0) { //Ash test
+
+			System.out.println(defend + "Defend signal reached, going to the rescue!!");
+			MapLocation eloc = Util.intToLoc(defend);
+			if (eloc.distanceSquaredTo(loc) > 100) {
+				rc.broadcast(60, 0); //The robot broadcasted a wrong location, nothing to do with you. hot fix
+			} else {
+				//attack closest
+				//attackClosest(rc, eloc);
+				moveTo(rc, eloc);
+				rc.broadcast(60, 0);
+			}
+		}
 		
 		while(enemyRobots.length>0){//SHOOT AT, OR RUN TOWARDS, ENEMIES
+//			//Sense nearby game objects, 200 bytecode
+//			enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, rc.getTeam().opponent());
+//			loc = rc.getLocation();
 			
-//			if(Math.random()>0.05)
-//				Util.moveToward(rc, new MapLocation(x, y)); //Regroup
-//			else
-//				Util.moveToward(rc, new MapLocation(targetX, targetY));
-			
-			loc = rc.getLocation();
-			
+			//to return to original state, uncomment below
 			MapLocation eloc = Util.nearestEnemyLoc(rc, enemyRobots, loc); //SHOULD NOT OUTPUT AN HQ LOCATION
 			if(eloc == null) {
-//				System.out.println("ENEMY LOCATION IS NULL");
+				System.out.println("ENEMY LOCATION IS NULL");
 				break;
 			}
 			
 			int maxAttackRad = rc.getType().attackRadiusMaxSquared;
 			
+			//I'd like to put all this in a new function, attackClosest or something
 			if(rc.isActive() && eloc.distanceSquaredTo(rc.getLocation())<=maxAttackRad)
 				rc.attackSquare(eloc);
-//			else if(rc.isActive() && rc.canMove(eloc.directionTo(loc)))
-//				rc.move(eloc.directionTo(loc));
+			else if(rc.isActive() && rc.canMove(loc.directionTo(eloc)))
+				rc.move(loc.directionTo(eloc));
+			
 			
 			rc.yield();
 		}
     }
+
+	private static void attackClosest(RobotController rc, MapLocation eloc) throws GameActionException {
+		int maxAttackRad = rc.getType().attackRadiusMaxSquared;
+		MapLocation loc = rc.getLocation();
+		//I'd like to put all this in a new function, attackClosest or something
+		if(rc.isActive() && eloc.distanceSquaredTo(rc.getLocation())<=maxAttackRad)
+			rc.attackSquare(eloc);
+		else if(rc.isActive() && rc.canMove(loc.directionTo(eloc)))
+			rc.move(loc.directionTo(eloc));
+		
+	}
 
 	@SuppressWarnings("incomplete-switch")
 	public static Direction[] tryDirections(RobotController rc, Direction toDest, MapLocation dest){ //this method basically just returns a list of directions i think it should try when stuck. just logic'ed it out here.
@@ -330,7 +373,7 @@ public class Util {
 
     	while(rc.getLocation().equals(dest)==false){
     		toDoWhileMoving(rc);
-    		if(rc.getType() == RobotType.SOLDIER && rc.getLocation().distanceSquaredTo(dest) < 4){
+    		if(rc.getType() == RobotType.SOLDIER && rc.getLocation().distanceSquaredTo(dest) < 9){
     			break;
     		}
     		if(rc.isActive() && rc.canMove(toDest)){
@@ -375,7 +418,7 @@ public class Util {
     	Direction toDest = rc.getLocation().directionTo(dest);
     	while(rc.getLocation().equals(dest) == false){
     		toDoWhileMoving(rc);
-    		if(rc.getType() == RobotType.SOLDIER && rc.getLocation().distanceSquaredTo(dest) < 4){
+    		if(rc.getType() == RobotType.SOLDIER && rc.getLocation().distanceSquaredTo(dest) < 9){
     			break;
     		}
     		x = rc.readBroadcast(rc.getRobot().getID());

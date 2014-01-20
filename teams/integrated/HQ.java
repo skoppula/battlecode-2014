@@ -48,6 +48,7 @@ public class HQ {
 		updateSquadLocs(rc);
 		updateRobotDistro(rc);
 		
+		Robot[] allies = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared, team);
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared, enemy);
 		if(enemyRobots.length > 0)
 			Util.indivShootNearby(rc, enemyRobots);
@@ -68,11 +69,11 @@ public class HQ {
     	idealNumPastures = computeNumPastures();
     	enemyHQ = rc.senseEnemyHQLocation();
     	teamHQ = rc.senseHQLocation();
-    	
+    	createTerrainMap();
     	desiredPASTRs = findPastureLocs();
     	System.out.println("Desired pastures : " + Arrays.deepToString(desiredPASTRs));
     	
-    	createTerrainMap();
+    	
     	initializerRun = true;
     	
     	rush = startRush(rc);
@@ -80,14 +81,15 @@ public class HQ {
     	rand = new Random(17);
     }
 	
-	//Put into channels correct pasture locations and enemy locations
+	//Put team and enemy team pasture, squad, and role info into channels
 	static void updateSquadLocs(RobotController rc) throws GameActionException{
-
+		//DEFENDER CHANNELS - 3 to about 8
+		//format: [N][XXYY] where N is robot count in the squad and XXYY are coordinates
 		for(int i = 0; i < desiredPASTRs.length; i++)
 			rc.broadcast(i+3, (rc.readBroadcast(i+3)/10000)*10000 + Util.locToInt(desiredPASTRs[i]));
 		
+		//RUSH CHANNEL - 11
 		MapLocation[] enemyPASTRs = rc.sensePastrLocations(enemy);
-		
 		if(rush)
 			rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(enemyHQ));
 		else if(enemyPASTRs.length>0)
@@ -99,7 +101,8 @@ public class HQ {
 	}
 	
 	static boolean startRush(RobotController rc){
-		if(enemyHQ.distanceSquaredTo(teamHQ) < 1800){
+		double mapDensity = findMapDensity();
+		if(enemyHQ.distanceSquaredTo(teamHQ) < 900 &&mapDensity < .5){
 			System.out.println("START-OF-GAME RUSHING THE OTHER TEAM");
 			return true;
 		} else {
@@ -108,24 +111,79 @@ public class HQ {
 		}
 	}
 	
+	private static double findMapDensity() {
+		//what's the map density
+		//what's the wall count between HQ's?
+		//how easy is it to navigate to enemyHQ? (guess? maybe?)
+		int normal = 0;
+		int wall = 0;
+		int road = 0;
+		int tileType;
+		
+		int Ystart = 0, Yend = 0, Xstart = 0, Xend=0;
+		//only focus on range between HQ's
+		if (teamHQ.y < enemyHQ.y) { //If our team HQ is north of enemy HQ
+			Ystart = teamHQ.y;
+			Yend = enemyHQ.y;
+		} else {
+			Ystart = enemyHQ.y;
+			Yend = teamHQ.y+3;
+		}
+		if (teamHQ.x < enemyHQ.x) { //If our team HQ is left of enemy HQ
+			Xstart = teamHQ.x;
+			Xend = enemyHQ.x;
+		} else {
+			Xstart = enemyHQ.y;
+			Xend = teamHQ.y;
+		}
+		
+		for (int i=Ystart;i<Yend;i++) {
+			for (int j=Xstart;j<Xend;j++) {
+				tileType = terrainMap[j][i];
+				if (tileType==NORMAL) {
+					normal+=1;
+				} else if (tileType==ROAD) {
+					road+=1;
+				} else if (tileType==WALL) {
+					wall+=1;
+				}
+			}
+		}
+		double density = (double) (wall)/(normal+road+wall);
+		
+		return density;
+		
+	}
+
 	//Keep track of deaths
 	static void updateRobotDistro(RobotController rc) throws GameActionException{
 		
 		//Channel 1: distress: [SS][T][SS][T]...SS=squad, and T = type of distressed robots
 		int in  = rc.readBroadcast(1);
-		int numRobots = (int) (Math.log10(in)+1)/3;
+		//int numRobots = (int) (Math.log10(in)+1)/3;
+		int numRobots = String.valueOf(in).length()/3;
 		
+		//System.out.println(numRobots + "this is the casualty num");
 		for(int i = 0; i < numRobots; i++){
 			int j = (int) (in/Math.pow(1000,i))%1000;
 			int type = j%10;
 			int squad = j/10;
+			//System.out.println(type + "and " + squad);
 			
 			//subtract from squad count signal and robot type count
 			System.out.println("ROBOT DIED from SQUAD: " + squad);
+			System.out.println(Arrays.toString(robotTypeCount));
 			robotTypeCount[type]--;
+			System.out.println(Arrays.toString(robotTypeCount));
 			int k = rc.readBroadcast(squad);
 			rc.broadcast(squad,(k/10000-1)*10000+k%10000);
 		}
+		
+		//reset the distress channel
+		rc.broadcast(1, 0);
+		
+		//System.out.println(in);
+		
 	}
 	
 	static void spawnRobot(RobotController rc) throws GameActionException{
@@ -135,7 +193,7 @@ public class HQ {
 			int squad = nextSquadNum(rc);
 			boolean spawnSuccess = false;
 			
-			if(squad > 10) {
+			if(squad > 10 ||rush) {
 				spawnSuccess = tryToSpawn(rc, 1);
 				if(spawnSuccess) {
 					int j = Util.assignmentToInt(squad, 1);
@@ -143,7 +201,9 @@ public class HQ {
 					System.out.println("Spawned an attacker: " + j);
 				}
 				
-			} else if (squad < 11 && robotTypeCount[0] < 5*desiredPASTRs.length) {
+			//} else if (squad < 11 && robotTypeCount[0] < 8*desiredPASTRs.length) {
+				//because our robot death count isn't working, this part is not working, so I hacked it
+			} else if (squad < 11 && rc.senseRobotCount() < 8*desiredPASTRs.length) {
 				spawnSuccess = tryToSpawn(rc, 0);
 				if(spawnSuccess){
 					int j = Util.assignmentToInt(squad, 0);
@@ -165,14 +225,14 @@ public class HQ {
 		//If starting out a rush, spawn enough attacking squads.
 		if(rush) {
 			for(int i = 11; i < 12; i++){
-				if((rc.readBroadcast(i)/10000)%10<6)
+				if((rc.readBroadcast(i)/10000)%10<10)
 					return i;
 			}
 		} 
 		
 		//Else if didn't establish pastures yet, need defensive squads
 		for(int i = 3; i < 3+desiredPASTRs.length; i++){
-			if((rc.readBroadcast(i)/10000)%10<5)
+			if((rc.readBroadcast(i)/10000)%10<10)
 				return i;
 		}
 			
@@ -212,12 +272,6 @@ public class HQ {
 			pstrLocs[i] = new MapLocation(mapX/2, mapY/2);
 		}
 		
-		
-	        //double numberOfCows = rc.senseCowsAtLocation(checkLoc);
-		
-		//The first pasture will be right next to the HQ
-		pstrLocs[0] = findHQpstr();
-		
 		//The next pastures are decided based on cow density
 		//Slides a 3x3 window across the entire map, intervals of three and returns windows with highest 
 		for(int i = 0; i < mapY-3; i+=4){
@@ -231,7 +285,7 @@ public class HQ {
 				double weight = hq.getLocation().distanceSquaredTo(new MapLocation(j,i));
 				double weight1 = hq.senseEnemyHQLocation().distanceSquaredTo(new MapLocation(j,i));
 				
-				for(int k = 1; k < idealNumPastures; k++){
+				for(int k = 0; k < idealNumPastures; k++){
 					
 					//Balancing profit in pasture productivity vs. distance: (sum-weight/10)
 					if((sum-weight/weight1)>pstrCowDens[k]){
@@ -243,27 +297,44 @@ public class HQ {
 				}
 			}
 		}
+		//The first pasture will be right next to the HQ
+		pstrLocs[0] = findHQpstr(pstrLocs[0]);
 
-		System.out.println(pstrLocs);
+		System.out.println(pstrLocs[0] + "and" + pstrLocs[1]);
+		
 		return pstrLocs;
 	}
 		
-	private static MapLocation findHQpstr() {
+	private static MapLocation findHQpstr(MapLocation origPstr) throws GameActionException {
 		// returns the first pstr location, close to the HQ so it can be defended well
 		MapLocation HQ = hq.senseHQLocation();
 		MapLocation enemyHQ = hq.senseEnemyHQLocation();
-		Direction away_from_enemy = enemyHQ.directionTo(HQ);
-		MapLocation HQpstr = null;
+		Direction toward_enemy = HQ.directionTo(enemyHQ);
+		MapLocation HQpstr = origPstr;
 		
-		if (hq.canMove(away_from_enemy)) { //check to see if that spot exists
-			HQpstr = HQ.add(away_from_enemy);
-		} else { //that spot is probably in a wall, which would be weird, but possible
-			for (Direction i:Util.allDirections) {
-				if (hq.canMove(i)) {
-					return HQ.add(away_from_enemy);
-				}
+		int r = hq.getType().sensorRadiusSquared;
+		//System.out.println(r);
+		
+		for (Direction i:Util.allDirections) {
+			MapLocation p = HQ.add(i, 10); //perimeter location
+			System.out.println("map" + p.x + "" + p.y);
+			if (p.x < 0 || p.x > mapX || p.y < 0 || p.y > mapY||i==toward_enemy)
+				continue;
+			else {
+				int a = terrainMap[p.x][p.y];
+				System.out.println(a);
+				if (a==NORMAL||a==ROAD) {
+					return p;
+				}	
 			}
+			
 		}
+		
+//		if (cowDensMap[test.x, test.y] > 1) { //check to see if that spot exists
+//			HQpstr = HQ.add(away_from_enemy);
+//		} else { //that spot is probably in a wall, which would be weird, but possible
+//			
+//		}
 		return HQpstr;
 	}
 	
