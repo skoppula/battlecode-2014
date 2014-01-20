@@ -9,6 +9,36 @@ import battlecode.common.RobotInfo;
 import battlecode.common.RobotType;
 
 public class PASTR {
+	static int squad = 0;
+	static boolean sentBroadcast = false;
+	
+	public static void getSquad(RobotController rc) throws GameActionException{
+		Robot[] closeBy = rc.senseNearbyGameObjects(Robot.class, 9);
+		if(closeBy.length>1){
+			int nearestID = closeBy[0].getID();
+			squad = Util.getSquad(rc.readBroadcast(nearestID));
+		}
+	}
+	
+	public static void checkHealth(RobotController rc) throws GameActionException{
+		int x = 0; //amount to decrement digit in channel 2 according to squad number
+		if(rc.getHealth()<=rc.getType().maxHealth*.5){
+			sentBroadcast = true;
+			System.out.println("LOSING A PASTURE");
+			int in = rc.readBroadcast(2);
+			System.out.println(in);
+			if((int) in/Math.pow(10, squad-3) == 1){
+				x = 1;
+			}
+			else{
+				x = 2;
+			}
+			int left = (int) ((in/Math.pow(10, squad-3)-x)*Math.pow(10, squad-3));
+			int right = in % (int) Math.pow(10, squad-3);
+			rc.broadcast(2, left + right);
+			System.out.println(left+right);
+		}
+	}
 
 	public static void maintainPasture(RobotController rc) throws GameActionException {
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, HQ.enemy);
@@ -48,7 +78,9 @@ public class PASTR {
 			rc.broadcast(51, 1); //should say squad number
 			//Skanda, how to change the status variable back to 1???
 		}
-		
+		if(sentBroadcast == false){
+			checkHealth(rc);
+		}
 		
 	}
 }
