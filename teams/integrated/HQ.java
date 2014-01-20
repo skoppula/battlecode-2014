@@ -86,20 +86,16 @@ public class HQ {
 		//DEFENDER CHANNELS - 3 to about 8
 		//format: [N][XXYY] where N is robot count in the squad and XXYY are coordinates
 		
-		if(rc.readBroadcast(9)>0) { //If haven't reached rally point yet
-			
-		} else {
-			//RUSH CHANNEL - 11
-			MapLocation[] enemyPASTRs = rc.sensePastrLocations(enemy);
-			MapLocation rallyPoint = new MapLocation ((enemyHQ.x + 2*teamHQ.x)/3, (enemyHQ.y + 2*teamHQ.y)/3);
-			if(rush)
-				rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(rallyPoint));
-			else if(enemyPASTRs.length>0)
-				rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(enemyPASTRs[0]));
-			
-			for(int i = 0; i < enemyPASTRs.length; i++) {
-				rc.broadcast(i+12, (rc.readBroadcast(i+12)/10000)*10000 + Util.locToInt(enemyPASTRs[i]));	
-			}
+		//RUSH CHANNEL - 11
+		MapLocation[] enemyPASTRs = rc.sensePastrLocations(enemy);
+		MapLocation rallyPoint = new MapLocation ((enemyHQ.x + 2*teamHQ.x)/3, (enemyHQ.y + 2*teamHQ.y)/3);
+		if(rush)
+			rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(rallyPoint));
+		else if(enemyPASTRs.length>0)
+			rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(enemyPASTRs[0]));
+		
+		for(int i = 0; i < enemyPASTRs.length; i++) {
+			rc.broadcast(i+12, (rc.readBroadcast(i+12)/10000)*10000 + Util.locToInt(enemyPASTRs[i]));	
 		}
 		
 		for(int i = 0; i < desiredPASTRs.length; i++)
