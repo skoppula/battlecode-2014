@@ -16,10 +16,17 @@ public class PASTR {
 		
 		int NTcount = 0;
 		int lastNTconstruct = rc.readBroadcast(50);
+		int NTexistenceChannel = 51;
 		
 		int spawnRound = rc.readBroadcast(rc.getRobot().getID());
+		int areaSafeChannel = 52;
 		//if after, say 150 rounds the pastr still exists, then it is well defended and set up
 		//we can definitely set up surrounding pastrs, since we assume the area is well defended
+		if (Clock.getRoundNum() > spawnRound + 150) {
+			//broadcast to the HQ that the area is well defended and you can start with the late Economy game
+			int area = Util.locToInt(rc.getLocation());
+			rc.broadcast(areaSafeChannel, area);
+		}
 		
 		if (allies.length < enemyRobots.length) {
 			//ask the HQ for reinforcements
@@ -42,7 +49,6 @@ public class PASTR {
 			//Skanda, how to change the status variable back to 1???
 		}
 		
-		System.out.println(NTcount);
 		
 	}
 }
