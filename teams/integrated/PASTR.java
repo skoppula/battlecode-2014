@@ -78,8 +78,12 @@ public class PASTR {
 			//Skanda, how to change the status variable back to 1???
 		}
 		
+<<<<<<< HEAD
 		if(sentBroadcast == false){
 			checkHealth(rc);
 		}
+=======
+		
+>>>>>>> 5edfce9a656fcf1a1ac896adfe5f31dbe9695000
 	}
 }

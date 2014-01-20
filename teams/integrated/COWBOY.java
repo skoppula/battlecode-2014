@@ -51,9 +51,11 @@ public class COWBOY {
 		
 		Team team = rc.getTeam();
 		Team enemy = team.opponent();
-		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, enemy);
 		Robot[] allies = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, team);
+<<<<<<< HEAD
 		MapLocation[] enemyPastrs = rc.sensePastrLocations(rc.getTeam().opponent());
+=======
+>>>>>>> 5edfce9a656fcf1a1ac896adfe5f31dbe9695000
 		MapLocation loc = rc.getLocation();
 		
 		//Keep a running average location of swarm
@@ -66,6 +68,7 @@ public class COWBOY {
 		//broadcast the new average
 		rc.broadcast(squad, x*10000000+y*100000+squadInfo%100000);
 		
+<<<<<<< HEAD
 		//PASTR and NT creation
 		int in = rc.readBroadcast(2);
 		int diff = squad > 10 ? 11 : 3;
@@ -93,15 +96,48 @@ public class COWBOY {
 		int safeArea = rc.readBroadcast(52); //52 is the areasafe channel
 		if(t==types.DEFENDER && loc.distanceSquaredTo(new MapLocation(targetX, targetY))<25){
 	
+=======
+		if(t == types.ATTACKER){
+			
+			//If attacking HQ, have new HQ target outside HQ attack range
+			if(rc.senseEnemyHQLocation().equals(new MapLocation(targetX, targetY))) {
+				targetX -= RobotType.HQ.attackRadiusMaxSquared/Math.sqrt(2);
+				targetY -= RobotType.HQ.attackRadiusMaxSquared/Math.sqrt(2);
+			}
+			
+			//Move away from home HQ
+			if(loc.distanceSquaredTo(rc.senseHQLocation()) < 25)
+				Util.tryToMove(rc);
+			
+			//AND THEN GO TO RIGHT PLACE
+			if(Math.pow(loc.x-target.x,2) + Math.pow(loc.y-target.y, 2) > 2)
+				Util.moveTo(rc, new MapLocation(targetX, targetY));
+			
+			Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, enemy);
+			MapLocation eloc = Util.nearestEnemyLoc(rc, enemyRobots, rc.getLocation());
+			
+			if(rc.isActive() && rc.canAttackSquare(eloc))
+				rc.attackSquare(eloc);
+				
+		} else if (t == types.DEFENDER) {
+			
+			//PASTR and NT creation
+			int in = rc.readBroadcast(2);
+			int diff = squad > 10 ? 11 : 3;
+			int status = (in/(int) Math.pow(10, squad-diff)) % 10; // should be 0, 1, or 2
+			
+			int a = rc.readBroadcast(51);
+			
+>>>>>>> 5edfce9a656fcf1a1ac896adfe5f31dbe9695000
 			if( (allies.length>4) && status==0 && rc.isActive()) { //6 is the optimal for big maps
 				//with 5 we barely fend them off but we get a shit ton more milk
 				//with 4 we actually win decisively...wtf!
 				rc.construct(RobotType.PASTR);
 				int left = (int) ((in/Math.pow(10, squad-diff)+1)*Math.pow(10, squad-diff));
 				int right = in % (int) Math.pow(10, squad-diff);
-//					System.out.println("LEFT LEFT LEFT: " + left + " " + right);
 				rc.broadcast(2, left + right);
 				System.out.println("Constructing a PASTR..." + allies.length + HQ.rush);
+<<<<<<< HEAD
 			}
 			else if (safeArea > 0){ //if the area is defended //NOTE THIS IS UNFINISHED DON'T PAY ATTENTION
 				//System.out.println(safeArea);
@@ -124,24 +160,32 @@ public class COWBOY {
 //				}
 			}
 			else if (allies.length>2 && (status==1||a > 0) && rc.isActive()) {
+=======
+				
+			} else if (allies.length>2 && (status==1||a > 0) && rc.isActive()) {
+>>>>>>> 5edfce9a656fcf1a1ac896adfe5f31dbe9695000
 				rc.construct(RobotType.NOISETOWER);
 				int left = (int) ((in/Math.pow(10, squad-diff)+1)*Math.pow(10, squad-diff));
 				int right = in % (int) Math.pow(10, squad-diff);
 				rc.broadcast(2, left + right);
 				System.out.println("Constructing a NT...");
+				
 				//Communicates to the pastr that a NT was created, so if it is destroyed, pastr can tell
 				rc.broadcast(50, Clock.getRoundNum());
 				rc.broadcast(51, 0);
 			}
-//			else {
-//				//sense chokepoints (utopia) and block those off
-//				Util.randomSneak(rc);
-//			}
+			
+			//THEN GO TO RIGHT PLACE
+			if(Math.pow(loc.x-target.x,2) + Math.pow(loc.y-target.y, 2) > 4)
+				Util.moveTo(rc, new MapLocation(targetX, targetY));
+			
+			Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, enemy);
+			MapLocation eloc = Util.nearestEnemyLoc(rc, enemyRobots, rc.getLocation());
+			
+			if(rc.isActive() && rc.canAttackSquare(eloc))
+				rc.attackSquare(eloc);
 		}
-		
-		
-		
-	//	else
+
 			rc.yield();
 		
 	}
