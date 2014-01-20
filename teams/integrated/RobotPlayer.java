@@ -9,7 +9,8 @@ package integrated;
  * Channel 0: spawning signal: squad*100+type
  * Channel 1: distress: [SS][T][SS][T]...SS=squad, and T = type of distressed robots
  * Channel 2: current pastures and noise towers: [D][D][D]...where D=0 indicates no PASTR/NT, D=1 indicates PASTR, D=2 PASTR & NT set up 
- * Channel 3-10: defensive squad locations & corresponding pastr/NT locations: [xx][yy][A][XX][YY], (xx,yy) = average loc of swam, A = count robots in squad, (XX,YY) = target
+ * Channel 3-9: defensive squad locations & corresponding pastr/NT locations: [xx][yy][A][XX][YY], (xx,yy) = average loc of swam, A = count robots in squad, (XX,YY) = target
+ * Channel 10: if experiencing rush, 1
  * Channel 11-20: offensive squad locations & corresponding pasr/NT locations
  * 
  */

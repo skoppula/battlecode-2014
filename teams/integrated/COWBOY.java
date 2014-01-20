@@ -27,13 +27,16 @@ public class COWBOY {
 		int role = Util.getRole(assignment);
 		
 		//if low on health send distress
-		if(rc.getHealth() == rc.getType().maxHealth*0.1){
+		if(rc.getHealth() == rc.getType().maxHealth*0.5){
 			int in = rc.readBroadcast(1);
 			//int len = (int) (Math.log10(in+1)+1)/3;
 			int len = String.valueOf(in).length()/3;
 			//System.out.println("Sending distress signal! ID: " + id + " Squad: " + squad + " Role: " + role);
 			rc.broadcast(1, in+ (int) Math.pow(10, len)*(10*squad+role));
 			//System.out.println(in+ (int) Math.pow(10, len)*(10*squad+role));
+			
+			if(squad == 0)
+				rc.broadcast(10, 1);
 		}
 		
 		//ATTACKERS - attack enemy pastrs in a swarm, regroup if necessary

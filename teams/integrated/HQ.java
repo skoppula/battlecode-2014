@@ -107,7 +107,7 @@ public class HQ {
 	
 	static boolean startRush(RobotController rc){
 		double mapDensity = findMapDensity();
-		if(enemyHQ.distanceSquaredTo(teamHQ) < 900 &&mapDensity < .5){
+		if(enemyHQ.distanceSquaredTo(teamHQ) < 900 && mapDensity < .5){
 			System.out.println("START-OF-GAME RUSHING THE OTHER TEAM");
 			return true;
 		} else {
@@ -198,7 +198,7 @@ public class HQ {
 			int squad = nextSquadNum(rc);
 			boolean spawnSuccess = false;
 			
-			if(squad > 10 ||rush) {
+			if(squad > 10 || rush) {
 				spawnSuccess = tryToSpawn(rc, 1);
 				if(spawnSuccess) {
 					int j = Util.assignmentToInt(squad, 1);
