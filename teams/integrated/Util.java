@@ -92,28 +92,30 @@ public class Util {
 	
 	public static MapLocation nearestEnemyLoc(RobotController rc, Robot[] enemyRobots, MapLocation loc) throws GameActionException {
 		
-		int minDist = HQ.mapX*HQ.mapY;
+		//int minDist = HQ.mapX*HQ.mapY;
+		int minDist = 100000;
 		MapLocation bestLoc = null;
 		MapLocation enemyHQ = rc.senseEnemyHQLocation();
 		
-		if(rc.canSenseObject(enemyRobots[0]))
-			bestLoc = rc.senseRobotInfo(enemyRobots[0]).location;
+//		if(rc.canSenseObject(enemyRobots[0]))
+//			bestLoc = rc.senseRobotInfo(enemyRobots[0]).location;
 		
 		for(Robot robot:enemyRobots){
-			
-			if(!rc.canSenseObject(robot))
-				continue;
-			
 			RobotInfo info = rc.senseRobotInfo(robot);
-
+			
 			if(info.location.equals(enemyHQ))
 				continue;
 			
-			MapLocation m = info.location;
-			int dist = m.distanceSquaredTo(loc);
-			if(minDist < dist){
-				minDist = dist;
-				bestLoc = m;
+			if(!rc.canSenseObject(robot)){
+				continue;
+			} else {
+				MapLocation m = info.location;
+				int dist = m.distanceSquaredTo(loc);
+				if(minDist > dist){
+					minDist = dist;
+					bestLoc = m;
+
+				}
 			}
 		}
 		
@@ -122,6 +124,8 @@ public class Util {
 	
 	/***************************/
 	
+	/*****************DEFENDER ENDGAME FUNCTIONS***********************/
+	//Create a bunch of pastrs in a well defended area
 	
 	
     public static int indexOfMin(int... arr) {
@@ -193,39 +197,30 @@ public class Util {
 		
 		while(enemyRobots.length>0){//SHOOT AT, OR RUN TOWARDS, ENEMIES
 //			//Sense nearby game objects, 200 bytecode
-//			enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, rc.getTeam().opponent());
-//			loc = rc.getLocation();
+			enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared, rc.getTeam().opponent());
+			loc = rc.getLocation();
 			
-			//to return to original state, uncomment below
-			MapLocation eloc = Util.nearestEnemyLoc(rc, enemyRobots, loc); //SHOULD NOT OUTPUT AN HQ LOCATION
-			if(eloc == null) {
-				System.out.println("ENEMY LOCATION IS NULL");
-				break;
+			
+			if (enemyRobots.length > 0) {
+				MapLocation eloc = Util.nearestEnemyLoc(rc, enemyRobots, loc); //SHOULD NOT OUTPUT AN HQ LOCATION
+				//System.out.println(enemyRobots[0].getID());
+				if(eloc == null) {
+					System.out.println("ENEMY LOCATION IS NULL");
+					break;
+				}
+				
+				int maxAttackRad = rc.getType().attackRadiusMaxSquared;
+				
+				//I'd like to put all this in a new function, attackClosest or something
+				if(rc.isActive() && eloc.distanceSquaredTo(rc.getLocation())<=maxAttackRad)
+					rc.attackSquare(eloc);
+				else if(rc.isActive() && rc.canMove(loc.directionTo(eloc)))
+					rc.move(loc.directionTo(eloc));
 			}
-			
-			int maxAttackRad = rc.getType().attackRadiusMaxSquared;
-			
-			//I'd like to put all this in a new function, attackClosest or something
-			if(rc.isActive() && eloc.distanceSquaredTo(rc.getLocation())<=maxAttackRad)
-				rc.attackSquare(eloc);
-			else if(rc.isActive() && rc.canMove(loc.directionTo(eloc)))
-				rc.move(loc.directionTo(eloc));
-			
 			
 			rc.yield();
 		}
     }
-
-	private static void attackClosest(RobotController rc, MapLocation eloc) throws GameActionException {
-		int maxAttackRad = rc.getType().attackRadiusMaxSquared;
-		MapLocation loc = rc.getLocation();
-		//I'd like to put all this in a new function, attackClosest or something
-		if(rc.isActive() && eloc.distanceSquaredTo(rc.getLocation())<=maxAttackRad)
-			rc.attackSquare(eloc);
-		else if(rc.isActive() && rc.canMove(loc.directionTo(eloc)))
-			rc.move(loc.directionTo(eloc));
-		
-	}
 
 	@SuppressWarnings("incomplete-switch")
 	public static Direction[] tryDirections(RobotController rc, Direction toDest, MapLocation dest){ //this method basically just returns a list of directions i think it should try when stuck. just logic'ed it out here.
