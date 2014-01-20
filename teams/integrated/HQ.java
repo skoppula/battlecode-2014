@@ -85,19 +85,22 @@ public class HQ {
 	static void updateSquadLocs(RobotController rc) throws GameActionException{
 		//DEFENDER CHANNELS - 3 to about 8
 		//format: [N][XXYY] where N is robot count in the squad and XXYY are coordinates
-		for(int i = 0; i < desiredPASTRs.length; i++)
-			rc.broadcast(i+3, (rc.readBroadcast(i+3)/10000)*10000 + Util.locToInt(desiredPASTRs[i]));
 		
 		//RUSH CHANNEL - 11
 		MapLocation[] enemyPASTRs = rc.sensePastrLocations(enemy);
+		MapLocation rallyPoint = new MapLocation ((enemyHQ.x + 2*teamHQ.x)/3, (enemyHQ.y + 2*teamHQ.y)/3);
 		if(rush)
-			rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(enemyHQ));
+			rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(rallyPoint));
 		else if(enemyPASTRs.length>0)
 			rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(enemyPASTRs[0]));
 		
 		for(int i = 0; i < enemyPASTRs.length; i++) {
 			rc.broadcast(i+12, (rc.readBroadcast(i+12)/10000)*10000 + Util.locToInt(enemyPASTRs[i]));	
 		}
+		
+		for(int i = 0; i < desiredPASTRs.length; i++)
+			rc.broadcast(i+3, (rc.readBroadcast(i+3)/10000)*10000 + Util.locToInt(desiredPASTRs[i]));
+		
 	}
 	
 	static boolean startRush(RobotController rc){
@@ -258,7 +261,7 @@ public class HQ {
 	}
 	
 	private static int computeNumPastures() {
-		return 2;
+		return 3; //If you increase this to 4 bad things happen
 	}
 
 	static MapLocation[] findPastureLocs() throws GameActionException {

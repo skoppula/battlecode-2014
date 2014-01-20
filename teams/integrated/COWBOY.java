@@ -1,6 +1,7 @@
 package integrated;
 
 import battlecode.common.Clock;
+import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.Robot;
@@ -30,9 +31,9 @@ public class COWBOY {
 			int in = rc.readBroadcast(1);
 			//int len = (int) (Math.log10(in+1)+1)/3;
 			int len = String.valueOf(in).length()/3;
-			System.out.println("Sending distress signal! ID: " + id + " Squad: " + squad + " Role: " + role);
+			//System.out.println("Sending distress signal! ID: " + id + " Squad: " + squad + " Role: " + role);
 			rc.broadcast(1, in+ (int) Math.pow(10, len)*(10*squad+role));
-			System.out.println(in+ (int) Math.pow(10, len)*(10*squad+role));
+			//System.out.println(in+ (int) Math.pow(10, len)*(10*squad+role));
 		}
 		
 		//ATTACKERS - attack enemy pastrs in a swarm, regroup if necessary
@@ -52,7 +53,7 @@ public class COWBOY {
 		Team enemy = team.opponent();
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, enemy);
 		Robot[] allies = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, team);
-		
+		MapLocation[] enemyPastrs = rc.sensePastrLocations(rc.getTeam().opponent());
 		MapLocation loc = rc.getLocation();
 		
 		//Keep a running average location of swarm
@@ -71,51 +72,58 @@ public class COWBOY {
 		
 		int status = (in/(int) Math.pow(10, squad-diff)) % 10; // should be 0, 1, or 2
 //		System.out.println(in + " " + squad + " " + status + " " + diff);
-//		System.out.println(squadInfo + " " + targetX + " " + targetY + " ");
+		//System.out.println(squadInfo + " " + targetX + " " + targetY + " ");
 		
+		MapLocation[] enemyPstrs = rc.sensePastrLocations(rc.getTeam().opponent()); // there is a way for the HQ to communicate this to the robot
+		//otherwise they're heading straight to enemy HQ
 
-		if(enemyRobots.length>0){
-//			System.out.println("ENEMY DETECTCED BY " + rc.getRobot().getID());
-//			
-////			if(Math.random()>0.05)
-////				Util.moveToward(rc, new MapLocation(x, y)); //Regroup
-////			else
-////				Util.moveToward(rc, new MapLocation(targetX, targetY));
-//			
-//			MapLocation eloc = Util.nearestEnemyLoc(rc, enemyRobots, loc); //SHOULD NOT OUTPUT AN HQ LOCATION
-//			
-//			int maxAttackRad = rc.getType().attackRadiusMaxSquared;
-//			
-//			if(rc.isActive() && eloc.distanceSquaredTo(rc.getLocation())<=maxAttackRad)
-//				rc.attackSquare(eloc);
-//			else if(rc.isActive() && rc.canMove(loc.directionTo(eloc))&&allies.length>enemyRobots.length)
-//				rc.move(loc.directionTo(eloc));
-//			
+		if(enemyRobots.length>0){ //for both cases
 			Util.toDoWhileMoving(rc);
-		} else if(loc.distanceSquaredTo(target) > 9) {
-			if (t==types.ATTACKER) {
-				if (allies.length > 3||Clock.getRoundNum() > 100) {
-					Util.moveTo(rc, new MapLocation(targetX, targetY));					
-				}
-			} else {
-				Util.moveTo(rc, new MapLocation(targetX, targetY));
-			}
-			
+		} else if(t==types.DEFENDER&&loc.distanceSquaredTo(target) > 25) {
+			Util.moveTo(rc, new MapLocation(targetX, targetY));
+		} else if (t==types.ATTACKER && enemyPstrs.length > 0 ) {
+			Util.moveTo(rc, enemyPstrs[0]);
+		} else if (t==types.ATTACKER&& loc.distanceSquaredTo(rc.senseHQLocation()) < 25) {
+			Direction away = rc.senseHQLocation().directionTo(loc);
+			Util.tryToMove(rc);
 		}
 		
 		//hot fix until skanda can explain status method and how to change it
 		int a = rc.readBroadcast(51); //if a is more than 0, the noisetower has been killed, make a new one
-
+		int safeArea = rc.readBroadcast(52); //52 is the areasafe channel
 		if(t==types.DEFENDER && loc.distanceSquaredTo(new MapLocation(targetX, targetY))<25){
 	
-			if( (allies.length>6) && status==0 && rc.isActive()) { //6 is threshold for valve, 7 beat Paul's rush
+			if( (allies.length>4) && status==0 && rc.isActive()) { //6 is the optimal for big maps
+				//with 5 we barely fend them off but we get a shit ton more milk
+				//with 4 we actually win decisively...wtf!
 				rc.construct(RobotType.PASTR);
 				int left = (int) ((in/Math.pow(10, squad-diff)+1)*Math.pow(10, squad-diff));
 				int right = in % (int) Math.pow(10, squad-diff);
 //					System.out.println("LEFT LEFT LEFT: " + left + " " + right);
 				rc.broadcast(2, left + right);
 				System.out.println("Constructing a PASTR..." + allies.length + HQ.rush);
-			} else if (allies.length>2 && (status==1||a > 0) && rc.isActive()) {
+			}
+			else if (safeArea > 0){ //if the area is defended //NOTE THIS IS UNFINISHED DON'T PAY ATTENTION
+				//System.out.println(safeArea);
+//				//Defender End game, build tons of pastures
+//				//build desired pastrs
+				MapLocation safeLoc = Util.intToLoc(safeArea);
+				MapLocation[] desiredPASTRsLocations;
+				
+				int id = rc.getRobot().getID();
+				int ah = rc.readBroadcast(squad);
+				int oh = rc.readBroadcast(squad + 1);
+				//System.out.println(ah + "is the old one and " + oh + "is the new one");
+				rc.broadcast(squad, oh);
+//				for (MapLocation i:HQ.desiredPASTRs) {
+//					if (i.distanceSquaredTo(safeLoc) < 100) {
+//						int id = rc.getRobot().getID();
+//						//rc.broadcast(id, 1);
+//						System.out.println(i + "is the next ideal location");
+//					}
+//				}
+			}
+			else if (allies.length>2 && (status==1||a > 0) && rc.isActive()) {
 				rc.construct(RobotType.NOISETOWER);
 				int left = (int) ((in/Math.pow(10, squad-diff)+1)*Math.pow(10, squad-diff));
 				int right = in % (int) Math.pow(10, squad-diff);
