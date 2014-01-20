@@ -157,7 +157,7 @@ public class Util {
 	
 	public static void toDoWhileMoving (RobotController rc) throws GameActionException{
 		//Sense nearby game objects, 200 bytecode
-		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, rc.getTeam().opponent());
+		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared, rc.getTeam().opponent());
 		MapLocation loc = rc.getLocation();
 		
 		int id = rc.getRobot().getID(); 
@@ -178,28 +178,12 @@ public class Util {
 		}
 		
 		//hot fix, broadcast sensed enemy location to channel 60, so other defenders respond to rush
-		int defend = rc.readBroadcast(60); //Ash test //could be a global variable in this class...
-		
 		//prepare against sneak attack from behind or out of range
-		if (defend > 0) { //Ash test
-
-			System.out.println(defend + "Defend signal reached, going to the rescue!!");
-			MapLocation eloc = Util.intToLoc(defend);
-			if (eloc.distanceSquaredTo(loc) > 100) {
-				rc.broadcast(60, 0); //The robot broadcasted a wrong location, nothing to do with you. hot fix
-			} else {
-				//attack closest
-				//attackClosest(rc, eloc);
-				moveTo(rc, eloc);
-				rc.broadcast(60, 0);
-			}
-		}
 		
 		while(enemyRobots.length>0){//SHOOT AT, OR RUN TOWARDS, ENEMIES
-//			//Sense nearby game objects, 200 bytecode
+			//Sense nearby game objects, 200 bytecode
 			enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared, rc.getTeam().opponent());
 			loc = rc.getLocation();
-			
 			
 			if (enemyRobots.length > 0) {
 				MapLocation eloc = Util.nearestEnemyLoc(rc, enemyRobots, loc); //SHOULD NOT OUTPUT AN HQ LOCATION
