@@ -74,7 +74,7 @@ public class PASTR {
 		
 		if (NTcount ==0 && Clock.getRoundNum() > lastNTconstruct + 110) {
 			//ask HQ to spawn another NT
-			System.out.println("NT HAS DIED NOOO");
+			//System.out.println("NT HAS DIED NOOO");
 			rc.broadcast(51, 1); //should say squad number
 			//Skanda, how to change the status variable back to 1???
 		}

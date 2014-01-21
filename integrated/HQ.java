@@ -165,7 +165,6 @@ public class HQ {
 		
 		//Channel 1: distress: [SS][T][SS][T]...SS=squad, and T = type of distressed robots
 		int in  = rc.readBroadcast(1);
-		System.out.println("DISTRESS BROADCASTS" + in);
 		//int numRobots = (int) (Math.log10(in)+1)/3;
 		int numRobots = String.valueOf(in).length()/3;
 		
