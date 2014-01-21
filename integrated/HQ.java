@@ -1,4 +1,4 @@
-package intgerated;
+package integrated;
 
 import java.util.Arrays;
 import java.util.Random;
