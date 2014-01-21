@@ -166,11 +166,11 @@ public class HQ {
 		
 		//Channel 1: distress: [SS][T][SS][T]...SS=squad, and T = type of distressed robots
 		int in  = rc.readBroadcast(1);
+		System.out.println("DISTRESS BROADCASTS: " + in);
 		//int numRobots = (int) (Math.log10(in)+1)/3;
-		int numRobots = String.valueOf(in).length()/3;
-		
+		int numRobots = ("0" + String.valueOf(in)).length()/3; //Must append a 0 to front of string to process so that numRobots works out correctly
 		//System.out.println(numRobots + "this is the casualty num");
-		for(int i = 0; i < numRobots; i++){
+		for(int i = 0; i < numRobots; i++){ //so this never gets iterated through...
 			int j = (int) (in/Math.pow(1000,i))%1000;
 			int type = j%10;
 			int squad = j/10;
@@ -183,7 +183,6 @@ public class HQ {
 			System.out.println(Arrays.toString(robotTypeCount));
 			int k = rc.readBroadcast(squad);
 			rc.broadcast(squad,(k/10000-1)*10000+k%10000);
-			System.out.println("SQUAD TRACKER " + squad);
 		}
 		
 		//reset the distress channel

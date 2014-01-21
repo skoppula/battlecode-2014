@@ -22,7 +22,7 @@ public class RobotPlayer{
 	public static void run(RobotController rc) throws GameActionException{
 		
 		int id = rc.getRobot().getID();
-    	RobotType type = rc.getType();
+    		RobotType type = rc.getType();
     	
 		//read from channel 0: get squad and role
     	int assignment = rc.readBroadcast(0);

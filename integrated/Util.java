@@ -166,20 +166,10 @@ public class Util {
 		//Understand the assignment
 		int squad = Util.getSquad(assignment);
 		int role = Util.getRole(assignment);
+
+		if(hasBroadcastedDistress(rc) == false)
+			COWBOY.checkHealth(rc);
 			
-		//if low on health send distress
-		if(rc.getHealth() < rc.getType().maxHealth*0.4){
-			int in = rc.readBroadcast(1);
-			//int len = (int) (Math.log10(in+1)+1)/3;
-			int len = String.valueOf(in).length()/3;
-			System.out.println("SQUAD HERE" + squad + " dsfd " + (in+ (int) Math.pow(10, len)*(10*squad+role)));
-			rc.broadcast(1, in+ (int) Math.pow(10, len)*(10*squad+role));
-			
-			if(role==0) {
-				rc.broadcast(10, squad);
-				System.out.println("MR.LOLSQUAD2 " + squad);
-			}
-		}
 		
 		//hot fix, broadcast sensed enemy location to channel 60, so other defenders respond to rush
 		//prepare against sneak attack from behind or out of range
@@ -208,7 +198,17 @@ public class Util {
 			
 			rc.yield();
 		}
-    }
+    	}
+
+	public static boolean hasBroadcastedDistress(RobotController rc) throws GameActionException{
+		int in = rc.readBroadcast(rc.getRobot().getID());
+		if(in<0){ //negative number in id channel means robot has broadcasted already
+			return true;			
+		}
+		else{
+			return false;
+		}
+	}
 
 	@SuppressWarnings("incomplete-switch")
 	public static Direction[] tryDirections(RobotController rc, Direction toDest, MapLocation dest){ //this method basically just returns a list of directions i think it should try when stuck. just logic'ed it out here.

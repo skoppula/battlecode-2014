@@ -12,6 +12,27 @@ import battlecode.common.Team;
 public class COWBOY {
 	
 	enum types {ATTACKER, DEFENDER}
+
+	public static void checkHealth(RobotController rc) throws GameActionException{
+		int assignment = rc.readBroadcast(rc.getRobot().getID());
+		int squad = Util.getSquad(assignment);
+		int role = Util.getRole(assignment);
+		int id = rc.getRobot().getID();
+		
+		//if low on health send distress
+		if(rc.getHealth() < rc.getType().maxHealth*0.4){
+			int in = rc.readBroadcast(1);
+			//int len = (int) (Math.log10(in+1)+1)/3;
+			int len = ("0" + String.valueOf(in)).length()/3;
+			System.out.println("SQUAD HERE" + squad + " dsfd " + (in+ (int) Math.pow(10, len)*(10*squad+role)));
+			rc.broadcast(1, in+ (int) Math.pow(10, len)*(10*squad+role));
+			int idchannel = rc.readBroadcast(id);
+			idchannel = idchannel * -1;
+			rc.broadcast(id, idchannel);
+			if(role==0)
+				rc.broadcast(10, squad);
+		}
+	}
 	
 	public static void runCowboy(RobotController rc, int assignment) throws GameActionException {
 		
@@ -23,6 +44,10 @@ public class COWBOY {
 		//Understand the assignment
 		int squad = Util.getSquad(assignment);
 		int role = Util.getRole(assignment);
+
+		if(Util.hasBroadcastedDistress(rc) == false){
+			checkHealth(rc);
+		}
 		
 		//if low on health send distress
 		if(rc.getHealth() == rc.getType().maxHealth*0.5){
