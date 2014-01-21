@@ -1,4 +1,7 @@
 package integrated;
+import integrated.COWBOY;
+import integrated.Util;
+
 import java.util.Random;
 
 import battlecode.common.Clock;
@@ -195,10 +198,12 @@ public class Util {
 				else if(rc.isActive() && rc.canMove(loc.directionTo(eloc)))
 					rc.move(loc.directionTo(eloc));
 			}
-			
+			if(Util.hasBroadcastedDistress(rc) == false){
+				COWBOY.checkHealth(rc);
+			}
 			rc.yield();
 		}
-    	}
+    }
 
 	public static boolean hasBroadcastedDistress(RobotController rc) throws GameActionException{
 		int in = rc.readBroadcast(rc.getRobot().getID());

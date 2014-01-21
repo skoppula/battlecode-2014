@@ -1,4 +1,4 @@
-package integrated;
+package intgerated;
 
 import java.util.Arrays;
 import java.util.Random;
@@ -102,7 +102,7 @@ public class HQ {
 		
 		for(int i = 0; i < desiredPASTRs.length; i++) {
 			rc.broadcast(i+3, (rc.readBroadcast(i+3)/10000)*10000 + Util.locToInt(desiredPASTRs[i]));
-			System.out.println("SQUAD TRACKER " + (i+3));
+			//System.out.println("SQUAD TRACKER " + (i+3));
 		}
 	}
 	
@@ -220,7 +220,7 @@ public class HQ {
 			
 			if(spawnSuccess){
 				rc.broadcast(squad, rc.readBroadcast(squad)+10000);
-				System.out.println("SQUAD TRACKER " + squad);
+				//System.out.println("SQUAD TRACKER " + squad);
 			}
 		}
 	}

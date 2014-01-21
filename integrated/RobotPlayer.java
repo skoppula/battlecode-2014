@@ -34,10 +34,10 @@ public class RobotPlayer{
     		System.out.println("you could spawn a spy here!");
     	} else if (type == RobotType.SOLDIER)
     		rc.broadcast(id, assignment);
-    	else if (type==RobotType.PASTR);
-		PASTR.getSquad(rc);
+    	else if (type==RobotType.PASTR){
+    		PASTR.getSquad(rc);
 //    		rc.broadcast(id, Clock.getRoundNum());
-		
+	}
 		try {
         	while(true) {
         		

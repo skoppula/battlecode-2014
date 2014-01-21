@@ -49,23 +49,6 @@ public class COWBOY {
 			checkHealth(rc);
 		}
 		
-		//if low on health send distress
-		if(rc.getHealth() == rc.getType().maxHealth*0.5){
-			int in = rc.readBroadcast(1);
-			//int len = (int) (Math.log10(in+1)+1)/3;
-			int len = String.valueOf(in).length()/3;
-			//System.out.println("Sending distress signal! ID: " + id + " Squad: " + squad + " Role: " + role);
-			System.out.println("SQUAD HERE" + squad + " dsfd " + (in+ (int) Math.pow(10, len)*(10*squad+role)));
-			rc.broadcast(1, in+ (int) Math.pow(10, len)*(10*squad+role));
-			//System.out.println(in+ (int) Math.pow(10, len)*(10*squad+role));
-			
-			if(role == 0) {
-				rc.broadcast(10, squad);
-				
-			System.out.println("MR.LOLSQUAD " + squad);
-			}
-		}
-		
 		//ATTACKERS - attack enemy pastrs in a swarm, regroup if necessary
 		//DEFENDERS - stationary near pastr, senses enemy approaching, attacks in groups
 		//PASTR precursor - goes straight to desired location, checks if it's a good area, constructs
@@ -93,7 +76,7 @@ public class COWBOY {
 		
 		//broadcast the new average
 		rc.broadcast(squad, x*10000000+y*100000+squadInfo%100000);
-		System.out.println("squad tracker" + squad);
+		//System.out.println("squad tracker" + squad);
 		
 		if(t == types.ATTACKER){
 			
