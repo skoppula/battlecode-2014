@@ -9,19 +9,21 @@ import battlecode.common.RobotInfo;
 import battlecode.common.RobotType;
 
 public class PASTR {
-	static int squad = 0;
 	static boolean sentBroadcast = false;
 	
 	public static void getSquad(RobotController rc) throws GameActionException{
 		Robot[] closeBy = rc.senseNearbyGameObjects(Robot.class, 9);
 		if(closeBy.length>1){
 			int nearestID = closeBy[0].getID();
-			squad = Util.getSquad(rc.readBroadcast(nearestID));
+			rc.broadcast(rc.getRobot().getID(), Util.getSquad(rc.readBroadcast(nearestID)));
 		}
 	}
 	
 	public static void checkHealth(RobotController rc) throws GameActionException{
 		int x = 0; //amount to decrement digit in channel 2 according to squad number
+		
+		int squad = Math.abs(rc.readBroadcast(rc.getRobot().getID()));
+		
 		if(rc.getHealth()<=rc.getType().maxHealth*.5){
 			sentBroadcast = true;
 			System.out.println("LOSING A PASTURE");
@@ -30,12 +32,18 @@ public class PASTR {
 			if((int) in/Math.pow(10, squad-3) == 1){
 				x = 1;
 			}
+			
 			else{
 				x = 2;
 			}
 			int left = (int) ((in/Math.pow(10, squad-3)-x)*Math.pow(10, squad-3));
 			int right = in % (int) Math.pow(10, squad-3);
-			rc.broadcast(2, left + right);
+			
+			if(rc.readBroadcast(rc.getRobot().getID())>=0) {
+				rc.broadcast(2, left + right);
+				rc.broadcast(rc.getRobot().getID(), rc.readBroadcast(rc.getRobot().getID())*-1);
+			}
+			
 			System.out.println(left+right);
 		}
 	}
@@ -48,7 +56,7 @@ public class PASTR {
 		int lastNTconstruct = rc.readBroadcast(50);
 		int NTexistenceChannel = 51;
 		
-		int spawnRound = rc.readBroadcast(rc.getRobot().getID());
+		int spawnRound = rc.readBroadcast(rc.getRobot().getID));
 		int areaSafeChannel = 52;
 		//if after, say 150 rounds the pastr still exists, then it is well defended and set up
 		//we can definitely set up surrounding pastrs, since we assume the area is well defended
