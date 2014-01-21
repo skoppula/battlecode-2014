@@ -27,10 +27,12 @@ public class RobotPlayer{
 		//read from channel 0: get squad and role
     	int assignment = rc.readBroadcast(0);
     	
-    	if(type == RobotType.HQ)
-    		//HQ.spawnRobot(rc); //maybe this one can be a spy??? hot fix
+    	if(type == RobotType.HQ) {
+    		rc.broadcast(0, 300);
+    		rc.broadcast(3, Util.locToInt(rc.senseHQLocation()));
+    		HQ.tryToSpawn(rc, 0); //maybe this one can be a spy??? hot fix
     		System.out.println("you could spawn a spy here!");
-    	else if (type == RobotType.SOLDIER)
+    	} else if (type == RobotType.SOLDIER)
     		rc.broadcast(id, assignment);
     	else if (type==RobotType.PASTR);
 		PASTR.getSquad(rc);

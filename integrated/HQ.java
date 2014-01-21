@@ -165,6 +165,7 @@ public class HQ {
 		
 		//Channel 1: distress: [SS][T][SS][T]...SS=squad, and T = type of distressed robots
 		int in  = rc.readBroadcast(1);
+		System.out.println("DISTRESS BROADCASTS" + in);
 		//int numRobots = (int) (Math.log10(in)+1)/3;
 		int numRobots = String.valueOf(in).length()/3;
 		
@@ -228,13 +229,13 @@ public class HQ {
 		
 		//If it reads that defensive robots are dying from channel 10
 		int squad = rc.readBroadcast(10);
-		if(squad>0){
+		if(squad!=0 && squad < 11){
 			rc.broadcast(10, 0); //reset value
 			return squad;
 		}
 		
 		//If starting out a rush, spawn enough attacking squads.
-		if(rush && Clock.getRoundNum() < 1000) {
+		if(rush && Clock.getRoundNum() < 500) {
 			for(int i = 11; i < 12; i++){
 				if((rc.readBroadcast(i)/10000)%10<8)
 					return i;

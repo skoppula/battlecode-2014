@@ -172,9 +172,11 @@ public class Util {
 			int in = rc.readBroadcast(1);
 			//int len = (int) (Math.log10(in+1)+1)/3;
 			int len = String.valueOf(in).length()/3;
-			System.out.println("Sending distress signal! ID: " + id + " Squad: " + squad + " Role: " + role);
+			System.out.println("SQUAD HERE" + squad + " dsfd " + (in+ (int) Math.pow(10, len)*(10*squad+role)));
 			rc.broadcast(1, in+ (int) Math.pow(10, len)*(10*squad+role));
-			System.out.println(in+ (int) Math.pow(10, len)*(10*squad+role));
+			
+			if(role==0)
+				rc.broadcast(10, squad);
 		}
 		
 		//hot fix, broadcast sensed enemy location to channel 60, so other defenders respond to rush

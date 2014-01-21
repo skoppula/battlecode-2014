@@ -17,10 +17,8 @@ public class COWBOY {
 		
 		int id = rc.getRobot().getID(); 
 		
-		if (assignment==0) {
+		if (assignment==0) 
 			assignment = rc.readBroadcast(id);
-			System.out.println(assignment);
-		}
 		
 		//Understand the assignment
 		int squad = Util.getSquad(assignment);
@@ -32,10 +30,11 @@ public class COWBOY {
 			//int len = (int) (Math.log10(in+1)+1)/3;
 			int len = String.valueOf(in).length()/3;
 			//System.out.println("Sending distress signal! ID: " + id + " Squad: " + squad + " Role: " + role);
+			System.out.println("SQUAD HERE" + squad + " dsfd " + (in+ (int) Math.pow(10, len)*(10*squad+role)));
 			rc.broadcast(1, in+ (int) Math.pow(10, len)*(10*squad+role));
 			//System.out.println(in+ (int) Math.pow(10, len)*(10*squad+role));
 			
-			if(squad == 0)
+			if(role == 0)
 				rc.broadcast(10, squad);
 		}
 		
@@ -69,6 +68,8 @@ public class COWBOY {
 		
 		if(t == types.ATTACKER){
 			
+			rc.setIndicatorString(4, "ATTACKER");
+			
 			//If attacking HQ, have new HQ target outside HQ attack range
 			if(rc.senseEnemyHQLocation().equals(new MapLocation(targetX, targetY))) {
 				targetX -= RobotType.HQ.attackRadiusMaxSquared/Math.sqrt(2);
@@ -86,11 +87,13 @@ public class COWBOY {
 			Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, enemy);
 			MapLocation eloc = Util.nearestEnemyLoc(rc, enemyRobots, rc.getLocation());
 			
-			if(rc.isActive() && rc.canAttackSquare(eloc))
+			if(eloc!=null && rc.isActive() && rc.canAttackSquare(eloc))
 				rc.attackSquare(eloc);
 				
 		} else if (t == types.DEFENDER) {
-			
+
+			rc.setIndicatorString(4, "DEFENDER");			
+
 			//PASTR and NT creation
 			int in = rc.readBroadcast(2);
 			int diff = squad > 10 ? 11 : 3;
@@ -126,7 +129,7 @@ public class COWBOY {
 			Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, enemy);
 			MapLocation eloc = Util.nearestEnemyLoc(rc, enemyRobots, rc.getLocation());
 			
-			if(rc.isActive() && rc.canAttackSquare(eloc))
+			if(eloc != null && rc.isActive() && rc.canAttackSquare(eloc))
 				rc.attackSquare(eloc);
 		}
 
