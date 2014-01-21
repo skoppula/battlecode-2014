@@ -34,8 +34,11 @@ public class COWBOY {
 			rc.broadcast(1, in+ (int) Math.pow(10, len)*(10*squad+role));
 			//System.out.println(in+ (int) Math.pow(10, len)*(10*squad+role));
 			
-			if(role == 0)
+			if(role == 0) {
 				rc.broadcast(10, squad);
+				
+			System.out.println("MR.LOLSQUAD " + squad);
+			}
 		}
 		
 		//ATTACKERS - attack enemy pastrs in a swarm, regroup if necessary
@@ -65,6 +68,7 @@ public class COWBOY {
 		
 		//broadcast the new average
 		rc.broadcast(squad, x*10000000+y*100000+squadInfo%100000);
+		System.out.println("squad tracker" + squad);
 		
 		if(t == types.ATTACKER){
 			

@@ -56,6 +56,7 @@ public class PASTR {
 			//broadcast to the HQ that the area is well defended and you can start with the late Economy game
 			int area = Util.locToInt(rc.getLocation());
 			rc.broadcast(areaSafeChannel, area);
+			System.out.println("SQUAD TRACKER" + areaSafeChannel);
 		}
 		
 		if (allies.length < enemyRobots.length) {

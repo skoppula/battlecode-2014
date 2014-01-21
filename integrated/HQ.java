@@ -100,9 +100,10 @@ public class HQ {
 			rc.broadcast(i+12, (rc.readBroadcast(i+12)/10000)*10000 + Util.locToInt(enemyPASTRs[i]));	
 		}
 		
-		for(int i = 0; i < desiredPASTRs.length; i++)
+		for(int i = 0; i < desiredPASTRs.length; i++) {
 			rc.broadcast(i+3, (rc.readBroadcast(i+3)/10000)*10000 + Util.locToInt(desiredPASTRs[i]));
-		
+			System.out.println("SQUAD TRACKER " + (i+3));
+		}
 	}
 	
 	static boolean startRush(RobotController rc){
@@ -182,6 +183,7 @@ public class HQ {
 			System.out.println(Arrays.toString(robotTypeCount));
 			int k = rc.readBroadcast(squad);
 			rc.broadcast(squad,(k/10000-1)*10000+k%10000);
+			System.out.println("SQUAD TRACKER " + squad);
 		}
 		
 		//reset the distress channel
@@ -219,6 +221,7 @@ public class HQ {
 			
 			if(spawnSuccess){
 				rc.broadcast(squad, rc.readBroadcast(squad)+10000);
+				System.out.println("SQUAD TRACKER " + squad);
 			}
 		}
 	}
@@ -228,6 +231,7 @@ public class HQ {
 		
 		//If it reads that defensive robots are dying from channel 10
 		int squad = rc.readBroadcast(10);
+		System.out.println("LE BROADCAST ON ZEHN" + rc.readBroadcast(10));
 		if(squad!=0 && squad < 11){
 			rc.broadcast(10, 0); //reset value
 			return squad;

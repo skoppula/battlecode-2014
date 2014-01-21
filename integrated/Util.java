@@ -175,8 +175,10 @@ public class Util {
 			System.out.println("SQUAD HERE" + squad + " dsfd " + (in+ (int) Math.pow(10, len)*(10*squad+role)));
 			rc.broadcast(1, in+ (int) Math.pow(10, len)*(10*squad+role));
 			
-			if(role==0)
+			if(role==0) {
 				rc.broadcast(10, squad);
+				System.out.println("MR.LOLSQUAD2 " + squad);
+			}
 		}
 		
 		//hot fix, broadcast sensed enemy location to channel 60, so other defenders respond to rush
