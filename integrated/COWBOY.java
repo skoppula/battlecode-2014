@@ -124,7 +124,7 @@ public class COWBOY {
 			}
 			
 			//Gather at the rally point
-			//System.out.println(targetX + "attacker moving to" + targetY);
+			System.out.println(targetX + "attacker moving to" + targetY);
 			if(Math.pow(loc.x-target.x,2) + Math.pow(loc.y-target.y, 2) > 2)
 				Util.moveTo(rc, new MapLocation(targetX, targetY));
 			

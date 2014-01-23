@@ -50,7 +50,7 @@ public class HQ {
 		updateSquadLocs(rc);
 		updateRobotDistro(rc);
 		
-		rush = reactiveRush(rc);
+		rush = reactiveRush(rc); //TODO Be able to switch to a rush strategy midgame
 		
 		Robot[] allies = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared, team);
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared, enemy);
@@ -63,6 +63,7 @@ public class HQ {
 	}
 	
 	private static boolean reactiveRush(RobotController rc) {
+		//TODO if we are losing in an economy based game
 		int ally = rc.sensePastrLocations(rc.getTeam()).length;
 		int enemy = rc.sensePastrLocations(rc.getTeam().opponent()).length;
 		
@@ -106,13 +107,13 @@ public class HQ {
 		
 		//RUSH CHANNEL - 11
 		MapLocation[] enemyPASTRs = rc.sensePastrLocations(enemy);
-		//MapLocation rallyPoint = new MapLocation ((enemyHQ.x + 2*teamHQ.x)/3, (enemyHQ.y + 2*teamHQ.y)/3);
-		MapLocation rallyPoint = new MapLocation ((enemyHQ.x + 5*teamHQ.x)/6, (enemyHQ.y + 5*teamHQ.y)/6);
-		//MapLocation rallyPoint = desiredPASTRs[1]; //rallyPoints have to be REALLY good!!!
-		if(rush && Clock.getRoundNum() < 1000)
-			rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(rallyPoint));
-		else if(enemyPASTRs.length>0)
-			rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(enemyPASTRs[0]));
+		MapLocation rallyPoint = determineRallyPoint(rc);
+		if(rush && Clock.getRoundNum() < 1000){
+			if(enemyPASTRs.length>0)
+				rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(enemyPASTRs[0]));
+			else
+				rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(rallyPoint));
+		}
 		
 		for(int i = 0; i < enemyPASTRs.length; i++) {
 			rc.broadcast(i+12, (rc.readBroadcast(i+12)/10000)*10000 + Util.locToInt(enemyPASTRs[i]));	
@@ -124,9 +125,19 @@ public class HQ {
 		}
 	}
 	
+	private static MapLocation determineRallyPoint(RobotController rc) {
+		// TODO this can basically win the game for us, it's THAT important
+		//for backdoor, uncomment below and this wins the game --->
+		//MapLocation rallyPoint = new MapLocation ((enemyHQ.x + 2*teamHQ.x)/3, (enemyHQ.y + 2*teamHQ.y)/3);
+		//for maps where the HQ is really close together --- this wins the game:
+		MapLocation rallyPoint = new MapLocation ((enemyHQ.x + 5*teamHQ.x)/6, (enemyHQ.y + 5*teamHQ.y)/6);
+		//MapLocation rallyPoint = desiredPASTRs[1]; //rallyPoints have to be REALLY good!!!
+		return rallyPoint;
+	}
+
 	static boolean startRush(RobotController rc) throws GameActionException{
-		double mapDensity = findMapDensity();
-		if(enemyHQ.distanceSquaredTo(teamHQ) < 900 && mapDensity < .5 || mapDensity==0){
+		boolean rushMap = decideRushMap(rc);
+		if(enemyHQ.distanceSquaredTo(teamHQ) < 900 || rushMap){
 			System.out.println("START-OF-GAME RUSHING THE OTHER TEAM");
 			return true;
 		}
@@ -136,6 +147,15 @@ public class HQ {
 		}
 	}
 	
+	private static boolean decideRushMap(RobotController rc) {
+		// TODO How hard is it to rush the map? Can the enemy reach us in less than 30 turns?
+		double mapDensity = findMapDensity();
+		if (mapDensity ==0){
+			return true;
+		}
+		return false;
+	}
+
 	private static double findMapDensity() {
 		//what's the map density
 		//what's the wall count between HQ's?
@@ -186,7 +206,6 @@ public class HQ {
 		//Channel 1: distress: [SS][T][SS][T]...SS=squad, and T = type of distressed robots
 		int in  = rc.readBroadcast(1);
 		//System.out.println("DISTRESS BROADCASTS: " + in);
-		//int numRobots = (int) (Math.log10(in)+1)/3;
 		int numRobots = ("0" + String.valueOf(in)).length()/3; //Must append a 0 to front of string to process so that numRobots works out correctly
 		//System.out.println(numRobots + "this is the casualty num");
 		for(int i = 0; i < numRobots; i++){ //so this never gets iterated through...
@@ -206,8 +225,6 @@ public class HQ {
 		
 		//reset the distress channel
 		rc.broadcast(1, 0);
-		
-		//System.out.println(in);
 		
 	}
 	
@@ -234,7 +251,6 @@ public class HQ {
 					rc.broadcast(0, j);
 					System.out.println("Spawned a defender: " + j);
 				}
-				
 			}
 			
 			//Increase the squad member count by one
@@ -248,19 +264,21 @@ public class HQ {
 	private static int nextSquadNum(RobotController rc) throws GameActionException {
 		//If it reads that defensive robots are dying from channel 10
 		int squad = rc.readBroadcast(10);
-		if(squad!=0 && squad < 11){
+		if(squad!=0 && squad < 11 && !rush){
 			rc.broadcast(10, 0); //reset value
 			System.out.println("spawning a replacement for defender" + squad);
 			return squad;
 		}
 		
 		//If starting out a rush, spawn enough attacking squads.
-		if(rush && Clock.getRoundNum() < 500) {
+		boolean rushFailed = false; //temporary hot fix - later this should be a checkpoint
+		int rushRetreat = computeRushRetreat(rc); 
+		if(rush && Clock.getRoundNum() < rushRetreat && !rushFailed) { //TODO decide when to stop rush
 			for(int i = 11; i < 12; i++){
 				if((rc.readBroadcast(i)/10000)%10<8)
 					return i;
 			}
-		} 
+		}
 		
 		//Else if didn't establish pastures yet, need defensive squads
 		for(int i = 3; i < 3+desiredPASTRs.length; i++){
@@ -275,6 +293,11 @@ public class HQ {
 		}
 		
 		return 3;
+	}
+
+	private static int computeRushRetreat(RobotController rc) {
+		// TODO If the other team is rushing you, DON"T CREATE A PASTR!
+		return 1000;
 	}
 
 	static boolean tryToSpawn(RobotController rc, int type) throws GameActionException {
