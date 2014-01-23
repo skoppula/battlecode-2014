@@ -136,8 +136,9 @@ public class HQ {
 	}
 
 	static boolean startRush(RobotController rc) throws GameActionException{
-		boolean rushMap = decideRushMap(rc);
-		if(enemyHQ.distanceSquaredTo(teamHQ) < 900 || rushMap){
+		// TODO How hard is it to rush the map? Can the enemy reach us in less than 30 turns?
+		double mapDensity = findMapDensity();
+		if(enemyHQ.distanceSquaredTo(teamHQ) < 900 || mapDensity ==0){
 			System.out.println("START-OF-GAME RUSHING THE OTHER TEAM");
 			return true;
 		}
@@ -145,15 +146,6 @@ public class HQ {
 			System.out.println("STARTING ECONOMY DEVELOPMENT PREFERRED");
 			return false;
 		}
-	}
-	
-	private static boolean decideRushMap(RobotController rc) {
-		// TODO How hard is it to rush the map? Can the enemy reach us in less than 30 turns?
-		double mapDensity = findMapDensity();
-		if (mapDensity ==0){
-			return true;
-		}
-		return false;
 	}
 
 	private static double findMapDensity() {

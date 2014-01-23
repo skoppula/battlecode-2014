@@ -99,34 +99,11 @@ public class COWBOY {
 			//attack enemy pastrs
 			MapLocation[] enemyPstrs = rc.sensePastrLocations(rc.getTeam().opponent());
 			
-//			MapLocation lastPstr = new MapLocation(targetX, targetY);
-//			if (rushedEnemyPstr) { //otherwise they're return to the rally point
-//				System.out.println(lastPstr + "rushed enemy pastr? " + rushedEnemyPstr);
-////				if (rc.isActive()&& loc.distanceSquaredTo(lastPstr) < 25&& !campEnemyPstr){
-////					rc.construct(RobotType.PASTR);
-////					campEnemyPstr = true;
-////				}
-//				targetX = lastPstr.x;
-//				targetY = lastPstr.y; //not working - tell hQ SOMEHOW - through broadcasting?
-//			}
-			
-			if (enemyPstrs.length > 0&&allies.length > 3&&!rushedEnemyPstr) {
-				if (enemyPstrs.length > 1) {
-					targetX = enemyPstrs[1].x;
-					targetY = enemyPstrs[1].y;
-				} else {
-					targetX = enemyPstrs[0].x;
-					targetY = enemyPstrs[0].y;
-				}
-//				rushedEnemyPstr = true;
-//				lastPstr = enemyPstrs[0];
-//				System.out.println(lastPstr + "rushed enemy pastr? " + rushedEnemyPstr);
-			}
-			
 			//Gather at the rally point
-			System.out.println(targetX + "attacker moving to" + targetY);
+			//System.out.println(targetX + "attacker moving to" + targetY);
 			if(Math.pow(loc.x-target.x,2) + Math.pow(loc.y-target.y, 2) > 2)
-				Util.moveTo(rc, new MapLocation(targetX, targetY));
+				//Util.moveTo(rc, new MapLocation(targetX, targetY));
+				Util.channelMove(rc);
 			
 			//Attack nearby enemy soldiers
 			Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, enemy);

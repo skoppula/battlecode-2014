@@ -162,20 +162,9 @@ public class Util {
 		//Sense nearby game objects, 200 bytecode
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared, rc.getTeam().opponent());
 		MapLocation loc = rc.getLocation();
-		
-		int id = rc.getRobot().getID(); 
-		int assignment = rc.readBroadcast(id);
-		
-		//Understand the assignment
-		int squad = Util.getSquad(assignment);
-		int role = Util.getRole(assignment);
 
 		if(hasBroadcastedDistress(rc) == false)
 			COWBOY.checkHealth(rc);
-			
-		
-		//hot fix, broadcast sensed enemy location to channel 60, so other defenders respond to rush
-		//prepare against sneak attack from behind or out of range
 		
 		while(enemyRobots.length>0){//SHOOT AT, OR RUN TOWARDS, ENEMIES
 			//Sense nearby game objects, 200 bytecode
@@ -184,19 +173,32 @@ public class Util {
 			
 			if (enemyRobots.length > 0) {
 				MapLocation eloc = Util.nearestEnemyLoc(rc, enemyRobots, loc); //SHOULD NOT OUTPUT AN HQ LOCATION
-				//System.out.println(enemyRobots[0].getID());
+				
 				if(eloc == null) {
 					System.out.println("ENEMY LOCATION IS NULL");
 					break;
 				}
 				
 				int maxAttackRad = rc.getType().attackRadiusMaxSquared;
-				
-				//I'd like to put all this in a new function, attackClosest or something
 				if(rc.isActive() && eloc.distanceSquaredTo(rc.getLocation())<=maxAttackRad)
 					rc.attackSquare(eloc);
 				else if(rc.isActive() && rc.canMove(loc.directionTo(eloc)))
 					rc.move(loc.directionTo(eloc));
+				else if (rc.isActive()) {
+					tryToMove(rc);
+				}
+				
+				//broadcast for backup
+//				int id = rc.getRobot().getID(); 
+//				int assignment = rc.readBroadcast(id);
+//				int squad = getSquad(assignment);
+//				int role = getRole(assignment);
+//				if (squad < 11) { //if robot is a defender
+//					rc.broadcast(Math.abs(squad), locToInt(eloc));
+//				} else { //if it is an attacker
+//					Robot[] allyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared, rc.getTeam());
+//					System.out.println(allyRobots.length + "ally robots in sensor range" + enemyRobots.length + "enemy");
+//				}
 			}
 			if(Util.hasBroadcastedDistress(rc) == false){
 				COWBOY.checkHealth(rc);
@@ -324,7 +326,7 @@ public class Util {
 			
 			while(rc.canMove(tryDir) && rc.canMove(toDest) == false){ //robot moves along wall to try to find way to move in toDest
 				toDoWhileMoving(rc);
-				if(rc.isActive()){
+				if(rc.isActive()&&rc.canMove(tryDir)){
 //					System.out.println("Moving " + tryDir);
 					rc.move(tryDir);
 				}
@@ -400,7 +402,7 @@ public class Util {
 	public static void channelMove(RobotController rc) throws GameActionException{
 		int x = rc.readBroadcast(rc.getRobot().getID());
 		int team = getSquad(x); //Ash test
-		MapLocation dest = intToLoc(rc.readBroadcast(team));
+		MapLocation dest = intToLoc(rc.readBroadcast(Math.abs(team)));
 		MapLocation laststuck = new MapLocation(0,0);
 		MapLocation beforelaststuck = new MapLocation(0,0);
     	Direction toDest = rc.getLocation().directionTo(dest);
@@ -411,7 +413,7 @@ public class Util {
     		}
     		x = rc.readBroadcast(rc.getRobot().getID());
     		team = getSquad(x); //Ash test
-    		dest = intToLoc(rc.readBroadcast(team));
+    		dest = intToLoc(rc.readBroadcast(Math.abs(team)));
     		if(rc.isActive() && rc.canMove(toDest)){
     			rc.move(toDest);
     			rc.yield();
@@ -523,7 +525,7 @@ public class Util {
 	}
 	
 	public static MapLocation intToLoc(int i){
-		return new MapLocation(i/100,i%100);
+		return new MapLocation((i/100)%100,i%100);
 	}
 	
 	public static void channelSneak(RobotController rc) throws GameActionException{
