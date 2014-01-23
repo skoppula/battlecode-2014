@@ -420,10 +420,10 @@ public class Util {
     			if(rc.isActive() && rc.canMove(toDest) == false){ //if robot can't move toDest...
     				if(laststuck.equals(rc.getLocation()) || beforelaststuck.equals(rc.getLocation())){ //wait, I've been here before
     					Random randint = new Random();
-    					while(rc.canMove(toDest) == false){
+    					while(rc.canMove(toDest) == false&& rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent()).length==0){
     						Direction randdir = allDirections[randint.nextInt(7)];
 //        					System.out.println("I'm stuck. Trying random direction " + randdir);
-        					while(rc.canMove(randdir)){
+        					while(rc.canMove(randdir)&& rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent()).length==0){
         						if(rc.isActive()){
         							rc.move(randdir);
         						}
