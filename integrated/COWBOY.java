@@ -12,6 +12,10 @@ import battlecode.common.Team;
 public class COWBOY {
 	
 	enum types {ATTACKER, DEFENDER}
+	
+	//checkpoints
+	static boolean rushedEnemyPstr = false;
+	static boolean campEnemyPstr = false;
 
 	public static void checkHealth(RobotController rc) throws GameActionException{
 		int assignment = rc.readBroadcast(rc.getRobot().getID());
@@ -24,7 +28,6 @@ public class COWBOY {
 			int in = rc.readBroadcast(1);
 			//int len = (int) (Math.log10(in+1)+1)/3;
 			int len = ("0" + String.valueOf(in)).length()/3;
-			System.out.println("SQUAD HERE" + squad + " dsfd " + (in+ (int) Math.pow(10, len)*(10*squad+role)));
 			rc.broadcast(1, in+ (int) Math.pow(10, len)*(10*squad+role));
 			int idchannel = rc.readBroadcast(id);
 			idchannel = idchannel * -1;
@@ -64,7 +67,7 @@ public class COWBOY {
 		
 		Team team = rc.getTeam();
 		Team enemy = team.opponent();
-		Robot[] allies = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, team);
+		Robot[] allies = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared, team);
 		MapLocation loc = rc.getLocation();
 		
 		//Keep a running average location of swarm
@@ -76,7 +79,8 @@ public class COWBOY {
 		
 		//broadcast the new average
 		rc.broadcast(squad, x*10000000+y*100000+squadInfo%100000);
-		//System.out.println("squad tracker" + squad);
+		
+		//retreat if the rallyPoint is too close to the enemy - unimplemented idea		
 		
 		if(t == types.ATTACKER){
 			
@@ -92,10 +96,39 @@ public class COWBOY {
 			if(loc.distanceSquaredTo(rc.senseHQLocation()) < 25)
 				Util.tryToMove(rc);
 			
-			//AND THEN GO TO RIGHT PLACE
+			//attack enemy pastrs
+			MapLocation[] enemyPstrs = rc.sensePastrLocations(rc.getTeam().opponent());
+			
+//			MapLocation lastPstr = new MapLocation(targetX, targetY);
+//			if (rushedEnemyPstr) { //otherwise they're return to the rally point
+//				System.out.println(lastPstr + "rushed enemy pastr? " + rushedEnemyPstr);
+////				if (rc.isActive()&& loc.distanceSquaredTo(lastPstr) < 25&& !campEnemyPstr){
+////					rc.construct(RobotType.PASTR);
+////					campEnemyPstr = true;
+////				}
+//				targetX = lastPstr.x;
+//				targetY = lastPstr.y; //not working - tell hQ SOMEHOW - through broadcasting?
+//			}
+			
+			if (enemyPstrs.length > 0&&allies.length > 3&&!rushedEnemyPstr) {
+				if (enemyPstrs.length > 1) {
+					targetX = enemyPstrs[1].x;
+					targetY = enemyPstrs[1].y;
+				} else {
+					targetX = enemyPstrs[0].x;
+					targetY = enemyPstrs[0].y;
+				}
+//				rushedEnemyPstr = true;
+//				lastPstr = enemyPstrs[0];
+//				System.out.println(lastPstr + "rushed enemy pastr? " + rushedEnemyPstr);
+			}
+			
+			//Gather at the rally point
+			//System.out.println(targetX + "attacker moving to" + targetY);
 			if(Math.pow(loc.x-target.x,2) + Math.pow(loc.y-target.y, 2) > 2)
 				Util.moveTo(rc, new MapLocation(targetX, targetY));
 			
+			//Attack nearby enemy soldiers
 			Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, enemy);
 			MapLocation eloc = Util.nearestEnemyLoc(rc, enemyRobots, rc.getLocation());
 			
@@ -111,18 +144,32 @@ public class COWBOY {
 			int diff = squad > 10 ? 11 : 3;
 			int status = (in/(int) Math.pow(10, squad-diff)) % 10; // should be 0, 1, or 2
 			
-			int a = rc.readBroadcast(51);
+			//communication
+			int NTexistence = rc.readBroadcast(51);
+			int areaSafe = rc.readBroadcast(52);
 			
-			if( (allies.length>4) && status==0 && rc.isActive()) { //6 is the optimal for big maps
-				//with 5 we barely fend them off but we get a shit ton more milk
-				//with 4 we actually win decisively...wtf!
+			MapLocation[] allyPstrs = rc.sensePastrLocations(rc.getTeam());
+
+			if(allies.length>3 && status==0 &&loc.distanceSquaredTo(target) < 25&&rc.isActive()) {
 				rc.construct(RobotType.PASTR);
 				int left = (int) ((in/Math.pow(10, squad-diff)+1)*Math.pow(10, squad-diff));
 				int right = in % (int) Math.pow(10, squad-diff);
 				rc.broadcast(2, left + right);
 				System.out.println("Constructing a PASTR..." + allies.length + HQ.rush);
-				
-			} else if (allies.length>2 && (status==1||a > 0) && rc.isActive()) {
+			}
+			else if (areaSafe > 0 &&rc.senseCowsAtLocation(loc) > 300&&rc.isActive()){
+				//economy based endgame, triggered when a pastr has been untouched for 130 rounds
+				//triggered in PASTR.java line 65
+				rc.construct(RobotType.PASTR);
+				//set status to 1 for the entire squad
+				int left = (int) ((in/Math.pow(10, squad-diff)+1)*Math.pow(10, squad-diff));
+				int right = in % (int) Math.pow(10, squad-diff);
+				rc.broadcast(2, left + right);
+				//don't need defenders
+				rc.broadcast(squad, 900000);
+				System.out.println("Constructing a PASTR..." + allies.length + HQ.rush);
+			}
+			else if (allies.length>2 && (status==1) && rc.isActive()) {
 				rc.construct(RobotType.NOISETOWER);
 				int left = (int) ((in/Math.pow(10, squad-diff)+1)*Math.pow(10, squad-diff));
 				int right = in % (int) Math.pow(10, squad-diff);

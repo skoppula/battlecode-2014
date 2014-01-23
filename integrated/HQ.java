@@ -50,6 +50,8 @@ public class HQ {
 		updateSquadLocs(rc);
 		updateRobotDistro(rc);
 		
+		rush = reactiveRush(rc);
+		
 		Robot[] allies = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared, team);
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared, enemy);
 		if(enemyRobots.length > 0)
@@ -60,6 +62,20 @@ public class HQ {
 		rc.yield();
 	}
 	
+	private static boolean reactiveRush(RobotController rc) {
+		int ally = rc.sensePastrLocations(rc.getTeam()).length;
+		int enemy = rc.sensePastrLocations(rc.getTeam().opponent()).length;
+		
+		if (rush){
+			return true;
+		}else if (enemy - 1 > ally) {
+			//System.out.println("REACTIVE RUSH");
+			return true;
+		}
+		
+		return false;
+	}
+
 	public static void initializeGameVars(RobotController rc) throws GameActionException{
     	hq = rc;
     	
@@ -90,7 +106,9 @@ public class HQ {
 		
 		//RUSH CHANNEL - 11
 		MapLocation[] enemyPASTRs = rc.sensePastrLocations(enemy);
-		MapLocation rallyPoint = new MapLocation ((enemyHQ.x + 2*teamHQ.x)/3, (enemyHQ.y + 2*teamHQ.y)/3);
+		//MapLocation rallyPoint = new MapLocation ((enemyHQ.x + 2*teamHQ.x)/3, (enemyHQ.y + 2*teamHQ.y)/3);
+		MapLocation rallyPoint = new MapLocation ((enemyHQ.x + 5*teamHQ.x)/6, (enemyHQ.y + 5*teamHQ.y)/6);
+		//MapLocation rallyPoint = desiredPASTRs[1]; //rallyPoints have to be REALLY good!!!
 		if(rush && Clock.getRoundNum() < 1000)
 			rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(rallyPoint));
 		else if(enemyPASTRs.length>0)
@@ -106,12 +124,13 @@ public class HQ {
 		}
 	}
 	
-	static boolean startRush(RobotController rc){
+	static boolean startRush(RobotController rc) throws GameActionException{
 		double mapDensity = findMapDensity();
-		if(enemyHQ.distanceSquaredTo(teamHQ) < 900 && mapDensity < .5){
+		if(enemyHQ.distanceSquaredTo(teamHQ) < 900 && mapDensity < .5 || mapDensity==0){
 			System.out.println("START-OF-GAME RUSHING THE OTHER TEAM");
 			return true;
-		} else {
+		}
+		else {
 			System.out.println("STARTING ECONOMY DEVELOPMENT PREFERRED");
 			return false;
 		}
@@ -166,7 +185,7 @@ public class HQ {
 		
 		//Channel 1: distress: [SS][T][SS][T]...SS=squad, and T = type of distressed robots
 		int in  = rc.readBroadcast(1);
-		System.out.println("DISTRESS BROADCASTS: " + in);
+		//System.out.println("DISTRESS BROADCASTS: " + in);
 		//int numRobots = (int) (Math.log10(in)+1)/3;
 		int numRobots = ("0" + String.valueOf(in)).length()/3; //Must append a 0 to front of string to process so that numRobots works out correctly
 		//System.out.println(numRobots + "this is the casualty num");
@@ -218,21 +237,20 @@ public class HQ {
 				
 			}
 			
+			//Increase the squad member count by one
 			if(spawnSuccess){
 				rc.broadcast(squad, rc.readBroadcast(squad)+10000);
-				//System.out.println("SQUAD TRACKER " + squad);
 			}
 		}
 	}
 	
 	//Determines squad of robot to by spawned next 
 	private static int nextSquadNum(RobotController rc) throws GameActionException {
-		
 		//If it reads that defensive robots are dying from channel 10
 		int squad = rc.readBroadcast(10);
-		System.out.println("LE BROADCAST ON ZEHN" + rc.readBroadcast(10));
 		if(squad!=0 && squad < 11){
 			rc.broadcast(10, 0); //reset value
+			System.out.println("spawning a replacement for defender" + squad);
 			return squad;
 		}
 		
@@ -302,7 +320,10 @@ public class HQ {
 				for(int k = 0; k < idealNumPastures; k++){
 					
 					//Balancing profit in pasture productivity vs. distance: (sum-weight/10)
-					if((sum-weight/weight1)>pstrCowDens[k]){
+					if (sum==0){
+						pstrCowDens[k] = 0;
+					}
+					else if((sum-weight/weight1)>pstrCowDens[k]){
 						pstrLocs[k] = new MapLocation(j+1, i+1);
 						
 						pstrCowDens[k] = (sum-weight/weight1);
@@ -313,8 +334,6 @@ public class HQ {
 		}
 		//The first pasture will be right next to the HQ
 		pstrLocs[0] = findHQpstr(pstrLocs[0]);
-
-		System.out.println(pstrLocs[0] + "and" + pstrLocs[1]);
 		
 		return pstrLocs;
 	}

@@ -24,9 +24,10 @@ public class PASTR {
 		
 		int squad = Math.abs(rc.readBroadcast(rc.getRobot().getID()));
 		
-		if(rc.getHealth()<=rc.getType().maxHealth*.5){
+		if(rc.getHealth()<=rc.getType().maxHealth*.5){ 
 			sentBroadcast = true;
-			System.out.println("LOSING A PASTURE");
+			System.out.println("LOSING A PASTURE"); //if we lose a pasture, we should switch to rush
+			rc.broadcast(100, 1); //HOT FIX STARTING RUSH IF WE LOSE A PASTURE
 			int in = rc.readBroadcast(2);
 			System.out.println(in);
 			if((int) in/Math.pow(10, squad-3) == 1){
@@ -60,11 +61,26 @@ public class PASTR {
 		int areaSafeChannel = 52;
 		//if after, say 150 rounds the pastr still exists, then it is well defended and set up
 		//we can definitely set up surrounding pastrs, since we assume the area is well defended
-		if (Clock.getRoundNum() > spawnRound + 150) {
+		
+		//sense if the pastr has survived a rush attack
+		boolean underAttack = false;  
+		boolean survivedRush = false;
+		
+		if (enemyRobots.length > 0) {
+			//under attack, survived
+			underAttack = true;
+		}
+		if (underAttack) {
+			if (enemyRobots.length==0){
+				survivedRush = true;
+			}
+		}
+		
+		if (Clock.getRoundNum() > spawnRound + 150&&spawnRound > 50&&survivedRush) { //takes 50 rounds to create a pastr
 			//broadcast to the HQ that the area is well defended and you can start with the late Economy game
 			int area = Util.locToInt(rc.getLocation());
 			rc.broadcast(areaSafeChannel, area);
-			//System.out.println("SQUAD TRACKER" + areaSafeChannel);
+			//System.out.println("SQUAD TRACKER" + areaSafeChannel + "area : " + area);
 		}
 		
 		if (allies.length < enemyRobots.length) {

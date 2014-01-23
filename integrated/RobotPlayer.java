@@ -28,15 +28,20 @@ public class RobotPlayer{
     	int assignment = rc.readBroadcast(0);
     	
     	if(type == RobotType.HQ) {
-    		rc.broadcast(0, 300);
-    		rc.broadcast(3, Util.locToInt(rc.senseHQLocation()));
-    		HQ.tryToSpawn(rc, 0); //maybe this one can be a spy??? hot fix
-    		System.out.println("you could spawn a spy here!");
+    		if (rc.getMapHeight() > 40) {
+    			rc.broadcast(0, 300);
+        		rc.broadcast(3, Util.locToInt(rc.senseHQLocation()));
+    		}else {
+    			rc.broadcast(0, 1101);
+    			rc.broadcast(3, Util.locToInt(rc.senseEnemyHQLocation()));
+    		}
+    		
+    		HQ.tryToSpawn(rc, 0);
     	} else if (type == RobotType.SOLDIER)
     		rc.broadcast(id, assignment);
     	else if (type==RobotType.PASTR){
     		PASTR.getSquad(rc);
-//    		rc.broadcast(id, Clock.getRoundNum());
+    		rc.broadcast(id, Clock.getRoundNum());
 	}
 		try {
         	while(true) {
