@@ -27,7 +27,12 @@ public class PASTR {
 		if(rc.getHealth()<=rc.getType().maxHealth*.5){ 
 			sentBroadcast = true;
 			System.out.println("LOSING A PASTURE"); //if we lose a pasture, we should switch to rush
-			rc.broadcast(100, 1); //HOT FIX STARTING RUSH IF WE LOSE A PASTURE
+			
+			//TODO
+			//communicate to HQ that we could switch to rush OR we should find a better pasture position to defend
+			//rc.broadcast(defenseFailedChannel, 1);
+			//received by HQ in updateSquadLocs - move desired pastures closer to HQ
+			
 			int in = rc.readBroadcast(2);
 			System.out.println(in);
 			if((int) in/Math.pow(10, squad-3) == 1){

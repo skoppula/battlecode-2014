@@ -172,6 +172,7 @@ public class Util {
 			loc = rc.getLocation();
 			
 			if (enemyRobots.length > 0) {
+				
 				MapLocation eloc = Util.nearestEnemyLoc(rc, enemyRobots, loc); //SHOULD NOT OUTPUT AN HQ LOCATION
 				
 				if(eloc == null) {
@@ -183,7 +184,17 @@ public class Util {
 				if(rc.isActive() && eloc.distanceSquaredTo(rc.getLocation())<=maxAttackRad)
 					rc.attackSquare(eloc);
 				else if(rc.isActive() && rc.canMove(loc.directionTo(eloc)))
-					rc.move(loc.directionTo(eloc));
+					//stay away from enemyHQ
+					if (loc.distanceSquaredTo(rc.senseEnemyHQLocation()) < 36) {
+						//don't move
+						//rush succeeded
+						System.out.println("RUSH SUCCEEDED");
+						//hot fix communicate rush success to everyone
+						int rushSucess = 100;
+						rc.broadcast(rushSucess, 1);
+					}else {
+						rc.move(loc.directionTo(eloc));
+					}
 				else if (rc.isActive()) {
 					tryToMove(rc);
 				}

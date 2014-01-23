@@ -96,9 +96,6 @@ public class COWBOY {
 			if(loc.distanceSquaredTo(rc.senseHQLocation()) < 25)
 				Util.tryToMove(rc);
 			
-			//attack enemy pastrs
-			MapLocation[] enemyPstrs = rc.sensePastrLocations(rc.getTeam().opponent());
-			
 			//Gather at the rally point
 			//System.out.println(targetX + "attacker moving to" + targetY);
 			if(Math.pow(loc.x-target.x,2) + Math.pow(loc.y-target.y, 2) > 2)
@@ -127,7 +124,7 @@ public class COWBOY {
 			
 			MapLocation[] allyPstrs = rc.sensePastrLocations(rc.getTeam());
 
-			if(allies.length>3 && status==0 &&loc.distanceSquaredTo(target) < 25&&rc.isActive()) {
+			if(allies.length>4 && status==0 &&loc.distanceSquaredTo(target) < 25&&rc.isActive()) {
 				rc.construct(RobotType.PASTR);
 				int left = (int) ((in/Math.pow(10, squad-diff)+1)*Math.pow(10, squad-diff));
 				int right = in % (int) Math.pow(10, squad-diff);
@@ -146,16 +143,18 @@ public class COWBOY {
 				rc.broadcast(squad, 900000);
 				System.out.println("Constructing a PASTR..." + allies.length + HQ.rush);
 			}
-			else if (allies.length>2 && (status==1) && rc.isActive()) {
-				rc.construct(RobotType.NOISETOWER);
-				int left = (int) ((in/Math.pow(10, squad-diff)+1)*Math.pow(10, squad-diff));
-				int right = in % (int) Math.pow(10, squad-diff);
-				rc.broadcast(2, left + right);
-				System.out.println("Constructing a NT...");
-				
-				//Communicates to the pastr that a NT was created, so if it is destroyed, pastr can tell
-				rc.broadcast(50, Clock.getRoundNum());
-				rc.broadcast(51, 0);
+			else if (allies.length>4 && (status==1) && rc.isActive()) {
+				if(Math.pow(loc.x-target.x,2) + Math.pow(loc.y-target.y, 2) < 16){
+					rc.construct(RobotType.NOISETOWER);
+					int left = (int) ((in/Math.pow(10, squad-diff)+1)*Math.pow(10, squad-diff));
+					int right = in % (int) Math.pow(10, squad-diff);
+					rc.broadcast(2, left + right);
+					System.out.println("Constructing a NT...");
+					
+					//Communicates to the pastr that a NT was created, so if it is destroyed, pastr can tell
+					rc.broadcast(50, Clock.getRoundNum());
+					rc.broadcast(51, 0);
+				}
 			}
 			
 			//THEN GO TO RIGHT PLACE

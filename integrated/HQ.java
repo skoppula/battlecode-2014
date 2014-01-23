@@ -108,7 +108,14 @@ public class HQ {
 		//RUSH CHANNEL - 11
 		MapLocation[] enemyPASTRs = rc.sensePastrLocations(enemy);
 		MapLocation rallyPoint = determineRallyPoint(rc);
-		if(rush && Clock.getRoundNum() < 1000){
+		
+		//TODO surround enemy HQ - rush ENDGAME :)
+		int rushSucess = 100; //set endgame target to enemy HQ.......somehow....help...
+		if (rc.readBroadcast(rushSucess) > 0){
+			rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(HQ.enemyHQ));
+		}
+		
+		else if(rush && Clock.getRoundNum() < 1000){
 			if(enemyPASTRs.length>0)
 				rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(enemyPASTRs[0]));
 			else
@@ -116,7 +123,12 @@ public class HQ {
 		}
 		
 		for(int i = 0; i < enemyPASTRs.length; i++) {
-			rc.broadcast(i+12, (rc.readBroadcast(i+12)/10000)*10000 + Util.locToInt(enemyPASTRs[i]));	
+			if (enemyPASTRs[i].distanceSquaredTo(rc.senseEnemyHQLocation()) < 36) {
+				//the pastr is untouchable
+				rc.broadcast(i+12, (rc.readBroadcast(i+12)/10000)*10000 + Util.locToInt(rallyPoint));
+			} else {
+				rc.broadcast(i+12, (rc.readBroadcast(i+12)/10000)*10000 + Util.locToInt(enemyPASTRs[i]));
+			}	
 		}
 		
 		for(int i = 0; i < desiredPASTRs.length; i++) {
@@ -126,7 +138,9 @@ public class HQ {
 	}
 	
 	private static MapLocation determineRallyPoint(RobotController rc) {
-		// TODO this can basically win the game for us, it's THAT important
+		// TODO this can basically win the game for us, it's THAT important. You HAVE to avoid enemy contact
+		//until they create a pastr
+		
 		//for backdoor, uncomment below and this wins the game --->
 		//MapLocation rallyPoint = new MapLocation ((enemyHQ.x + 2*teamHQ.x)/3, (enemyHQ.y + 2*teamHQ.y)/3);
 		//for maps where the HQ is really close together --- this wins the game:
