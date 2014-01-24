@@ -171,6 +171,9 @@ public class Util {
 	
 	public static void toDoWhileMoving (RobotController rc) throws GameActionException{
 		//Sense nearby game objects, 200 bytecode
+		
+		avoidEnemyHQ(rc);
+		
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared, rc.getTeam().opponent());
 		MapLocation loc = rc.getLocation();
 
@@ -178,6 +181,9 @@ public class Util {
 			COWBOY.checkHealth(rc);
 		
 		while(enemyRobots.length>0){//SHOOT AT, OR RUN TOWARDS, ENEMIES
+			
+			avoidEnemyHQ(rc);
+			
 			//Sense nearby game objects, 200 bytecode
 			enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared, rc.getTeam().opponent());
 			loc = rc.getLocation();
@@ -208,18 +214,6 @@ public class Util {
 				else if (rc.isActive()) {
 					tryToMove(rc);
 				}
-				
-				//broadcast for backup
-//				int id = rc.getRobot().getID(); 
-//				int assignment = rc.readBroadcast(id);
-//				int squad = getSquad(assignment);
-//				int role = getRole(assignment);
-//				if (squad < 11) { //if robot is a defender
-//					rc.broadcast(Math.abs(squad), locToInt(eloc));
-//				} else { //if it is an attacker
-//					Robot[] allyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared, rc.getTeam());
-//					System.out.println(allyRobots.length + "ally robots in sensor range" + enemyRobots.length + "enemy");
-//				}
 			}
 			if(Util.hasBroadcastedDistress(rc) == false){
 				COWBOY.checkHealth(rc);
@@ -227,6 +221,59 @@ public class Util {
 			rc.yield();
 		}
     }
+
+	private static void avoidEnemyHQ(RobotController rc) throws GameActionException {
+		//hot fix stay away from enemy Pastr
+		MapLocation loc = rc.getLocation();
+		
+		if (loc.distanceSquaredTo(rc.senseEnemyHQLocation()) < 64) {
+			
+			if (loc.distanceSquaredTo(rc.senseEnemyHQLocation()) < 36){
+				Direction away = rc.senseEnemyHQLocation().directionTo(loc);
+				if (rc.isActive()&&rc.canMove(away)){
+					rc.move(away);
+				}
+			}else {
+				Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared, rc.getTeam().opponent());
+				while(enemyRobots.length>0){//SHOOT AT, OR RUN TOWARDS, ENEMIES
+//					//Sense nearby game objects, 200 bytecode
+					enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared, rc.getTeam().opponent());
+					loc = rc.getLocation();
+					
+					if (enemyRobots.length > 0) {
+						
+						MapLocation eloc = Util.nearestEnemyLoc(rc, enemyRobots, loc); //SHOULD NOT OUTPUT AN HQ LOCATION
+						
+						if(eloc == null) {
+							System.out.println("ENEMY LOCATION IS NULL");
+							break;
+						}
+						
+						int maxAttackRad = rc.getType().attackRadiusMaxSquared;
+						if(rc.isActive() && eloc.distanceSquaredTo(rc.getLocation())<=maxAttackRad)
+							rc.attackSquare(eloc);
+						else if(rc.isActive() && rc.canMove(loc.directionTo(eloc)))
+							//stay away from enemyHQ
+							if (loc.distanceSquaredTo(rc.senseEnemyHQLocation()) < 36) {
+								//don't move
+								//rush succeeded
+								System.out.println("RUSH SUCCEEDED");
+								//hot fix communicate rush success to everyone
+								int rushSucess = 100;
+								rc.broadcast(rushSucess, 1);
+							}else {
+								rc.move(loc.directionTo(eloc));
+							}
+						else if (rc.isActive()) {
+							tryToMove(rc);
+						}
+					}
+					//System.out.println("rusher senses" + enemyRobots.length);
+					rc.yield();
+				}
+			}
+		}
+	}
 
 	public static boolean hasBroadcastedDistress(RobotController rc) throws GameActionException{
 		int in = rc.readBroadcast(rc.getRobot().getID());

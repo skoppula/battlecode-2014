@@ -1,5 +1,6 @@
 package integrated;
 
+
 import java.util.Arrays;
 import java.util.Random;
 
@@ -28,6 +29,7 @@ public class HQ {
 	static MapLocation enemyHQ;
 	static MapLocation teamHQ;
 	static boolean rush = false;
+	static boolean attackedEnemy = false;
     
     static int[] squads = new int[20];
     
@@ -115,8 +117,15 @@ public class HQ {
 		}
 		
 		else if(rush && Clock.getRoundNum() < 1000){
-			if(enemyPASTRs.length>0)
+			System.out.println("rush and under 1000");
+			if(enemyPASTRs.length>0){
 				rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(enemyPASTRs[0]));
+				attackedEnemy = true;
+			}
+			else if (attackedEnemy && enemyPASTRs.length == 0){ //shut down headquarters and endgame
+				rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(rc.senseEnemyHQLocation()));
+				
+			}
 			else
 				rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(rallyPoint));
 		}
@@ -177,7 +186,7 @@ public class HQ {
 			Yend = enemyHQ.y;
 		} else {
 			Ystart = enemyHQ.y;
-			Yend = teamHQ.y+3;
+			Yend = teamHQ.y;
 		}
 		if (teamHQ.x < enemyHQ.x) { //If our team HQ is left of enemy HQ
 			Xstart = teamHQ.x;
