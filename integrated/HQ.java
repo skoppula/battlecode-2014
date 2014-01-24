@@ -112,7 +112,6 @@ public class HQ {
 		//TODO surround enemy HQ - rush ENDGAME :)
 		//SKANDA: HOW FIT INTO FRAMEWORK?
 		int rushSucess = 100; //set endgame target to enemy HQ.......somehow....help...
-		if (rc.readBroadcast(rushSucess) > 0){
 		if (rc.readBroadcast(Util.rushSuccess) > 0){
 			rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(HQ.enemyHQ));
 		}
