@@ -62,6 +62,7 @@ public class HQ {
 		rc.yield();
 	}
 	
+	//SKANDA: HOW FIT INTO FRAMEWORK?
 	private static boolean reactiveRush(RobotController rc) {
 		//TODO if we are losing in an economy based game
 		int ally = rc.sensePastrLocations(rc.getTeam()).length;
@@ -92,11 +93,8 @@ public class HQ {
     	desiredPASTRs = findPastureLocs();
     	System.out.println("Desired pastures : " + Arrays.deepToString(desiredPASTRs));
     	
-    	
     	initializerRun = true;
-    	
     	rush = startRush(rc);
-    	
     	rand = new Random(17);
     }
 	
@@ -110,6 +108,7 @@ public class HQ {
 		MapLocation rallyPoint = determineRallyPoint(rc);
 		
 		//TODO surround enemy HQ - rush ENDGAME :)
+		//SKANDA: HOW FIT INTO FRAMEWORK?
 		int rushSucess = 100; //set endgame target to enemy HQ.......somehow....help...
 		if (rc.readBroadcast(rushSucess) > 0){
 			rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(HQ.enemyHQ));
@@ -300,7 +299,8 @@ public class HQ {
 		
 		return 3;
 	}
-
+	
+//what?
 	private static int computeRushRetreat(RobotController rc) {
 		// TODO If the other team is rushing you, DON"T CREATE A PASTR!
 		return 1000;
