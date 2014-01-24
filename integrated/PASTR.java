@@ -46,11 +46,11 @@ public class PASTR {
 			int right = in % (int) Math.pow(10, squad-3);
 			
 			if(rc.readBroadcast(rc.getRobot().getID())>=0) {
-				rc.broadcast(2, left + right);
+				rc.broadcast(Util.pastrChannel, left + right);
 				rc.broadcast(rc.getRobot().getID(), rc.readBroadcast(rc.getRobot().getID())*-1);
 			}
 			
-			System.out.println(left+right);
+			//System.out.println(left+right);
 		}
 	}
 
@@ -59,11 +59,9 @@ public class PASTR {
 		Robot[] allies = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, HQ.team);
 		
 		int NTcount = 0;
-		int lastNTconstruct = rc.readBroadcast(50);
-		int NTexistenceChannel = 51;
+		int lastNTconstruct = rc.readBroadcast(Util.lastNTChannel);
 		
 		int spawnRound = rc.readBroadcast(rc.getRobot().getID());
-		int areaSafeChannel = 52;
 		//if after, say 150 rounds the pastr still exists, then it is well defended and set up
 		//we can definitely set up surrounding pastrs, since we assume the area is well defended
 		
@@ -84,7 +82,7 @@ public class PASTR {
 		if (Clock.getRoundNum() > spawnRound + 150&&spawnRound > 50&&survivedRush) { //takes 50 rounds to create a pastr
 			//broadcast to the HQ that the area is well defended and you can start with the late Economy game
 			int area = Util.locToInt(rc.getLocation());
-			rc.broadcast(areaSafeChannel, area);
+			rc.broadcast(Util.areaSafeChannel, area);
 			//System.out.println("SQUAD TRACKER" + areaSafeChannel + "area : " + area);
 		}
 		
@@ -105,7 +103,7 @@ public class PASTR {
 		if (NTcount ==0 && Clock.getRoundNum() > lastNTconstruct + 110) {
 			//ask HQ to spawn another NT
 			//System.out.println("NT HAS DIED NOOO");
-			rc.broadcast(51, 1); //should say squad number
+			rc.broadcast(Util.NTexistenceChannel, 1); //should say squad number
 			//Skanda, how to change the status variable back to 1???
 		}
 		if(sentBroadcast == false){

@@ -114,13 +114,13 @@ public class COWBOY {
 			rc.setIndicatorString(4, "DEFENDER");			
 
 			//PASTR and NT creation
-			int in = rc.readBroadcast(2);
+			int in = rc.readBroadcast(Util.pastrChannel);
 			int diff = squad > 10 ? 11 : 3;
 			int status = (in/(int) Math.pow(10, squad-diff)) % 10; // should be 0, 1, or 2
 			
 			//communication
-			int NTexistence = rc.readBroadcast(51);
-			int areaSafe = rc.readBroadcast(52);
+			int NTexistence = rc.readBroadcast(Util.NTexistenceChannel);
+			int areaSafe = rc.readBroadcast(Util.areaSafeChannel);
 			
 			MapLocation[] allyPstrs = rc.sensePastrLocations(rc.getTeam());
 
@@ -128,7 +128,7 @@ public class COWBOY {
 				rc.construct(RobotType.PASTR);
 				int left = (int) ((in/Math.pow(10, squad-diff)+1)*Math.pow(10, squad-diff));
 				int right = in % (int) Math.pow(10, squad-diff);
-				rc.broadcast(2, left + right);
+				rc.broadcast(Util.pastrChannel, left + right);
 				System.out.println("Constructing a PASTR..." + allies.length + HQ.rush);
 			}
 			else if (areaSafe > 0 &&rc.senseCowsAtLocation(loc) > 300&&rc.isActive()){
@@ -138,7 +138,7 @@ public class COWBOY {
 				//set status to 1 for the entire squad
 				int left = (int) ((in/Math.pow(10, squad-diff)+1)*Math.pow(10, squad-diff));
 				int right = in % (int) Math.pow(10, squad-diff);
-				rc.broadcast(2, left + right);
+				rc.broadcast(Util.pastrChannel, left + right);
 				//don't need defenders
 				rc.broadcast(squad, 900000);
 				System.out.println("Constructing a PASTR..." + allies.length + HQ.rush);
@@ -148,12 +148,12 @@ public class COWBOY {
 					rc.construct(RobotType.NOISETOWER);
 					int left = (int) ((in/Math.pow(10, squad-diff)+1)*Math.pow(10, squad-diff));
 					int right = in % (int) Math.pow(10, squad-diff);
-					rc.broadcast(2, left + right);
+					rc.broadcast(Util.pastrChannel, left + right);
 					System.out.println("Constructing a NT...");
 					
 					//Communicates to the pastr that a NT was created, so if it is destroyed, pastr can tell
-					rc.broadcast(50, Clock.getRoundNum());
-					rc.broadcast(51, 0);
+					rc.broadcast(Util.lastNTChannel, Clock.getRoundNum()); //channel 50: last noisetower constructed birthstamp
+					rc.broadcast(Util.NTexistenceChannel, 0);
 				}
 			}
 			

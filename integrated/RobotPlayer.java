@@ -25,7 +25,7 @@ public class RobotPlayer{
     		RobotType type = rc.getType();
     	
 		//read from channel 0: get squad and role
-    	int assignment = rc.readBroadcast(0);
+    	int assignment = rc.readBroadcast(Util.spawnchannel);
     	
     	if(type == RobotType.HQ) {
     		if (rc.getMapHeight() > 40) {

@@ -14,8 +14,19 @@ import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
 import battlecode.common.RobotType;
 
-public class Util {
-	
+public class Util {	
+
+	static int spawnchannel = 0;
+	static int distress = 1; //distress: [SS][T][SS][T]...SS=squad, and T = type of distressed robots
+	static int pastrChannel = 2;
+	//Defenders are on channels 3-9
+	static int spawnNext = 10; //receives squad number for things that are dying. 
+	//Attackers are on channels 11-21
+	static int lastNTChannel = 50;
+	static int NTexistenceChannel = 51;
+	static int areaSafeChannel = 52;
+	static int rushSuccess = 100; //channel that we broadcast to if our rush was a success
+
     public static Direction allDirections[] = {Direction.NORTH, Direction.SOUTH, Direction.NORTH_EAST, Direction.SOUTH_EAST, Direction.WEST, Direction.SOUTH_WEST, Direction.NORTH_WEST, Direction.EAST};
     static Random rand = new Random();
     
@@ -190,8 +201,7 @@ public class Util {
 						//rush succeeded
 						System.out.println("RUSH SUCCEEDED");
 						//hot fix communicate rush success to everyone
-						int rushSucess = 100;
-						rc.broadcast(rushSucess, 1);
+						rc.broadcast(rushSuccess, 1);
 					}else {
 						rc.move(loc.directionTo(eloc));
 					}
@@ -332,10 +342,11 @@ public class Util {
 	public static void unstick(RobotController rc, Direction toDest, MapLocation dest) throws GameActionException{
 //		System.out.println("Trying to move " + toDest + " towards (" + dest.x + ", " + dest.y + ")");
 		Direction[] directions = tryDirections(rc, toDest, dest);
+		MapLocation enemyHQ = rc.senseEnemyHQLocation();
 
 		for(Direction tryDir: directions){ //think of ways that would make sense to try, ordered by likelihood of finding opening
-			
-			while(rc.canMove(tryDir) && rc.canMove(toDest) == false){ //robot moves along wall to try to find way to move in toDest
+			MapLocation next = rc.getLocation().add(tryDir);
+			while(rc.canMove(tryDir) && rc.canMove(toDest) == false && next.distanceSquaredTo(enemyHQ) > RobotType.HQ.attackRadiusMaxSquared){ //robot moves along wall to try to find way to move in toDest
 				toDoWhileMoving(rc);
 				if(rc.isActive()&&rc.canMove(tryDir)){
 //					System.out.println("Moving " + tryDir);
@@ -343,11 +354,11 @@ public class Util {
 				}
 				rc.yield();
 			}
-			if(rc.canMove(tryDir) == false){ //robot couldn't find a way to move in toDest before hitting another wall in tryDir direction (corner case)
+			if(rc.canMove(tryDir) == false || next.distanceSquaredTo(enemyHQ) < RobotType.HQ.attackRadiusMaxSquared){ //robot couldn't find a way to move in toDest before hitting another wall in tryDir direction (corner case)
 //				System.out.println("Can't move " + tryDir);
 				continue;
 			}
-			if(rc.canMove(toDest)){
+			if(rc.canMove(toDest) && rc.getLocation().add(toDest).distanceSquaredTo(enemyHQ) > RobotType.HQ.attackRadiusMaxSquared){
 //				System.out.println("found hole");
 				if(rc.isActive()&&rc.canMove(toDest)){
 					rc.move(toDest);
@@ -355,7 +366,7 @@ public class Util {
 				}
 				else{
 					rc.yield();
-					if (rc.isActive()&&rc.canMove(toDest)){
+					if (rc.isActive()&&rc.canMove(toDest) && rc.getLocation().add(toDest).distanceSquaredTo(enemyHQ) > RobotType.HQ.attackRadiusMaxSquared){
 						rc.move(toDest);
 					}
 //					System.out.println("Took a nap and then moved toDest");
@@ -371,6 +382,8 @@ public class Util {
 		MapLocation laststuck = new MapLocation(0,0);
 		MapLocation beforelaststuck = new MapLocation(0,0);
     	Direction toDest = rc.getLocation().directionTo(dest);
+    	MapLocation next = rc.getLocation().add(toDest);
+    	MapLocation enemyHQ = rc.senseEnemyHQLocation();
 
     	while(rc.getLocation().equals(dest)==false){
     		toDoWhileMoving(rc);
@@ -382,7 +395,7 @@ public class Util {
     			rc.yield();
     			toDest = rc.getLocation().directionTo(dest);
     		}else{ //robot is either inactive or can't move toDest
-    			if(rc.isActive() && rc.canMove(toDest) == false){ //if robot can't move toDest...
+    			if(rc.isActive() && (rc.canMove(toDest) == false || next.distanceSquaredTo(enemyHQ)<RobotType.HQ.attackRadiusMaxSquared)){ //if robot can't move toDest either because there's a wall or HQ is in way...
     				if(laststuck.equals(rc.getLocation()) || beforelaststuck.equals(rc.getLocation())){ //wait, I've been here before
     					Random randint = new Random();
 

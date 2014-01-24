@@ -110,8 +110,7 @@ public class HQ {
 		MapLocation rallyPoint = determineRallyPoint(rc);
 		
 		//TODO surround enemy HQ - rush ENDGAME :)
-		int rushSucess = 100; //set endgame target to enemy HQ.......somehow....help...
-		if (rc.readBroadcast(rushSucess) > 0){
+		if (rc.readBroadcast(Util.rushSuccess) > 0){
 			rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(HQ.enemyHQ));
 		}
 		
@@ -210,7 +209,7 @@ public class HQ {
 	static void updateRobotDistro(RobotController rc) throws GameActionException{
 		
 		//Channel 1: distress: [SS][T][SS][T]...SS=squad, and T = type of distressed robots
-		int in  = rc.readBroadcast(1);
+		int in  = rc.readBroadcast(Util.distress);
 		//System.out.println("DISTRESS BROADCASTS: " + in);
 		int numRobots = ("0" + String.valueOf(in)).length()/3; //Must append a 0 to front of string to process so that numRobots works out correctly
 		//System.out.println(numRobots + "this is the casualty num");
@@ -230,7 +229,7 @@ public class HQ {
 		}
 		
 		//reset the distress channel
-		rc.broadcast(1, 0);
+		rc.broadcast(Util.distress, 0);
 		
 	}
 	
@@ -246,7 +245,7 @@ public class HQ {
 				spawnSuccess = tryToSpawn(rc, 1);
 				if(spawnSuccess) {
 					int j = Util.assignmentToInt(squad, 1);
-					rc.broadcast(0, j);
+					rc.broadcast(Util.spawnchannel, j);
 					System.out.println("Spawned an attacker: " + j);
 				}
 			
@@ -254,7 +253,7 @@ public class HQ {
 				spawnSuccess = tryToSpawn(rc, 0);
 				if(spawnSuccess){
 					int j = Util.assignmentToInt(squad, 0);
-					rc.broadcast(0, j);
+					rc.broadcast(Util.spawnchannel, j);
 					System.out.println("Spawned a defender: " + j);
 				}
 			}
@@ -269,9 +268,9 @@ public class HQ {
 	//Determines squad of robot to by spawned next 
 	private static int nextSquadNum(RobotController rc) throws GameActionException {
 		//If it reads that defensive robots are dying from channel 10
-		int squad = rc.readBroadcast(10);
+		int squad = rc.readBroadcast(Util.spawnNext);
 		if(squad!=0 && squad < 11 && !rush){
-			rc.broadcast(10, 0); //reset value
+			rc.broadcast(Util.spawnNext, 0); //reset value
 			System.out.println("spawning a replacement for defender" + squad);
 			return squad;
 		}
