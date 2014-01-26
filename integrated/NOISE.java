@@ -62,7 +62,7 @@ public class NOISE {
 				print("Pulling Southeast");
 				rc.yield();
 				if(rc.isActive()){
-					rc.attackSquare(rc.getLocation().add(14-s, -(14-s)));
+					rc.attackSquare(rc.getLocation().add(s-i, -(s-i)));
 					rc.yield();
 				}
 			}
