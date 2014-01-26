@@ -11,7 +11,7 @@ import battlecode.common.RobotType;
 public class PASTR {
 	static boolean sentBroadcast = false;
 	
-	public static void getSquad(RobotController rc) throws GameActionException{
+	public static void broadcastSquad(RobotController rc) throws GameActionException{
 		Robot[] closeBy = rc.senseNearbyGameObjects(Robot.class, 9);
 		if(closeBy.length>1){
 			int nearestID = closeBy[0].getID();

@@ -1,6 +1,7 @@
 package lotus;
 
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 
@@ -20,7 +21,7 @@ public class HQ {
 	static boolean initializerRun = false;
     static double cowDensMap[][];
     static int mapY, mapX;
-    static MapLocation desiredPASTRs[];
+    static ArrayList<MapLocation> desiredPASTRs;
     static  Team team;
     static Team enemy;
     static int idealNumPastures = 2;
