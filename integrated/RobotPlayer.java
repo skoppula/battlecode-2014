@@ -28,24 +28,21 @@ public class RobotPlayer{
     	int assignment = rc.readBroadcast(Util.spawnchannel);
     	
     	if(type == RobotType.HQ) {
-    		if (HQ.startRush(rc)) {
-    			rc.broadcast(0, 1101);
-        		rc.broadcast(3, Util.locToInt(rc.senseHQLocation()));
-    		} else {
+    		if (rc.getMapHeight() > 40) {
     			rc.broadcast(0, 300);
-    			rc.broadcast(3, Util.locToInt(rc.senseEnemyHQLocation()));
+        		rc.broadcast(3, Util.locToInt(rc.senseHQLocation()));
+    		}else {
+    			rc.broadcast(0, 1101);
+    			rc.broadcast(11, Util.locToInt(rc.senseEnemyHQLocation()));
     		}
     		
     		HQ.tryToSpawn(rc, 0);
-    		
     	} else if (type == RobotType.SOLDIER)
     		rc.broadcast(id, assignment);
-    	
     	else if (type==RobotType.PASTR){
     		PASTR.getSquad(rc);
-    		rc.broadcast(id, Clock.getRoundNum());
-    	}
-    	
+    		rc.broadcast(id+1, Clock.getRoundNum());
+	}
 		try {
         	while(true) {
         		
@@ -58,12 +55,12 @@ public class RobotPlayer{
         		else if(type == RobotType.NOISETOWER)
         			NOISE.maintainNoiseTower(rc);
         		
-        		else 
+        		else {
         			COWBOY.runCowboy(rc, assignment);
+        		}
         		
         		rc.yield();
         	}
-        	
 		} catch (Exception e){
 				e.printStackTrace();
 		}

@@ -1,6 +1,7 @@
 package integrated;
 
 import battlecode.common.Clock;
+import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.Robot;
@@ -15,6 +16,7 @@ public class COWBOY {
 	//checkpoints
 	static boolean rushedEnemyPstr = false;
 	static boolean campEnemyPstr = false;
+	static boolean rush = false;
 
 	public static void checkHealth(RobotController rc) throws GameActionException{
 		int assignment = rc.readBroadcast(rc.getRobot().getID());
@@ -40,8 +42,12 @@ public class COWBOY {
 		
 		int id = rc.getRobot().getID(); 
 		
-		if (assignment==0) 
+		if (assignment==0){
 			assignment = rc.readBroadcast(id);
+		} else if (rc.readBroadcast(id+1) > 0) {
+			//dynamic assignment
+			assignment = rc.readBroadcast(id);
+		}
 		
 		//Understand the assignment
 		int squad = Util.getSquad(assignment);
@@ -55,6 +61,7 @@ public class COWBOY {
 		//DEFENDERS - stationary near pastr, senses enemy approaching, attacks in groups
 		//PASTR precursor - goes straight to desired location, checks if it's a good area, constructs
 		//NOISETOWER precursor - goes right next to PASTR, checks if PASTR doesn't have noisetower, construct
+		
 
 		switch(role){                              
 	        case 0: COWBOY.runSoldier (rc, squad, types.DEFENDER); break;
@@ -88,7 +95,7 @@ public class COWBOY {
 			//If attacking HQ, have new HQ target outside HQ attack range
 			if(rc.senseEnemyHQLocation().equals(new MapLocation(targetX, targetY))) {
 				targetX -= RobotType.HQ.attackRadiusMaxSquared/Math.sqrt(2);
-				targetY -= RobotType.HQ.attackRadiusMaxSquared/Math.sqrt(2);
+				targetY -= RobotType.HQ.attackRadiusMaxSquared/Math.sqrt(2); //this sometimes returns negative values
 			}
 			
 			//Move away from home HQ
@@ -96,7 +103,7 @@ public class COWBOY {
 				Util.tryToMove(rc);
 			
 			//Gather at the rally point
-			//System.out.println(targetX + "attacker moving to" + targetY);
+			System.out.println("attacker moving to" + targetX + "," + targetY + ", " + squadInfo);
 			if(Math.pow(loc.x-target.x,2) + Math.pow(loc.y-target.y, 2) > 2)
 				//Util.moveTo(rc, new MapLocation(targetX, targetY));
 				Util.channelMove(rc);
@@ -122,13 +129,39 @@ public class COWBOY {
 			int areaSafe = rc.readBroadcast(Util.areaSafeChannel);
 			
 			MapLocation[] allyPstrs = rc.sensePastrLocations(rc.getTeam());
+			
+			if (Clock.getRoundNum() > 1000 && Clock.getRoundNum() < 1500){
+				System.out.println(status + "status" + in + "channel 2");
+			}
+			
 
-			if(allies.length>4 && status==0 &&loc.distanceSquaredTo(target) < 25&&rc.isActive()) {
-				rc.construct(RobotType.PASTR);
-				int left = (int) ((in/Math.pow(10, squad-diff)+1)*Math.pow(10, squad-diff));
-				int right = in % (int) Math.pow(10, squad-diff);
-				rc.broadcast(Util.pastrChannel, left + right);
-				System.out.println("Constructing a PASTR..." + allies.length + HQ.rush);
+			if(allies.length>3 && status==0 &&loc.distanceSquaredTo(target) < 25&&rc.isActive() ) {
+				//check to make sure there are cows there
+				double cows = rc.senseCowsAtLocation(loc);
+				if (cows > 10) {
+					rc.construct(RobotType.PASTR);
+					int left = (int) ((in/Math.pow(10, squad-diff)+1)*Math.pow(10, squad-diff));
+					int right = in % (int) Math.pow(10, squad-diff);
+					rc.broadcast(Util.pastrChannel, left + right);
+					System.out.println("Constructing a PASTR..." + allies.length + HQ.rush);
+				}else {
+					rc.broadcast(Util.failedPastr, 1);
+					int id = rc.getRobot().getID();
+					
+					rc.broadcast(id, 1101);
+					//signals that the robot has switched occupations
+					rc.broadcast(id+1, 1);
+					System.out.println("transformed into attacker" + id);
+				}
+			} else if (rc.readBroadcast(Util.strategyChannel) > 0&&rc.isActive()&&status==0) {
+				double cows = rc.senseCowsAtLocation(loc);
+				if (cows > 10) {
+					rc.construct(RobotType.PASTR);
+					int left = (int) ((in/Math.pow(10, squad-diff)+1)*Math.pow(10, squad-diff));
+					int right = in % (int) Math.pow(10, squad-diff);
+					rc.broadcast(Util.pastrChannel, left + right);
+					System.out.println("Constructing a PASTR..." + allies.length + HQ.rush);
+				}
 			}
 			else if (areaSafe > 0 &&rc.senseCowsAtLocation(loc) > 300&&rc.isActive()){
 				//economy based endgame, triggered when a pastr has been untouched for 130 rounds

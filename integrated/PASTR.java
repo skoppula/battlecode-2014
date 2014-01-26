@@ -46,11 +46,11 @@ public class PASTR {
 			int right = in % (int) Math.pow(10, squad-3);
 			
 			if(rc.readBroadcast(rc.getRobot().getID())>=0) {
-				rc.broadcast(Util.pastrChannel, left + right);
+				rc.broadcast(2, left + right);
 				rc.broadcast(rc.getRobot().getID(), rc.readBroadcast(rc.getRobot().getID())*-1);
 			}
 			
-			//System.out.println(left+right);
+			System.out.println(left+right);
 		}
 	}
 
@@ -61,7 +61,7 @@ public class PASTR {
 		int NTcount = 0;
 		int lastNTconstruct = rc.readBroadcast(Util.lastNTChannel);
 		
-		int spawnRound = rc.readBroadcast(rc.getRobot().getID());
+		int spawnRound = rc.readBroadcast(rc.getRobot().getID()+1);
 		//if after, say 150 rounds the pastr still exists, then it is well defended and set up
 		//we can definitely set up surrounding pastrs, since we assume the area is well defended
 		

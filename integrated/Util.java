@@ -26,6 +26,8 @@ public class Util {
 	static int NTexistenceChannel = 51;
 	static int areaSafeChannel = 52;
 	static int rushSuccess = 100; //channel that we broadcast to if our rush was a success
+	static int failedPastr = 101; //channel that triggers reactive rush
+	static int strategyChannel = 30;
 
     public static Direction allDirections[] = {Direction.NORTH, Direction.SOUTH, Direction.NORTH_EAST, Direction.SOUTH_EAST, Direction.WEST, Direction.SOUTH_WEST, Direction.NORTH_WEST, Direction.EAST};
     static Random rand = new Random();
@@ -174,18 +176,19 @@ public class Util {
 		
 		avoidEnemyHQ(rc);
 		
-		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared, rc.getTeam().opponent());
+		MapLocation enemyPstrs[] = rc.sensePastrLocations(rc.getTeam());
+		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, rc.getTeam().opponent());
 		MapLocation loc = rc.getLocation();
 
 		if(hasBroadcastedDistress(rc) == false)
 			COWBOY.checkHealth(rc);
 		
-		while(enemyRobots.length>0){//SHOOT AT, OR RUN TOWARDS, ENEMIES
+		while(enemyRobots.length>0 && enemyPstrs.length == 0){//SHOOT AT, OR RUN TOWARDS, ENEMIES
 			
 			avoidEnemyHQ(rc);
 			
 			//Sense nearby game objects, 200 bytecode
-			enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared, rc.getTeam().opponent());
+			enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, rc.getTeam().opponent());
 			loc = rc.getLocation();
 			
 			if (enemyRobots.length > 0) {
@@ -194,7 +197,9 @@ public class Util {
 				
 				if(eloc == null) {
 					System.out.println("ENEMY LOCATION IS NULL");
-					break;
+//					if (rc.isActive()) {
+//						randomMove(rc);
+//					}
 				}
 				
 				int maxAttackRad = rc.getType().attackRadiusMaxSquared;
@@ -235,7 +240,7 @@ public class Util {
 				}
 			}else {
 				Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared, rc.getTeam().opponent());
-				while(enemyRobots.length>0){//SHOOT AT, OR RUN TOWARDS, ENEMIES
+				while(enemyRobots.length>0 && Clock.getRoundNum()%30 < 10 && Clock.getRoundNum()%30 > 25){//SHOOT AT, OR RUN TOWARDS, ENEMIES
 //					//Sense nearby game objects, 200 bytecode
 					enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared, rc.getTeam().opponent());
 					loc = rc.getLocation();

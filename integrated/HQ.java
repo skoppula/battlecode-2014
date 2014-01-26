@@ -53,6 +53,9 @@ public class HQ {
 		updateRobotDistro(rc);
 		
 		rush = reactiveRush(rc); //TODO Be able to switch to a rush strategy midgame
+		if (rush) {
+			rc.broadcast(Util.strategyChannel, 1);
+		}
 		
 		Robot[] allies = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared, team);
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared, enemy);
@@ -64,16 +67,18 @@ public class HQ {
 		rc.yield();
 	}
 	
-	//SKANDA: HOW FIT INTO FRAMEWORK?
-	private static boolean reactiveRush(RobotController rc) {
+	private static boolean reactiveRush(RobotController rc) throws GameActionException {
 		//TODO if we are losing in an economy based game
 		int ally = rc.sensePastrLocations(rc.getTeam()).length;
 		int enemy = rc.sensePastrLocations(rc.getTeam().opponent()).length;
 		
 		if (rush){
 			return true;
-		}else if (enemy - 1 > ally) {
-			//System.out.println("REACTIVE RUSH");
+		}else if (enemy > ally) {
+			System.out.println("REACTIVE RUSH");
+			return true;
+		}else if (rc.readBroadcast(Util.failedPastr) > 0) {
+			System.out.println("REACTIVE RUSH 1");
 			return true;
 		}
 		
@@ -95,8 +100,11 @@ public class HQ {
     	desiredPASTRs = findPastureLocs();
     	System.out.println("Desired pastures : " + Arrays.deepToString(desiredPASTRs));
     	
+    	
     	initializerRun = true;
+    	
     	rush = startRush(rc);
+    	
     	rand = new Random(17);
     }
 	
@@ -110,21 +118,18 @@ public class HQ {
 		MapLocation rallyPoint = determineRallyPoint(rc);
 		
 		//TODO surround enemy HQ - rush ENDGAME :)
-		//SKANDA: HOW FIT INTO FRAMEWORK?
-		int rushSucess = 100; //set endgame target to enemy HQ.......somehow....help...
 		if (rc.readBroadcast(Util.rushSuccess) > 0){
 			rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(HQ.enemyHQ));
 		}
 		
 		else if(rush && Clock.getRoundNum() < 1000){
-			System.out.println("rush and under 1000");
+			//System.out.println("rush and under 1000");
 			if(enemyPASTRs.length>0){
 				rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(enemyPASTRs[0]));
 				attackedEnemy = true;
 			}
 			else if (attackedEnemy && enemyPASTRs.length == 0){ //shut down headquarters and endgame
 				rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(rc.senseEnemyHQLocation()));
-				
 			}
 			else
 				rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(rallyPoint));
@@ -149,10 +154,10 @@ public class HQ {
 		// TODO this can basically win the game for us, it's THAT important. You HAVE to avoid enemy contact
 		//until they create a pastr
 		
-		//for backdoor, uncomment below and this wins the game --->
+		MapLocation rallyPoint = new MapLocation (teamHQ.x, teamHQ.y -10);
 		//MapLocation rallyPoint = new MapLocation ((enemyHQ.x + 2*teamHQ.x)/3, (enemyHQ.y + 2*teamHQ.y)/3);
 		//for maps where the HQ is really close together --- this wins the game:
-		MapLocation rallyPoint = new MapLocation ((enemyHQ.x + 5*teamHQ.x)/6, (enemyHQ.y + 5*teamHQ.y)/6);
+		//MapLocation rallyPoint = new MapLocation ((enemyHQ.x + 5*teamHQ.x)/6, (enemyHQ.y + 5*teamHQ.y)/6);
 		//MapLocation rallyPoint = desiredPASTRs[1]; //rallyPoints have to be REALLY good!!!
 		return rallyPoint;
 	}
@@ -160,7 +165,7 @@ public class HQ {
 	static boolean startRush(RobotController rc) throws GameActionException{
 		// TODO How hard is it to rush the map? Can the enemy reach us in less than 30 turns?
 		double mapDensity = findMapDensity();
-		if(enemyHQ.distanceSquaredTo(teamHQ) < 900 || mapDensity ==0){
+		if(enemyHQ.distanceSquaredTo(teamHQ) < 900 || mapDensity <.1){
 			System.out.println("START-OF-GAME RUSHING THE OTHER TEAM");
 			return true;
 		}
@@ -308,8 +313,7 @@ public class HQ {
 		
 		return 3;
 	}
-	
-//what?
+
 	private static int computeRushRetreat(RobotController rc) {
 		// TODO If the other team is rushing you, DON"T CREATE A PASTR!
 		return 1000;
@@ -371,7 +375,10 @@ public class HQ {
 			}
 		}
 		//The first pasture will be right next to the HQ
-		pstrLocs[0] = findHQpstr(pstrLocs[0]);
+		if (!rush) {
+			pstrLocs[0] = findHQpstr(pstrLocs[0]);
+		}
+		
 		
 		return pstrLocs;
 	}
