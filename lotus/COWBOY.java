@@ -66,6 +66,7 @@ public class COWBOY {
 		switch(role){                              
 	        case 0: COWBOY.runSoldier (rc, squad, types.DEFENDER); break;
 	        case 1: COWBOY.runSoldier(rc, squad, types.ATTACKER); break;
+	        case 2: //scout
 		}
 	}
 	

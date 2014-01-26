@@ -1,6 +1,5 @@
 package lotus;
 
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
@@ -18,18 +17,19 @@ import battlecode.common.TerrainTile;
 
 public class HQ {
 	
+	static RobotController hq;
 	static boolean initializerRun = false;
     static double cowDensMap[][];
     static int mapY, mapX;
-    static ArrayList<MapLocation> desiredPASTRs;
     static  Team team;
     static Team enemy;
+    
+    static ArrayList<MapLocation> desiredPASTRs;
     static int idealNumPastures = 2;
-    static int storedCurrNumPastures = 0;
-    static boolean constructNT = false;
+
 	static MapLocation enemyHQ;
 	static MapLocation teamHQ;
-	static boolean rush = false;
+	static boolean initRush = false;
 	static boolean attackedEnemy = false;
     
     static int[] squads = new int[20];
@@ -39,26 +39,18 @@ public class HQ {
 	final static int	ROAD = 3;
 	final static int	WALL = 1000;
 	final static int	OFFMAP = 99999;
-    
-	static RobotController hq;
-	static Random rand;
-
-    static int[] robotTypeCount = {0,0};
+	
+	static ArrayList<Job> jobQueu = new ArrayList<Job>();
 
 	public static void runHeadquarters(RobotController rc) throws GameActionException {
 		
 		if(!initializerRun)
 			initializeGameVars(rc);
 		
+		updateJobQueu();
 		updateSquadLocs(rc);
 		updateRobotDistro(rc);
 		
-		rush = reactiveRush(rc); //TODO Be able to switch to a rush strategy midgame
-		if (rush) {
-			rc.broadcast(Util.strategyChannel, 1);
-		}
-		
-		Robot[] allies = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared, team);
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared, enemy);
 		if(enemyRobots.length > 0)
 			Util.indivShootNearby(rc, enemyRobots);
@@ -68,45 +60,22 @@ public class HQ {
 		rc.yield();
 	}
 	
-	private static boolean reactiveRush(RobotController rc) throws GameActionException {
-		//TODO if we are losing in an economy based game
-		int ally = rc.sensePastrLocations(rc.getTeam()).length;
-		int enemy = rc.sensePastrLocations(rc.getTeam().opponent()).length;
-		
-		if (rush){
-			return true;
-		}else if (enemy > ally) {
-			System.out.println("REACTIVE RUSH");
-			return true;
-		}else if (rc.readBroadcast(Util.failedPastr) > 0) {
-			System.out.println("REACTIVE RUSH 1");
-			return true;
-		}
-		
-		return false;
-	}
-
 	public static void initializeGameVars(RobotController rc) throws GameActionException{
-    	hq = rc;
     	
+		hq = rc;
     	team =  hq.getTeam();
     	enemy = team.opponent();
     	cowDensMap = hq.senseCowGrowth();
     	mapY = cowDensMap.length;
     	mapX = cowDensMap[0].length;
-    	idealNumPastures = computeNumPastures();
+    	
     	enemyHQ = rc.senseEnemyHQLocation();
     	teamHQ = rc.senseHQLocation();
-    	createTerrainMap();
+    	terrainMap = createTerrainMap();
     	desiredPASTRs = findPastureLocs();
-    	System.out.println("Desired pastures : " + Arrays.deepToString(desiredPASTRs));
-    	
+    	initRush = startRush(rc);
     	
     	initializerRun = true;
-    	
-    	rush = startRush(rc);
-    	
-    	rand = new Random(17);
     }
 	
 	//Put team and enemy team pasture, squad, and role info into channels
@@ -149,18 +118,6 @@ public class HQ {
 			rc.broadcast(i+3, (rc.readBroadcast(i+3)/10000)*10000 + Util.locToInt(desiredPASTRs[i]));
 			//System.out.println("SQUAD TRACKER " + (i+3));
 		}
-	}
-	
-	private static MapLocation determineRallyPoint(RobotController rc) {
-		// TODO this can basically win the game for us, it's THAT important. You HAVE to avoid enemy contact
-		//until they create a pastr
-		
-		MapLocation rallyPoint = new MapLocation (teamHQ.x, teamHQ.y -10);
-		//MapLocation rallyPoint = new MapLocation ((enemyHQ.x + 2*teamHQ.x)/3, (enemyHQ.y + 2*teamHQ.y)/3);
-		//for maps where the HQ is really close together --- this wins the game:
-		//MapLocation rallyPoint = new MapLocation ((enemyHQ.x + 5*teamHQ.x)/6, (enemyHQ.y + 5*teamHQ.y)/6);
-		//MapLocation rallyPoint = desiredPASTRs[1]; //rallyPoints have to be REALLY good!!!
-		return rallyPoint;
 	}
 
 	static boolean startRush(RobotController rc) throws GameActionException{
@@ -315,12 +272,9 @@ public class HQ {
 		return 3;
 	}
 
-	private static int computeRushRetreat(RobotController rc) {
-		// TODO If the other team is rushing you, DON"T CREATE A PASTR!
-		return 1000;
-	}
-
 	static boolean tryToSpawn(RobotController rc, int type) throws GameActionException {
+		
+		//include scout!!!
 		if(rc.isActive() && rc.senseRobotCount() < GameConstants.MAX_ROBOTS) {
 			Direction dir = Util.findDirToMove(rc);
 			if(dir != null) {
@@ -331,24 +285,15 @@ public class HQ {
 		}
 		return false;
 	}
-	
-	private static int computeNumPastures() {
-		return 3; //If you increase this to 4 bad things happen
-	}
 
-	static MapLocation[] findPastureLocs() throws GameActionException {
-		//returns a MapLocation array with the best pastures
+	static ArrayList<MapLocation> findPastureLocs() throws GameActionException {
 		
-		MapLocation pstrLocs[] = new MapLocation[idealNumPastures];
-		double pstrCowDens[] = new double[idealNumPastures];
-		
-		//Fill default
-		for (int i = 0; i < idealNumPastures; i++) {
-			pstrLocs[i] = new MapLocation(mapX/2, mapY/2);
-		}
-		
-		//The next pastures are decided based on cow density
-		//Slides a 3x3 window across the entire map, intervals of three and returns windows with highest 
+		int numSafetyIntervals = 5;
+		int[] desiredPASTRs = new int[numSafetyIntervals];
+				
+		MapLocation[] squares = new MapLocation[mapX*mapY/2];
+		int[] 
+ 
 		for(int i = 0; i < mapY-3; i+=4){
 			for(int j = 0; j < mapX-3; j+=4){
 				
@@ -375,56 +320,14 @@ public class HQ {
 				}
 			}
 		}
-		//The first pasture will be right next to the HQ
-		if (!rush) {
-			pstrLocs[0] = findHQpstr(pstrLocs[0]);
-		}
-		
-		
+
 		return pstrLocs;
 	}
 		
-	private static MapLocation findHQpstr(MapLocation origPstr) throws GameActionException {
-		// returns the first pstr location, close to the HQ so it can be defended well
-		MapLocation HQ = hq.senseHQLocation();
-		MapLocation enemyHQ = hq.senseEnemyHQLocation();
-		Direction toward_enemy = HQ.directionTo(enemyHQ);
-		MapLocation HQpstr = origPstr;
-		
-		int r = hq.getType().sensorRadiusSquared;
-		//System.out.println(r);
-		
-		for (Direction i:Util.allDirections) {
-			MapLocation p = HQ.add(i, 10); //perimeter location
-			System.out.println("map" + p.x + "" + p.y);
-			if (p.x < 0 || p.x > mapX || p.y < 0 || p.y > mapY||i==toward_enemy)
-				continue;
-			else {
-				int a = terrainMap[p.x][p.y];
-				System.out.println(a);
-				if (a==NORMAL||a==ROAD) {
-					return p;
-				}	
-			}
-			
-		}
-		
-//		if (cowDensMap[test.x, test.y] > 1) { //check to see if that spot exists
-//			HQpstr = HQ.add(away_from_enemy);
-//		} else { //that spot is probably in a wall, which would be weird, but possible
-//			
-//		}
-		return HQpstr;
-	}
-	
-	public static void createTerrainMap(){
-
-		//Get cow density field and map dimensions
-		double cowDensMap[][] = hq.senseCowGrowth();
-		int mapY = cowDensMap.length, mapX = cowDensMap[0].length;
+	public static int[][] createTerrainMap(){
 
 		//Initialize terrain map array
-		terrainMap = new int[mapY][mapX]; 
+		int[][] terrainMap = new int[mapY][mapX]; 
 
 		//Scan over map to identify types of terrain at each location
 		for(int i = 0; i < mapY; i++){
@@ -440,6 +343,8 @@ public class HQ {
 					terrainMap[i][j] = OFFMAP;
 			}
 		}
+		
+		return terrainMap;
 	}
 
 }
