@@ -54,7 +54,7 @@ public class HQ {
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared, enemy);
 		
 		if(enemyRobots.length > 0)
-			Util.indivShootNearby(rc, enemyRobots);
+			Attack.indivShootNearby(rc, enemyRobots);
 		else
 			spawnRobot(rc);
 		

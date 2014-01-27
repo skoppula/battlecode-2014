@@ -10,15 +10,16 @@ import battlecode.common.Team;
 
 public class COWBOY {
 	
-	//check if target exists: if not, camp and attack?
-	//face oncoming enemy side when defending
-	//introduce rally points into moveTo
-	//if cows = 0 at pastr location, switch to attacker
-	//economy based endgame, triggered when a pastr has been untouched for 130 rounds
-	//update NT status
-	//if pastr dies, don't eliminate the entire Job
-	// why Util.channelMove(rc)?
-	//ask the HQ for reinforcements?
+	//TODO check if target exists or is HQ: if not, camp and attack?
+	//TODO face oncoming enemy side when defending
+	//TODO introduce rally points into moveTo
+	//TODO if cows = 0 at pastr location, switch to attacker
+	//TODO economy based endgame, triggered when a pastr has been untouched for 130 rounds
+	//TODO update NT status
+	//TODO if pastr dies, don't eliminate the entire Job
+	//TODO why/when use Util.channelMove(rc)? and Util.avoidEnemyHQ(rc)?
+	//TODO ask the HQ for reinforcements?
+	//TODO in moveto, route robots around HQ, if possible, otherwise just pass through
 	
 	public static void runCowboy(RobotController rc, int assignment) throws GameActionException {
 	
@@ -99,12 +100,12 @@ public class COWBOY {
 		}
 		
 		//Then go to right place
-		if(curr.distanceSquaredTo(target) > 7)
+		if(curr.distanceSquaredTo(target) > 8)
 			Util.moveTo(rc, target);
 		
 		//Then attack!
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, enemy);
-		MapLocation eloc = Util.nearestEnemyLoc(rc, enemyRobots, rc.getLocation());
+		MapLocation eloc = Attack.nearestEnemyLoc(rc, enemyRobots, rc.getLocation());
 		
 		if(eloc != null && rc.isActive() && rc.canAttackSquare(eloc)) {
 			Util.moveToward(rc, eloc);
@@ -131,7 +132,7 @@ public class COWBOY {
 			
 		//Then attack!
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, enemy);
-		MapLocation eloc = Util.nearestEnemyLoc(rc, enemyRobots, rc.getLocation());
+		MapLocation eloc = Attack.nearestEnemyLoc(rc, enemyRobots, rc.getLocation());
 		
 		if(eloc != null && rc.isActive() && rc.canAttackSquare(eloc)) {
 			Util.moveToward(rc, eloc);
