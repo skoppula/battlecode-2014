@@ -10,17 +10,6 @@ import battlecode.common.Team;
 
 public class COWBOY {
 	
-	//TODO check if target exists or is HQ: if not, camp and attack?
-	//TODO face oncoming enemy side when defending
-	//TODO introduce rally points into moveTo
-	//TODO if cows = 0 at pastr location, switch to attacker
-	//TODO economy based endgame, triggered when a pastr has been untouched for 130 rounds
-	//TODO update NT status
-	//TODO if pastr dies, don't eliminate the entire Job
-	//TODO why/when use Util.channelMove(rc)? and Util.avoidEnemyHQ(rc)?
-	//TODO ask the HQ for reinforcements?
-	//TODO in moveto, route robots around HQ, if possible, otherwise just pass through
-	
 	public static void runCowboy(RobotController rc, int assignment) throws GameActionException {
 	
 		if (assignment == 0)
