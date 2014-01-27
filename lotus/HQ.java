@@ -286,10 +286,10 @@ public class HQ {
 		return false;
 	}
 
-	static ArrayList<MapLocation> findPastureLocs() throws GameActionException {
+	static MapLocation[] findPastureLocs() throws GameActionException {
 		
 		int numSafetyIntervals = 5;
-		int[] desiredPASTRs = new int[numSafetyIntervals];
+		MapLocation[] desiredPASTRs = new MapLocation[numSafetyIntervals];
 				
 		int[] squares = new int[mapX*mapY];
 		double[] productivity = new double[mapX*mapY];
@@ -319,18 +319,43 @@ public class HQ {
 			}
 		}
 		
-		double[] copySquares = Arrays.copyOf(safetyRatios, index);
+		int[] copySquares = Arrays.copyOf(squares, index);
 		double[] copyRatios = Arrays.copyOf(safetyRatios, index);
 		double[] copyRatiosSorted = Arrays.copyOf(safetyRatios, index);
 		double[] copyProds = Arrays.copyOf(safetyRatios, index);
 		
 		Arrays.sort(copyRatiosSorted);
+		double[] thresholds = new double[numSafetyIntervals-1];
 		
-		for(int j = 1; j <= numSafetyIntervals; j++){
+		for(double j = 1; j < numSafetyIntervals; j++)
+			thresholds[(int)j-1] = copyRatiosSorted[(int) j*copyRatiosSorted.length/numSafetyIntervals];
+		
+		double bestProd = 0;
+		
+		for(int i = 0; i < thresholds.length+1; i++) {
+			for(int j = 0; j < copyProds.length; j++){
+				if(i == 0 && copyRatios[j] < thresholds[i]) {
+					if(bestProd < copyProds[j]) {
+						bestProd = copyProds[j];
+						desiredPASTRs[i] = Conversion.intToMapLocation(copySquares[j]);
+					}		
+				} else if (i == thresholds.length && copyRatios[j] > thresholds[i-1]){
+					if(bestProd < copyProds[j]) {
+						bestProd = copyProds[j];
+						desiredPASTRs[i] = Conversion.intToMapLocation(copySquares[j]);
+					}
+				} else if (copyRatios[j] < thresholds[i] && copyRatios[j] > thresholds[i-1]){
+					if(bestProd < copyProds[j]) {
+						bestProd = copyProds[j];
+						desiredPASTRs[i] = Conversion.intToMapLocation(copySquares[j]);
+					}
+				}
+			}
 			
+			bestProd = 0;
 		}
 		
-		return pstrLocs;
+		return desiredPASTRs;
 	}
 		
 	public static int[][] createTerrainMap(){
