@@ -323,7 +323,7 @@ public class HQ {
 		
 		double bestProd = 0;
 		
-		for(int i = 0; i < thresholds.length+1; i++) {
+		for(int i = 0; i < thresholds.length; i++) {
 			for(int j = 0; j < copyProds.length; j++){
 				if(i == 0 && copyRatios[j] < thresholds[i]) {
 					if(bestProd < copyProds[j]) {
