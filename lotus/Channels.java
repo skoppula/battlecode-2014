@@ -18,7 +18,8 @@ public class Channels {
 	
 	
 	static int spawnChannel = 0;
-	static int firstDefenseChannel = 1; //Alternating squad channel, and corresponding PASTR/NT channel
+	static int firstDefenseChannel = 1;
+	//Alternating squad channel, and corresponding PASTR/NT channel -> [AB], A = 0 if no NT, 1 if NT constructed, B = 0 if no PASTR
 	static int lastDefenseChannel = 10;
 	static int firstOffenseChannel = 11;
 	static int lastOffenseChannel = 19;
@@ -30,16 +31,25 @@ public class Channels {
 	static int failedPastr = 101; //channel that triggers reactive rush
 	static int strategyChannel = 30;
 	
-	static int scoutEncoding(int distance, MapLocation m, int status) {
-		return distance*100000 + Conversion.mapLocationToInt(m)*10 + status;
+	static int NTPASTREncoding(int NT, int PASTR) {
+		return NT*10+PASTR;
 	}
 	
-	static int scoutEncoding(int distance, int loc, int status) {
-		return distance*100000 + loc*10 + status;
+	static int[] NTPASTRDecoding(int i) {
+		int[] a = {i/10, i%10}; //{NT status, PASTR status} 
+		return a;
+	}
+	
+	static int scoutEncoding(int round, MapLocation m, int status) {
+		return round*100000 + Conversion.mapLocationToInt(m)*10 + status;
+	}
+	
+	static int scoutEncoding(int round, int loc, int status) {
+		return round*100000 + loc*10 + status;
 	}
 	
 	static int[] scoutDecoding(int i) {
-		int[] a = {(i/100000), (i/10)%10000, i%10}; //{distance, XXYY, done/not done} 
+		int[] a = {(i/100000), (i/10)%10000, i%10}; //{current clock or num rounds to reach enemy HQ, XXYY, done/not done} 
 		return a;
 	}
 
