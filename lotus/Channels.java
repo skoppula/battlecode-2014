@@ -8,7 +8,7 @@ public class Channels {
 	 * Channel 0: spawning signal: squad*100+type
 	 * Channel 1: distress: [SS][T][SS][T]...SS=squad, and T = type of distressed robots
 	 * Channel 2: current pastures and noise towers: [D][D][D]...where D=0 indicates no PASTR/NT, D=1 indicates PASTR, D=2 PASTR & NT set up 
-	 * Channel 3-9: defensive squad locations & corresponding PASTR/NT locations: [A][XX][YY], A = count robots in squad, (XX,YY) = target
+	 * Channel 3-9: defensive squad locations & corresponding PASTR/NT locations: [XX][YY], (XX,YY) = target
 	 * Channel 10: ARE WE BEING RUSHED/
 	 * Channel 11-19: offensive squad locations & corresponding PASTR/NT locations
 	 * Channel 20: scout counter [#moves][XXYY][AA][1 or 0], AA = id, 1 = journey done, 0 = still en-route
@@ -21,7 +21,7 @@ public class Channels {
 	static int spawnChannel = 0;
 	static int pastrChannel = 2;
 	static int firstDefenseChannel = 3;
-	static int lastDefenseChannel = 9;
+	static int lastDefenseChannel = 10;
 	static int firstOffenseChannel = 11;
 	static int lastOffenseChannel = 19;
 	//static int spawnNext = 10; //receives squad number for things that are dying. 
@@ -45,5 +45,9 @@ public class Channels {
 	static int[] scoutDecoding(int i) {
 		int[] a = {(i/1000), (i/10)%100, i%10};
 		return a;
+	}
+
+	public static int assignmentEncoding(int squad, int role) {
+		return squad*100 + role;
 	}
 }

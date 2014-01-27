@@ -2,7 +2,6 @@ package lotus;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Random;
 
 import battlecode.common.Clock;
 import battlecode.common.Direction;
@@ -11,7 +10,6 @@ import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.Robot;
 import battlecode.common.RobotController;
-import battlecode.common.RobotType;
 import battlecode.common.Team;
 import battlecode.common.TerrainTile;
 
@@ -49,7 +47,9 @@ public class HQ {
 			initializeGameVars(rc);
 		
 		updateJobQueu(rc);
-		updateSquadLocs(rc);
+		
+		for(Job job:jobQueu)
+			job.updateSquadChannel(rc);
 		
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared, enemy);
 		
@@ -105,7 +105,7 @@ public class HQ {
 				//Add replacement PASTR in safer position
 				for(int j = 0; j < safe.length; j++)
 					if(safe[j] && !jobAlreadyTaken(desiredPASTRs[j]))						
-						jobQueu.add(new Job(j, desiredPASTRs[j], 5, getAvailableSquadNum("defense"), 250));
+						jobQueu.add(new Job(j, desiredPASTRs[j], 5, getAvailableSquadNum("defense"), 400));
 				
 				//Remove from queu after adding new Job, so that same squad number is not assigned
 				jobQueu.remove(i);
@@ -129,7 +129,7 @@ public class HQ {
 		if(enemyPASTRs.length > ourPASTRs.length - 1) {
 			for(MapLocation enemyPASTR:enemyPASTRs) {
 				if(!jobAlreadyTaken(enemyPASTR))
-					jobQueu.add(0, new Job(enemyPASTR, 6, getAvailableSquadNum("offense"), 250));
+					jobQueu.add(0, new Job(enemyPASTR, 6, getAvailableSquadNum("offense"), 450));
 			}
 		}
 
@@ -141,7 +141,7 @@ public class HQ {
 			while(numDefenseJobs() < idealNumPastures) {
 				for(int j = 0; j < safe.length; j++)
 					if(safe[j] && !jobAlreadyTaken(desiredPASTRs[j]))						
-						jobQueu.add(new Job(j, desiredPASTRs[j], 4, getAvailableSquadNum("defense"), 250));
+						jobQueu.add(new Job(j, desiredPASTRs[j], 4, getAvailableSquadNum("defense"), 350));
 			}
 		}
 	}
@@ -178,129 +178,42 @@ public class HQ {
 		
 		return 3;
 	}
-
-	
-	
-	//Put team and enemy team pasture, squad, and role info into channels
-	static void updateSquadLocs(RobotController rc) throws GameActionException{
-		//DEFENDER CHANNELS - 3 to about 8
-		//format: [N][XXYY] where N is robot count in the squad and XXYY are coordinates
-		
-		//RUSH CHANNEL - 11
-		MapLocation[] enemyPASTRs = rc.sensePastrLocations(enemy);
-		MapLocation rallyPoint = determineRallyPoint(rc);
-		
-		//TODO surround enemy HQ - rush ENDGAME :)
-		if (rc.readBroadcast(Util.rushSuccess) > 0){
-			rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(HQ.enemyHQ));
-		}
-		
-		else if(rush && Clock.getRoundNum() < 1000){
-			//System.out.println("rush and under 1000");
-			if(enemyPASTRs.length>0){
-				rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(enemyPASTRs[0]));
-				attackedEnemy = true;
-			}
-			else if (attackedEnemy && enemyPASTRs.length == 0){ //shut down headquarters and endgame
-				rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(rc.senseEnemyHQLocation()));
-			}
-			else
-				rc.broadcast(11, (rc.readBroadcast(11)/10000)*10000 + Util.locToInt(rallyPoint));
-		}
-		
-		for(int i = 0; i < enemyPASTRs.length; i++) {
-			if (enemyPASTRs[i].distanceSquaredTo(rc.senseEnemyHQLocation()) < 36) {
-				//the pastr is untouchable
-				rc.broadcast(i+12, (rc.readBroadcast(i+12)/10000)*10000 + Util.locToInt(rallyPoint));
-			} else {
-				rc.broadcast(i+12, (rc.readBroadcast(i+12)/10000)*10000 + Util.locToInt(enemyPASTRs[i]));
-			}	
-		}
-		
-		for(int i = 0; i < desiredPASTRs.length; i++) {
-			rc.broadcast(i+3, (rc.readBroadcast(i+3)/10000)*10000 + Util.locToInt(desiredPASTRs[i]));
-			//System.out.println("SQUAD TRACKER " + (i+3));
-		}
-	}
 	
 	static void spawnRobot(RobotController rc) throws GameActionException{
 
-		if(rc.senseRobotCount()<GameConstants.MAX_ROBOTS && rc.isActive()){
+		for(Job job:jobQueu) {
 			
-			int squad = nextSquadNum(rc);
-			boolean spawnSuccess = false;
-			Robot[] allies = rc.senseNearbyGameObjects(Robot.class, RobotType.SOLDIER.attackRadiusMaxSquared/2, team);
-			
-			if(squad > 10) {
-				spawnSuccess = tryToSpawn(rc, 1);
+			if(job.numRobotsAssigned < job.numRobotsNeeded) {
+				
+				boolean spawnSuccess = false;
+				int squad = job.squadNum;
+				
+				spawnSuccess = tryToSpawn(rc);
 				if(spawnSuccess) {
-					int j = Util.assignmentToInt(squad, 1);
-					rc.broadcast(Util.spawnchannel, j);
-					System.out.println("Spawned an attacker: " + j);
-				}
-			
-			} else if (squad < 11) {
-				spawnSuccess = tryToSpawn(rc, 0);
-				if(spawnSuccess){
-					int j = Util.assignmentToInt(squad, 0);
-					rc.broadcast(Util.spawnchannel, j);
-					System.out.println("Spawned a defender: " + j);
+					int assignment = squad < Channels.firstOffenseChannel ? Channels.assignmentEncoding(squad, 0) : Channels.assignmentEncoding(squad, 1);
+					rc.broadcast(Channels.spawnChannel, assignment);
+					
+					job.addRobotAssigned(1);
+					
+					String type = squad < Channels.firstOffenseChannel ? "attacker" : "defender";
+					System.out.println("Spawned a " + type + " with assignment " + assignment);
+					return;
 				}
 			}
-			
-			//Increase the squad member count by one
-			if(spawnSuccess){
-				rc.broadcast(squad, rc.readBroadcast(squad)+10000);
-			}
-		}
-	}
-	
-	//Determines squad of robot to by spawned next 
-	private static int nextSquadNum(RobotController rc) throws GameActionException {
-		//If it reads that defensive robots are dying from channel 10
-		int squad = rc.readBroadcast(Util.spawnNext);
-		if(squad!=0 && squad < 11 && !rush){
-			rc.broadcast(Util.spawnNext, 0); //reset value
-			System.out.println("spawning a replacement for defender" + squad);
-			return squad;
 		}
 		
-		//If starting out a rush, spawn enough attacking squads.
-		boolean rushFailed = false; //temporary hot fix - later this should be a checkpoint
-		int rushRetreat = computeRushRetreat(rc); 
-		if(rush && Clock.getRoundNum() < rushRetreat && !rushFailed) { //TODO decide when to stop rush
-			for(int i = 11; i < 12; i++){
-				if((rc.readBroadcast(i)/10000)%10<8)
-					return i;
-			}
-		}
-		
-		//Else if didn't establish pastures yet, need defensive squads
-		for(int i = 3; i < 3+desiredPASTRs.length; i++){
-			if((rc.readBroadcast(i)/10000)%10<6)
-				return i;
-		}
-		
-		//else spawn attackers
-		for(int i = 11; i < 21; i++){
-			if((rc.readBroadcast(i)/10000)%10<6)
-				return i;
-		}
-		
-		return 3;
 	}
 
-	static boolean tryToSpawn(RobotController rc, int type) throws GameActionException {
+	static boolean tryToSpawn(RobotController rc) throws GameActionException {
 		
-		//include scout!!!
 		if(rc.isActive() && rc.senseRobotCount() < GameConstants.MAX_ROBOTS) {
 			Direction dir = Util.findDirToMove(rc);
 			if(dir != null) {
 				rc.spawn(dir);
-				robotTypeCount[type]++;
 				return true;
 			}
 		}
+		
 		return false;
 	}
 

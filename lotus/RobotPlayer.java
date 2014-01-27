@@ -15,9 +15,9 @@ public class RobotPlayer{
     	
     	if(type == RobotType.HQ) {
     		//Spawn the scout
-    		rc.broadcast(0, 2102);
+    		rc.broadcast(0, Channels.assignmentEncoding(21, 2));
         	rc.broadcast(Channels.scoutChannel, Channels.scoutEncoding(rc.senseEnemyHQLocation(), id, 0));
-    		HQ.tryToSpawn(rc, 2);
+    		HQ.tryToSpawn(rc);
     		
     	} else if (type == RobotType.SOLDIER) {
     		//Place the squad and type assignment into the robot's ID channel
