@@ -1,5 +1,7 @@
 package lotus;
 
+import battlecode.common.MapLocation;
+
 public class Channels {
 	
 	/*
@@ -21,7 +23,8 @@ public class Channels {
 	static int pastrChannel = 2;
 	//Defenders are on channels 3-9
 	static int spawnNext = 10; //receives squad number for things that are dying. 
-	//Attackers are on channels 11-21
+	//Attackers are on channels 11-19
+	static int scoutChannel = 20;
 	static int lastNTChannel = 50;
 	static int NTexistenceChannel = 51;
 	static int areaSafeChannel = 52;
@@ -29,4 +32,16 @@ public class Channels {
 	static int failedPastr = 101; //channel that triggers reactive rush
 	static int strategyChannel = 30;
 	
+	static int scoutEncoding(MapLocation m, int id, int status) {
+		return Conversion.mapLocationToInt(m)*1000 + (id%100)*10 + status;
+	}
+	
+	static int scoutEncoding(int loc, int id, int status) {
+		return loc*1000 + (id%100)*10 + status;
+	}
+	
+	static int[] scoutDecoding(int i) {
+		int[] a = {(i/1000), (i/10)%100, i%10};
+		return a;
+	}
 }

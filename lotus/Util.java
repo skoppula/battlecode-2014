@@ -14,18 +14,7 @@ import battlecode.common.RobotType;
 
 public class Util {	
 
-	static int spawnchannel = 0;
-	static int distress = 1; //distress: [SS][T][SS][T]...SS=squad, and T = type of distressed robots
-	static int pastrChannel = 2;
-	//Defenders are on channels 3-9
-	static int spawnNext = 10; //receives squad number for things that are dying. 
-	//Attackers are on channels 11-21
-	static int lastNTChannel = 50;
-	static int NTexistenceChannel = 51;
-	static int areaSafeChannel = 52;
-	static int rushSuccess = 100; //channel that we broadcast to if our rush was a success
-	static int failedPastr = 101; //channel that triggers reactive rush
-	static int strategyChannel = 30;
+
 
     public static Direction allDirections[] = {Direction.NORTH, Direction.SOUTH, Direction.NORTH_EAST, Direction.SOUTH_EAST, Direction.WEST, Direction.SOUTH_WEST, Direction.NORTH_WEST, Direction.EAST};
     static Random rand = new Random();
@@ -91,9 +80,7 @@ public class Util {
 		return squad*100+role;
 	}
 
-	static int locToInt(MapLocation m){
-		return (m.x*100 + m.y);
-	}
+
 	
 	//broadcast to channel ID the assignment: AABB: A = squad[01-20] and B = type[00-03]
 	public static int getSquad(int i) {

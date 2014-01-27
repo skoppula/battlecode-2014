@@ -16,7 +16,7 @@ public class RobotPlayer{
     	if(type == RobotType.HQ) {
     		//Spawn the scout
     		rc.broadcast(0, 2102);
-        	rc.broadcast(20, Util.locToInt(rc.senseEnemyHQLocation())*1000 + (id%100)*10);
+        	rc.broadcast(Channels.scoutChannel, Channels.scoutEncoding(rc.senseEnemyHQLocation(), id, 0));
     		HQ.tryToSpawn(rc, 2);
     		
     	} else if (type == RobotType.SOLDIER) {

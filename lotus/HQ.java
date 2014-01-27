@@ -24,7 +24,7 @@ public class HQ {
     static  Team team;
     static Team enemy;
     
-    static ArrayList<MapLocation> desiredPASTRs;
+    static MapLocation[] desiredPASTRs;
     static int idealNumPastures = 2;
 
 	static MapLocation enemyHQ;
@@ -120,62 +120,7 @@ public class HQ {
 		}
 	}
 
-	static boolean startRush(RobotController rc) throws GameActionException{
-		// TODO How hard is it to rush the map? Can the enemy reach us in less than 30 turns?
-		double mapDensity = findMapDensity();
-		if(enemyHQ.distanceSquaredTo(teamHQ) < 900 || mapDensity <.1){
-			System.out.println("START-OF-GAME RUSHING THE OTHER TEAM");
-			return true;
-		}
-		else {
-			System.out.println("STARTING ECONOMY DEVELOPMENT PREFERRED");
-			return false;
-		}
-	}
 
-	private static double findMapDensity() {
-		//what's the map density
-		//what's the wall count between HQ's?
-		//how easy is it to navigate to enemyHQ? (guess? maybe?)
-		int normal = 0;
-		int wall = 0;
-		int road = 0;
-		int tileType;
-		
-		int Ystart = 0, Yend = 0, Xstart = 0, Xend=0;
-		//only focus on range between HQ's
-		if (teamHQ.y < enemyHQ.y) { //If our team HQ is north of enemy HQ
-			Ystart = teamHQ.y;
-			Yend = enemyHQ.y;
-		} else {
-			Ystart = enemyHQ.y;
-			Yend = teamHQ.y;
-		}
-		if (teamHQ.x < enemyHQ.x) { //If our team HQ is left of enemy HQ
-			Xstart = teamHQ.x;
-			Xend = enemyHQ.x;
-		} else {
-			Xstart = enemyHQ.y;
-			Xend = teamHQ.y;
-		}
-		
-		for (int i=Ystart;i<Yend;i++) {
-			for (int j=Xstart;j<Xend;j++) {
-				tileType = terrainMap[j][i];
-				if (tileType==NORMAL) {
-					normal+=1;
-				} else if (tileType==ROAD) {
-					road+=1;
-				} else if (tileType==WALL) {
-					wall+=1;
-				}
-			}
-		}
-		double density = (double) (wall)/(normal+road+wall);
-		
-		return density;
-		
-	}
 
 	//Keep track of deaths
 	static void updateRobotDistro(RobotController rc) throws GameActionException{
@@ -286,6 +231,57 @@ public class HQ {
 		return false;
 	}
 
+	static boolean startRush(RobotController rc) throws GameActionException{
+		
+		int[] scoutResults = Channels.scoutDecoding(rc.readBroadcast(Channels.scoutChannel));
+		
+		if((scoutResults[2] > 1 && scoutResults[0] < 50) || (enemyHQ.distanceSquaredTo(teamHQ) < 1000 && getDiagonalDensity() <.1)) {
+			System.out.println("Deciding on rush ...");
+			return true;
+			
+		} else {
+			System.out.println("Deciding economy development ...");
+			return false;
+		}
+	}
+
+	private static double getDiagonalDensity() {
+		
+		double normal = 0, wall = 0;
+		
+		int Ystart = teamHQ.y < enemyHQ.y ? teamHQ.y : enemyHQ.y;
+		int Yend = teamHQ.y < enemyHQ.y ? enemyHQ.y : teamHQ.y;
+		int Xstart = teamHQ.x < enemyHQ.x ? teamHQ.x : enemyHQ.x;
+		int Xend = teamHQ.x < enemyHQ.x ? enemyHQ.x : teamHQ.x;
+		
+		int Xdiff = (Xend-Xstart), Ydiff = (Yend-Ystart);
+		boolean Xlarger = Xdiff > Ydiff;
+		int stepSize = Xlarger ? Xdiff/Ydiff : Ydiff/Xdiff;
+		
+		//Traverse along the diagonal
+		if(Xlarger) {
+			for(int x = Xstart, y = Ystart; x < Xend; x += stepSize, y++)
+				for(int j = 0; j < stepSize; j++){
+					if(terrainMap[x+j][y] == NORMAL || terrainMap[x+j][y] == ROAD)
+						normal++;
+					else
+						wall++;
+				}
+			
+		} else {
+			for(int x = Xstart, y = Ystart; y < Yend; y += stepSize, x++)
+				for(int j = 0; j < stepSize; j++){
+					if(terrainMap[x][y+j] == NORMAL || terrainMap[x][y+j] == ROAD)
+						normal++;
+					else
+						wall++;
+				}
+		}
+
+		return (wall)/(normal+wall);
+		
+	}
+	
 	static MapLocation[] findPastureLocs() throws GameActionException {
 		
 		int numSafetyIntervals = 5;
