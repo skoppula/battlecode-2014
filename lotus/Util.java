@@ -76,21 +76,7 @@ public class Util {
 		}
 	}
 	
-	public static int assignmentEncoding(int squad, int role) {
-		return squad*100+role;
-	}
 
-
-	
-	//broadcast to channel ID the assignment: AABB: A = squad[01-20] and B = type[00-03]
-	public static int getSquad(int i) {
-		return (i/100)%100;
-	}
-
-	public static int getRole(int i) {
-		return i%100;
-	}
-	
 	public static MapLocation nearestEnemyLoc(RobotController rc, Robot[] enemyRobots, MapLocation loc) throws GameActionException {
 		
 		//int minDist = HQ.mapX*HQ.mapY;

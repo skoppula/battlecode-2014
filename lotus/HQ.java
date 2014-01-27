@@ -129,7 +129,10 @@ public class HQ {
 		if(enemyPASTRs.length > ourPASTRs.length - 1) {
 			for(MapLocation enemyPASTR:enemyPASTRs) {
 				if(!jobAlreadyTaken(enemyPASTR))
-					jobQueu.add(0, new Job(enemyPASTR, 6, getAvailableSquadNum("offense"), 450));
+					if(teamHQ.distanceSquaredTo(enemyPASTR) < 900) //If enemy PASTR is close by, add it to the front of the queu
+						jobQueu.add(0, new Job(enemyPASTR, 6, getAvailableSquadNum("offense"), 450));
+					else
+						jobQueu.add(new Job(enemyPASTR, 6, getAvailableSquadNum("offense"), 450));
 			}
 		}
 
@@ -140,8 +143,12 @@ public class HQ {
 		} else {
 			while(numDefenseJobs() < idealNumPastures) {
 				for(int j = 0; j < safe.length; j++)
-					if(safe[j] && !jobAlreadyTaken(desiredPASTRs[j]))						
-						jobQueu.add(new Job(j, desiredPASTRs[j], 4, getAvailableSquadNum("defense"), 350));
+					if(safe[j] && !jobAlreadyTaken(desiredPASTRs[j]))
+						if(teamHQ.distanceSquaredTo(enemyHQ) > 900 && mapX > 30 && mapY > 30) //If enemy is far and map is big, add it to the front of the queu 
+							jobQueu.add(0, new Job(j, desiredPASTRs[j], 4, getAvailableSquadNum("defense"), 350));
+						else
+							jobQueu.add(new Job(j, desiredPASTRs[j], 4, getAvailableSquadNum("defense"), 350));
+							
 			}
 		}
 	}
@@ -168,15 +175,17 @@ public class HQ {
 		
 		ArrayList<Integer> usedSquadNums = new ArrayList<Integer>();
 		
-		for(Job job:jobQueu)
+		for(Job job:jobQueu) {
 			usedSquadNums.add(job.squadNum);
+			usedSquadNums.add(job.NTPASTRchannel);
+		}
 		
 		int start = type.equals("defense") ? Channels.firstDefenseChannel : Channels.firstOffenseChannel;
 		for(int i = start; start < Channels.lastOffenseChannel; start++)
 			if(!usedSquadNums.contains(i))
 				return i;
 		
-		return 3;
+		return Channels.firstDefenseChannel;
 	}
 	
 	static void spawnRobot(RobotController rc) throws GameActionException{
@@ -221,7 +230,7 @@ public class HQ {
 		
 		int[] scoutResults = Channels.scoutDecoding(rc.readBroadcast(Channels.scoutChannel));
 		
-		if((scoutResults[2] > 1 && scoutResults[0] < 50) || (enemyHQ.distanceSquaredTo(teamHQ) < 1000 && getDiagonalDensity() <.1)) {
+		if((scoutResults[2] == 1 && scoutResults[0] < 50) || (enemyHQ.distanceSquaredTo(teamHQ) < 1000 && getDiagonalDensity() <.1)) {
 			System.out.println("Deciding on rush ...");
 			return true;
 			

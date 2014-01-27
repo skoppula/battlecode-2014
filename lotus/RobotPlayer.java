@@ -15,8 +15,8 @@ public class RobotPlayer{
     	
     	if(type == RobotType.HQ) {
     		//Spawn the scout
-    		rc.broadcast(0, Channels.assignmentEncoding(21, 2));
-        	rc.broadcast(Channels.scoutChannel, Channels.scoutEncoding(rc.senseEnemyHQLocation(), id, 0));
+    		rc.broadcast(0, Channels.assignmentEncoding(Channels.scoutChannel, 2));
+        	rc.broadcast(Channels.scoutChannel, Channels.scoutEncoding(0, rc.senseEnemyHQLocation(), 0));
     		HQ.tryToSpawn(rc);
     		
     	} else if (type == RobotType.SOLDIER) {

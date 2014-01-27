@@ -6,7 +6,6 @@ public class Channels {
 	
 	/*
 	 * Channel 0: spawning signal: squad*100+type
-	 * Channel 1: distress: [SS][T][SS][T]...SS=squad, and T = type of distressed robots
 	 * Channel 2: current pastures and noise towers: [D][D][D]...where D=0 indicates no PASTR/NT, D=1 indicates PASTR, D=2 PASTR & NT set up 
 	 * Channel 3-9: defensive squad locations & corresponding PASTR/NT locations: [XX][YY], (XX,YY) = target
 	 * Channel 10: ARE WE BEING RUSHED/
@@ -19,13 +18,10 @@ public class Channels {
 	
 	
 	static int spawnChannel = 0;
-	static int pastrChannel = 2;
-	static int firstDefenseChannel = 3;
+	static int firstDefenseChannel = 1; //Alternating squad channel, and corresponding PASTR/NT channel
 	static int lastDefenseChannel = 10;
 	static int firstOffenseChannel = 11;
 	static int lastOffenseChannel = 19;
-	//static int spawnNext = 10; //receives squad number for things that are dying. 
-	//Attackers are on channels 11-19
 	static int scoutChannel = 20;
 	static int lastNTChannel = 50;
 	static int NTexistenceChannel = 51;
@@ -34,20 +30,25 @@ public class Channels {
 	static int failedPastr = 101; //channel that triggers reactive rush
 	static int strategyChannel = 30;
 	
-	static int scoutEncoding(MapLocation m, int id, int status) {
-		return Conversion.mapLocationToInt(m)*1000 + (id%100)*10 + status;
+	static int scoutEncoding(int distance, MapLocation m, int status) {
+		return distance*100000 + Conversion.mapLocationToInt(m)*10 + status;
 	}
 	
-	static int scoutEncoding(int loc, int id, int status) {
-		return loc*1000 + (id%100)*10 + status;
+	static int scoutEncoding(int distance, int loc, int status) {
+		return distance*100000 + loc*10 + status;
 	}
 	
 	static int[] scoutDecoding(int i) {
-		int[] a = {(i/1000), (i/10)%100, i%10};
+		int[] a = {(i/100000), (i/10)%10000, i%10}; //{distance, XXYY, done/not done} 
 		return a;
 	}
 
 	public static int assignmentEncoding(int squad, int role) {
 		return squad*100 + role;
+	}
+	
+	public static int[] assignmentDecoding(int assignment) {
+		int[] a = {(assignment/100)%100, assignment%10}; //{squad, role}
+		return a;
 	}
 }

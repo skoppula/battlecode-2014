@@ -17,6 +17,8 @@ public class Job {
 	String[] typesOfJobs = {"defense", "offense"};
 	int type;
 	
+	int NTPASTRchannel;
+	
 	int startRound;
 	int maxJobLength = 250;
 	
@@ -28,7 +30,9 @@ public class Job {
 		this.numRobotsAssigned = 0;
 		this.startRound = Clock.getRoundNum();
 		this.maxJobLength = maxJobLength;
-		this.type = this.squadNum < 10 ? 0 : 1;
+		this.type = this.squadNum < Channels.firstOffenseChannel ? 0 : 1;
+		
+		this.NTPASTRchannel = this.squadNum + 1;
 	}
 	
 	public Job(MapLocation m, int numRobotsNeeded, int squadNum, int maxJobLength){
@@ -38,7 +42,9 @@ public class Job {
 		this.numRobotsAssigned = 0;
 		this.startRound = Clock.getRoundNum();
 		this.maxJobLength = maxJobLength;
-		this.type = this.squadNum < 10 ? 0 : 1;
+		this.type = this.squadNum < Channels.firstOffenseChannel ? 0 : 1;
+		
+		this.NTPASTRchannel = this.squadNum + 1;
 	}
 	
 	
@@ -48,6 +54,7 @@ public class Job {
 
 	void prepareForRemoval(RobotController rc) throws GameActionException {
 		rc.broadcast(this.squadNum, 0);
+		rc.broadcast(this.NTPASTRchannel, 0);
 	}
 	
 	public String toString(){
