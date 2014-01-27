@@ -291,36 +291,45 @@ public class HQ {
 		int numSafetyIntervals = 5;
 		int[] desiredPASTRs = new int[numSafetyIntervals];
 				
-		MapLocation[] squares = new MapLocation[mapX*mapY/2];
-		int[] 
- 
-		for(int i = 0; i < mapY-3; i+=4){
-			for(int j = 0; j < mapX-3; j+=4){
+		int[] squares = new int[mapX*mapY];
+		double[] productivity = new double[mapX*mapY];
+		double[] safetyRatios = new double[mapX*mapY];
+		int index = 0;
+		
+		for(int i = 0; i < mapY-3; i+=3){
+			for(int j = 0; j < mapX-3; j+=3){
 				
+				if(cowDensMap[i+1][j+1] == 0)
+					continue;
+				
+				double ratio = (Math.pow((HQ.enemyHQ.x-(j+1)), 2) + Math.pow((HQ.enemyHQ.y-(i+1)), 2))
+								/(Math.pow((HQ.teamHQ.x-(j+1)), 2) + Math.pow((HQ.teamHQ.y-(i+1)), 2)); 
+				
+				if(ratio > 1)
+					continue;
+						
 				double sum = (cowDensMap[i][j] + cowDensMap[i+1][j] + cowDensMap[i+2][j] 
 							+ cowDensMap[i][j+1] + cowDensMap[i+1][j+1] + cowDensMap[i+2][j+1]
 							+ cowDensMap[i][j+2] + cowDensMap[i+1][j+2] + cowDensMap[i+2][j+2]);
 				
-				//More weight = farther away from HQ = bad
-				double weight = hq.getLocation().distanceSquaredTo(new MapLocation(j,i));
-				double weight1 = hq.senseEnemyHQLocation().distanceSquaredTo(new MapLocation(j,i));
-				
-				for(int k = 0; k < idealNumPastures; k++){
-					
-					//Balancing profit in pasture productivity vs. distance: (sum-weight/10)
-					if (sum==0){
-						pstrCowDens[k] = 0;
-					}
-					else if((sum-weight/weight1)>pstrCowDens[k]){
-						pstrLocs[k] = new MapLocation(j+1, i+1);
-						
-						pstrCowDens[k] = (sum-weight/weight1);
-						break;
-					}
-				}
+				squares[index] = Conversion.coordinatesToInt(j+1, i+1);
+				productivity[index] = sum;
+				safetyRatios[index] = ratio;
+				index++;
 			}
 		}
-
+		
+		double[] copySquares = Arrays.copyOf(safetyRatios, index);
+		double[] copyRatios = Arrays.copyOf(safetyRatios, index);
+		double[] copyRatiosSorted = Arrays.copyOf(safetyRatios, index);
+		double[] copyProds = Arrays.copyOf(safetyRatios, index);
+		
+		Arrays.sort(copyRatiosSorted);
+		
+		for(int j = 1; j <= numSafetyIntervals; j++){
+			
+		}
+		
 		return pstrLocs;
 	}
 		
