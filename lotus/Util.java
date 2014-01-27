@@ -76,7 +76,7 @@ public class Util {
 		}
 	}
 	
-	public static int assignmentToInt(int squad, int role) {
+	public static int assignmentEncoding(int squad, int role) {
 		return squad*100+role;
 	}
 

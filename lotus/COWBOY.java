@@ -13,6 +13,8 @@ public class COWBOY {
 	
 	enum types {ATTACKER, DEFENDER}
 	
+	//rc.broadcast(this.squadNum, 0); -> CHECK FOR THIS
+	
 	//checkpoints
 	static boolean rushedEnemyPstr = false;
 	static boolean campEnemyPstr = false;

@@ -53,4 +53,8 @@ public class Job {
 	public String toString(){
 		return "Job " + startRound + "[Squad: " + squadNum + ", type: " + type + "]";
 	}
+
+	void updateSquadChannel(RobotController rc) throws GameActionException {
+		rc.broadcast(squadNum, Conversion.mapLocationToInt(this.target));
+	}
 }
