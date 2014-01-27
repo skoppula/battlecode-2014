@@ -70,6 +70,8 @@ public class COWBOY {
 		}
 	}
 	
+	//check for 0 -> removed/no assignement -> go to nearest enemy and kamikaze!!!
+	
 	static void runSoldier (RobotController rc, int squad, types t) throws GameActionException {
 		
 		Team team = rc.getTeam();

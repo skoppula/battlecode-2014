@@ -25,6 +25,7 @@ public class HQ {
     static Team enemy;
     
     static MapLocation[] desiredPASTRs;
+    static boolean[] safe;
     static int idealNumPastures = 2;
 
 	static MapLocation enemyHQ;
@@ -47,11 +48,11 @@ public class HQ {
 		if(!initializerRun)
 			initializeGameVars(rc);
 		
-		updateJobQueu();
+		updateJobQueu(rc);
 		updateSquadLocs(rc);
-		updateRobotDistro(rc);
 		
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared, enemy);
+		
 		if(enemyRobots.length > 0)
 			Util.indivShootNearby(rc, enemyRobots);
 		else
@@ -60,7 +61,7 @@ public class HQ {
 		rc.yield();
 	}
 	
-	public static void initializeGameVars(RobotController rc) throws GameActionException{
+	static void initializeGameVars(RobotController rc) throws GameActionException{
     	
 		hq = rc;
     	team =  hq.getTeam();
@@ -71,12 +72,114 @@ public class HQ {
     	
     	enemyHQ = rc.senseEnemyHQLocation();
     	teamHQ = rc.senseHQLocation();
+    	
     	terrainMap = createTerrainMap();
     	desiredPASTRs = findPastureLocs();
+    	safe = new boolean[desiredPASTRs.length];
+    	
+    	for(int i = 0; i < safe.length; i++)
+    		safe[i] = true;
+    	
     	initRush = startRush(rc);
     	
     	initializerRun = true;
     }
+	
+	static void updateJobQueu(RobotController rc) throws GameActionException{
+		
+		MapLocation[] ourPASTRs = rc.sensePastrLocations(team);
+		MapLocation[] enemyPASTRs = rc.sensePastrLocations(enemy);
+		
+		//Remove ongoing Jobs that need deleting
+		for(int i = 0; i < jobQueu.size(); i++){
+			
+			Job job = jobQueu.get(i);
+			boolean maxedOutTime = Clock.getRoundNum() > jobQueu.get(i).maxJobLength + jobQueu.get(i).startRound;
+			
+			//[If an ongoing PASTR reported, but none exists -> assume PASTR died] or [defense job without a PASTR took too long -> assume hit obstacle]
+			if((job.ongoingPASTR && !Arrays.asList(ourPASTRs).contains(job.target)) 
+					|| (job.type == 0 && !job.ongoingPASTR && maxedOutTime)) {
+				job.prepareForRemoval(rc);
+				safe[job.desiredPASTRs_index] = false; //mark that position as unsafe
+				
+				//Add replacement PASTR in safer position
+				for(int j = 0; j < safe.length; j++)
+					if(safe[j] && !jobAlreadyTaken(desiredPASTRs[j]))						
+						jobQueu.add(new Job(j, desiredPASTRs[j], 5, getAvailableSquadNum("defense"), 250));
+				
+				//Remove from queu after adding new Job, so that same squad number is not assigned
+				jobQueu.remove(i);
+				
+			//else if job is offense and been taking too long to get attack
+			} else if(job.type == 1 && maxedOutTime) {
+				job.prepareForRemoval(rc);
+				jobQueu.remove(i);
+				
+			}
+		}
+		
+		//Check if jobs have established an ongoing PASTR; if so, mark it.
+		for(int i = 0; i < jobQueu.size(); i++) {
+			Job job = jobQueu.get(i);
+			if(Arrays.asList(ourPASTRs).contains(job.target))
+				job.ongoingPASTR = true;
+		}
+		
+		//Create new jobs in offense, rush, and defense/PASTR creation
+		if(enemyPASTRs.length > ourPASTRs.length - 1) {
+			for(MapLocation enemyPASTR:enemyPASTRs) {
+				if(!jobAlreadyTaken(enemyPASTR))
+					jobQueu.add(0, new Job(enemyPASTR, 6, getAvailableSquadNum("offense"), 250));
+			}
+		}
+
+		if(initRush) {
+			jobQueu.add(0, new Job(enemyHQ, 7, getAvailableSquadNum("offense"), 500));
+			initRush = false;
+			
+		} else {
+			while(numDefenseJobs() < idealNumPastures) {
+				for(int j = 0; j < safe.length; j++)
+					if(safe[j] && !jobAlreadyTaken(desiredPASTRs[j]))						
+						jobQueu.add(new Job(j, desiredPASTRs[j], 4, getAvailableSquadNum("defense"), 250));
+			}
+		}
+	}
+	
+	static int numDefenseJobs() {
+		int count = 0;
+		for(Job job:jobQueu)
+			if(job.type == 0)
+				count++;
+		
+		
+		return count;
+	}
+	
+	static boolean jobAlreadyTaken(MapLocation m) {
+		for(Job job:jobQueu)
+			if(job.target.equals(m))
+				return true;
+	
+		return false;
+	}
+
+	private static int getAvailableSquadNum(String type) {
+		
+		ArrayList<Integer> usedSquadNums = new ArrayList<Integer>();
+		
+		for(Job job:jobQueu)
+			usedSquadNums.add(job.squadNum);
+		
+		int start = type.equals("defense") ? Channels.firstDefenseChannel : Channels.firstOffenseChannel;
+		for(int i = start; start < Channels.lastOffenseChannel; start++)
+			if(!usedSquadNums.contains(i))
+				return i;
+		
+		return 3;
+	}
+
+	
 	
 	//Put team and enemy team pasture, squad, and role info into channels
 	static void updateSquadLocs(RobotController rc) throws GameActionException{
@@ -118,36 +221,6 @@ public class HQ {
 			rc.broadcast(i+3, (rc.readBroadcast(i+3)/10000)*10000 + Util.locToInt(desiredPASTRs[i]));
 			//System.out.println("SQUAD TRACKER " + (i+3));
 		}
-	}
-
-
-
-	//Keep track of deaths
-	static void updateRobotDistro(RobotController rc) throws GameActionException{
-		
-		//Channel 1: distress: [SS][T][SS][T]...SS=squad, and T = type of distressed robots
-		int in  = rc.readBroadcast(Util.distress);
-		//System.out.println("DISTRESS BROADCASTS: " + in);
-		int numRobots = ("0" + String.valueOf(in)).length()/3; //Must append a 0 to front of string to process so that numRobots works out correctly
-		//System.out.println(numRobots + "this is the casualty num");
-		for(int i = 0; i < numRobots; i++){ //so this never gets iterated through...
-			int j = (int) (in/Math.pow(1000,i))%1000;
-			int type = j%10;
-			int squad = j/10;
-			//System.out.println(type + "and " + squad);
-			
-			//subtract from squad count signal and robot type count
-			System.out.println("ROBOT DIED from SQUAD: " + squad);
-			System.out.println(Arrays.toString(robotTypeCount));
-			robotTypeCount[type]--;
-			System.out.println(Arrays.toString(robotTypeCount));
-			int k = rc.readBroadcast(squad);
-			rc.broadcast(squad,(k/10000-1)*10000+k%10000);
-		}
-		
-		//reset the distress channel
-		rc.broadcast(Util.distress, 0);
-		
 	}
 	
 	static void spawnRobot(RobotController rc) throws GameActionException{

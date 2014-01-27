@@ -1,47 +1,56 @@
 package lotus;
 
+import battlecode.common.Clock;
+import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
+import battlecode.common.RobotController;
 
 public class Job {
 	
-	MapLocation target;
 	int numRobotsNeeded, numRobotsAssigned;
-	boolean finished = false;
-	String[] typesOfJobs = {"defense", "offense", "enemy_hq_rush"};
-	String description;
-	int typeOfJob;
+	
+	boolean ongoingPASTR = false;
+	int desiredPASTRs_index;
+	MapLocation target;
+	
 	int squadNum;
+	String[] typesOfJobs = {"defense", "offense"};
+	int type;
+	
 	int startRound;
+	int maxJobLength = 250;
 	
-	public Job(MapLocation m, int numRobotsNeeded, int squadNum, String typeOfJob, int startRound){
+	public Job(int desiredPASTRs_index, MapLocation m, int numRobotsNeeded, int squadNum, int maxJobLength){
+		this.desiredPASTRs_index = desiredPASTRs_index;
 		this.target = m;
 		this.numRobotsNeeded = numRobotsNeeded;
 		this.squadNum = squadNum;
-		this.typeOfJob = decipherJob(typeOfJob);
 		this.numRobotsAssigned = 0;
-		this.startRound = startRound;
+		this.startRound = Clock.getRoundNum();
+		this.maxJobLength = maxJobLength;
+		this.type = this.squadNum < 10 ? 0 : 1;
 	}
 	
-	public Job(MapLocation m, int numRobotsNeeded, int squadNum, String typeOfJob, int startRound, String description){
+	public Job(MapLocation m, int numRobotsNeeded, int squadNum, int maxJobLength){
 		this.target = m;
 		this.numRobotsNeeded = numRobotsNeeded;
 		this.squadNum = squadNum;
-		this.typeOfJob = decipherJob(typeOfJob);
 		this.numRobotsAssigned = 0;
-		this.startRound = startRound;
-		this.description = description;
+		this.startRound = Clock.getRoundNum();
+		this.maxJobLength = maxJobLength;
+		this.type = this.squadNum < 10 ? 0 : 1;
 	}
 	
-	int decipherJob(String text){
-		if(text.toLowerCase().contains("defens"))
-			return 0;
-		else if(text.toLowerCase().contains("off"))
-			return 1;
-		else
-			return 2;	
-	}
 	
 	void addRobotAssigned(int num){
-		numRobotsAssigned += num;
+		this.numRobotsAssigned += num;
+	}
+
+	void prepareForRemoval(RobotController rc) throws GameActionException {
+		rc.broadcast(this.squadNum, 0);
+	}
+	
+	public String toString(){
+		return "Job " + startRound + "[Squad: " + squadNum + ", type: " + type + "]";
 	}
 }

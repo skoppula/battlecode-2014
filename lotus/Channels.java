@@ -19,10 +19,12 @@ public class Channels {
 	
 	
 	static int spawnChannel = 0;
-	static int distress = 1; //distress: [SS][T][SS][T]...SS=squad, and T = type of distressed robots
 	static int pastrChannel = 2;
-	//Defenders are on channels 3-9
-	static int spawnNext = 10; //receives squad number for things that are dying. 
+	static int firstDefenseChannel = 3;
+	static int lastDefenseChannel = 9;
+	static int firstOffenseChannel = 11;
+	static int lastOffenseChannel = 19;
+	//static int spawnNext = 10; //receives squad number for things that are dying. 
 	//Attackers are on channels 11-19
 	static int scoutChannel = 20;
 	static int lastNTChannel = 50;
