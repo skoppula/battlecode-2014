@@ -83,10 +83,10 @@ public class Util {
 				MapLocation eloc = Attack.nearestEnemyLoc(rc, enemyRobots, loc); //SHOULD NOT OUTPUT AN HQ LOCATION
 				int maxAttackRad = rc.getType().attackRadiusMaxSquared;
 				
-				if(rc.isActive() && eloc.distanceSquaredTo(rc.getLocation()) <= maxAttackRad)
+				if(eloc != null && rc.isActive() && rc.canAttackSquare(eloc))
 					rc.attackSquare(eloc);
 				
-				else if(rc.isActive() && rc.canMove(loc.directionTo(eloc)))
+				else if(eloc != null && rc.isActive() && rc.canMove(loc.directionTo(eloc)))
 					if (loc.distanceSquaredTo(rc.senseEnemyHQLocation()) > 36)
  						rc.move(loc.directionTo(eloc));
 					

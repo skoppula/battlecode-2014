@@ -96,9 +96,11 @@ public class COWBOY {
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, enemy);
 		MapLocation eloc = Attack.nearestEnemyLoc(rc, enemyRobots, rc.getLocation());
 		
-		if(eloc != null && rc.isActive() && rc.canAttackSquare(eloc)) {
-			Util.moveToward(rc, eloc);
-			rc.attackSquare(eloc);
+		if(eloc != null) {
+			if(rc.isActive())
+				Util.moveToward(rc, eloc);
+			if(rc.isActive() && rc.canAttackSquare(eloc))
+				rc.attackSquare(eloc);
 		}
 	}
 	
@@ -116,16 +118,19 @@ public class COWBOY {
 			Util.tryToMove(rc);
 		
 		//Go to right place
-		if(curr.distanceSquaredTo(target) > 7)
+		if(curr.distanceSquaredTo(target) > 7) {
+			System.out.println(target);
 			Util.moveTo(rc, target);
-			
+		}
 		//Then attack!
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, enemy);
 		MapLocation eloc = Attack.nearestEnemyLoc(rc, enemyRobots, rc.getLocation());
 		
-		if(eloc != null && rc.isActive() && rc.canAttackSquare(eloc)) {
-			Util.moveToward(rc, eloc);
-			rc.attackSquare(eloc);
+		if(eloc != null) {
+			if(rc.isActive())
+				Util.moveToward(rc, eloc);
+			if(rc.isActive() && rc.canAttackSquare(eloc))
+				rc.attackSquare(eloc);
 		}
 		
 	}

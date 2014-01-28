@@ -234,10 +234,10 @@ public class HQ {
 			//System.out.println(type + "and " + squad);
 			
 			//subtract from squad count signal and robot type count
-			System.out.println("ROBOT DIED from SQUAD: " + squad);
-			System.out.println(Arrays.toString(robotTypeCount));
+//			System.out.println("ROBOT DIED from SQUAD: " + squad);
+//			System.out.println(Arrays.toString(robotTypeCount));
 			robotTypeCount[type]--;
-			System.out.println(Arrays.toString(robotTypeCount));
+//			System.out.println(Arrays.toString(robotTypeCount));
 			int k = rc.readBroadcast(squad);
 			rc.broadcast(squad,(k/10000-1)*10000+k%10000);
 		}

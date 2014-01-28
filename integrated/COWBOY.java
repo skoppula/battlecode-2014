@@ -103,7 +103,7 @@ public class COWBOY {
 				Util.tryToMove(rc);
 			
 			//Gather at the rally point
-			System.out.println("attacker moving to" + targetX + "," + targetY + ", " + squadInfo);
+//			System.out.println("attacker moving to" + targetX + "," + targetY + ", " + squadInfo);
 			if(Math.pow(loc.x-target.x,2) + Math.pow(loc.y-target.y, 2) > 2)
 				//Util.moveTo(rc, new MapLocation(targetX, targetY));
 				Util.channelMove(rc);
@@ -131,7 +131,7 @@ public class COWBOY {
 			MapLocation[] allyPstrs = rc.sensePastrLocations(rc.getTeam());
 			
 			if (Clock.getRoundNum() > 1000 && Clock.getRoundNum() < 1500){
-				System.out.println(status + "status" + in + "channel 2");
+//				System.out.println(status + "status" + in + "channel 2");
 			}
 			
 
