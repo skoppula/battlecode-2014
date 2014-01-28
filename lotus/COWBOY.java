@@ -76,13 +76,6 @@ public class COWBOY {
 		Robot[] allies = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared*2, team);
 		
 		//Create a PASTR/NT if not already there
-		
-		boolean b1 = allies.length >= rc.readBroadcast(Channels.numAlliesNeededChannel);
-		//System.out.println(curr.distanceSquaredTo(target) + " " + distanceThreshold);
-		boolean b2 = curr.distanceSquaredTo(target) < distanceThreshold;
-		boolean b3 = rc.isActive();
-		//System.out.println("CHECKS: " + b1 + " " + b2 + " " + b3);
-		
 		if(allies.length >= rc.readBroadcast(Channels.numAlliesNeededChannel) && curr.distanceSquaredTo(target) < distanceThreshold && rc.isActive()) {
 			if(PASTRstatus == 0) {
 				rc.construct(RobotType.PASTR);
