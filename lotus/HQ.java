@@ -172,7 +172,9 @@ public class HQ {
 				//Add replacement PASTR in safer position
 				for(int j = 0; j < safe.length; j++) {
 					if(safe[j] && !jobAlreadyTaken(desiredPASTRs[j])) {
-						int distance = (int) Math.sqrt(teamHQ.distanceSquaredTo(desiredPASTRs[j]));
+						MapLocation myTeamHQ = rc.senseHQLocation();
+						System.out.println(teamHQ + "teamHQ");
+						int distance = (int) Math.sqrt(myTeamHQ.distanceSquaredTo(desiredPASTRs[j]));
 						jobQueu.add(new Job(j, desiredPASTRs[j], numDefenders, getAvailableSquadNum("defense"), getPASTRMaxRounds(distance)));
 						break;
 					}
@@ -295,8 +297,21 @@ public class HQ {
 	}
 	
 	static void spawnRobot(RobotController rc) throws GameActionException{
-
+		
+		//In some cases, if the initial rush fails miserably, we don't produce robots at all for a time
+		//This will just generate robots no matter what
+		
+		if (jobQueu.size()==0&&rc.isActive()){
+			System.out.println("no jobs!" + jobQueu.size());
+			//possible fix below
+			//jobQueu.add(0, new Job(enemyHQ, 7, getAvailableSquadNum("offense"), attackerMaxRounds));
+			
+			//TODO this happens in desolation
+			//System.out.println("no jobs left!" + jobQueu.size());
+		}
+				
 		for(Job job:jobQueu) {
+			
 			
 			if(job.numRobotsAssigned < job.numRobotsNeeded) {
 				
@@ -340,6 +355,9 @@ public class HQ {
 			System.out.println("Deciding on rush ...");
 			return true;
 			
+		} else if (HQ.desiredPASTRs.length ==0 ) { //TODO in desolation, there are no pastures found...
+			System.out.println("Deciding on rush ...due to 0 pastures");
+			return true;
 		} else {
 			System.out.println("Deciding economy development ...");
 			return false;
@@ -400,19 +418,23 @@ public class HQ {
 		else if (mapX*mapY<900)
 			scanResolution = 2;
 		
+		
 		for(int i = 0; i < mapY-scanResolution; i+=scanResolution){
+
 			for(int j = 0; j < mapX-scanResolution; j+=scanResolution){
-				
+
 				if((scanResolution == 1 || scanResolution == 2) && cowDensMap[i][j] == 0)
 					continue;
 				else if(scanResolution == 3 && cowDensMap[i+1][j+1] == 0)
 					continue;
+				
 				
 				double ratio = Math.sqrt(Math.pow((HQ.enemyHQ.x-(j+1)), 2) + Math.pow((HQ.enemyHQ.y-(i+1)), 2))
 								/Math.sqrt(Math.pow((HQ.teamHQ.x-(j+1)), 2) + Math.pow((HQ.teamHQ.y-(i+1)), 2)); 
 				
 				//WE WANT THIS RATIO TO BE AS LARGE AS POSSIBLE
 				double ratioThreshold = mapX*mapY > 400 ? 2 : 1;
+				
 				if(ratio < ratioThreshold)
 					continue;
 				
@@ -435,11 +457,19 @@ public class HQ {
 				productivity[index] = sum;
 				safetyRatios[index] = ratio;
 				index++;
+
 			}
 		}
 		
 		while(index <= numSafetyIntervals) {
 			numSafetyIntervals--;
+		}
+		
+		//TODO what if there are no safe regions for pastrs?
+		if (numSafetyIntervals < 0){
+			//We are unable to find any desired pastures - happens in desolation
+			numSafetyIntervals = 0;
+			//Go to a rush strategy - hot fix
 		}
 		
 		MapLocation[] desiredPASTRs = new MapLocation[numSafetyIntervals];

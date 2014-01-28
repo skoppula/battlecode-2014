@@ -121,6 +121,8 @@ public class COWBOY {
 		int squadInfo = rc.readBroadcast(squad);
 		MapLocation target = Conversion.intToMapLocation(squadInfo);
 		MapLocation curr = rc.getLocation();
+
+		Robot[] allies = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared*2, team);
 		
 		//First steps away from home HQ
 		if(curr.distanceSquaredTo(rc.senseHQLocation()) < 25)
