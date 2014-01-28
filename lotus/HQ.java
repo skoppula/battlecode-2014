@@ -295,7 +295,7 @@ public class HQ {
 	
 	static MapLocation[] findPastureLocs() throws GameActionException {
 		
-		int numSafetyIntervals = 5;
+		int numSafetyIntervals = 8;
 		MapLocation[] desiredPASTRs = new MapLocation[numSafetyIntervals];
 				
 		int[] squares = new int[mapX*mapY];
@@ -333,6 +333,14 @@ public class HQ {
 		
 		Arrays.sort(copyRatiosSorted);
 		double[] thresholds = new double[numSafetyIntervals-1];
+		
+		if(testing) {
+			System.out.println(Arrays.toString(copySquares));
+			System.out.println(Arrays.toString(copyRatios));
+			System.out.println(Arrays.toString(copyRatiosSorted));
+			System.out.println(Arrays.toString(copyProds));
+			System.out.println(Arrays.toString(thresholds));
+		}
 		
 		for(double j = 1; j < numSafetyIntervals; j++)
 			thresholds[(int)j-1] = copyRatiosSorted[(int) j*copyRatiosSorted.length/numSafetyIntervals];

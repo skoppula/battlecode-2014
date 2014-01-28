@@ -16,6 +16,10 @@ import battlecode.common.RobotType;
 //TODO ask the HQ for reinforcements?
 //TODO in moveto, route robots around HQ, if possible, otherwise just pass through
 
+//TODO Fix pastr locations
+//TODO pastr status not working?
+//TODO retreat if outnumbered
+
 public class RobotPlayer{
 	
 	public static void run(RobotController rc) throws GameActionException{
