@@ -41,6 +41,8 @@ public class HQ {
 	
 	static ArrayList<Job> jobQueu = new ArrayList<Job>();
 
+	static boolean testing = false;
+	
 	public static void runHeadquarters(RobotController rc) throws GameActionException {
 		
 		if(!initializerRun)
@@ -80,6 +82,8 @@ public class HQ {
     	for(int i = 0; i < safe.length; i++)
     		safe[i] = true;
     	
+    	System.out.println("Desired PASTR positions, in order of increasing safety: " + Arrays.toString(desiredPASTRs));
+    	
     	initRush = startRush(rc);
     	
     	initializerRun = true;
@@ -92,7 +96,6 @@ public class HQ {
 		
 		//Remove ongoing Jobs that need deleting
 		for(int i = 0; i < jobQueu.size(); i++){
-			
 			Job job = jobQueu.get(i);
 			boolean maxedOutTime = Clock.getRoundNum() > jobQueu.get(i).maxJobLength + jobQueu.get(i).startRound;
 			
@@ -101,12 +104,15 @@ public class HQ {
 					|| (job.type == 0 && !job.ongoingPASTR && maxedOutTime)) {
 				job.prepareForRemoval(rc);
 				safe[job.desiredPASTRs_index] = false; //mark that position as unsafe
+				System.out.println("PASTR position " + desiredPASTRs[job.desiredPASTRs_index] + " deemed unsafe.");
 				
 				//Add replacement PASTR in safer position
-				for(int j = 0; j < safe.length; j++)
-					if(safe[j] && !jobAlreadyTaken(desiredPASTRs[j]))						
-						jobQueu.add(new Job(j, desiredPASTRs[j], 5, getAvailableSquadNum("defense"), 400));
-				
+				for(int j = 0; j < safe.length; j++) {		
+					if(safe[j] && !jobAlreadyTaken(desiredPASTRs[j])) {
+						jobQueu.add(new Job(j, desiredPASTRs[j], 10, getAvailableSquadNum("defense"), 700));
+						break;
+					}
+				}
 				//Remove from queu after adding new Job, so that same squad number is not assigned
 				jobQueu.remove(i);
 				
@@ -127,30 +133,38 @@ public class HQ {
 		
 		//Create new jobs in offense, rush, and defense/PASTR creation
 		if(enemyPASTRs.length > ourPASTRs.length - 1) {
+
 			for(MapLocation enemyPASTR:enemyPASTRs) {
 				if(!jobAlreadyTaken(enemyPASTR))
 					if(teamHQ.distanceSquaredTo(enemyPASTR) < 900) //If enemy PASTR is close by, add it to the front of the queu
-						jobQueu.add(0, new Job(enemyPASTR, 6, getAvailableSquadNum("offense"), 450));
+						jobQueu.add(0, new Job(enemyPASTR, 6, getAvailableSquadNum("offense"), 700));
 					else
-						jobQueu.add(new Job(enemyPASTR, 6, getAvailableSquadNum("offense"), 450));
+						jobQueu.add(new Job(enemyPASTR, 6, getAvailableSquadNum("offense"), 700));
 			}
 		}
 
 		if(initRush) {
-			jobQueu.add(0, new Job(enemyHQ, 7, getAvailableSquadNum("offense"), 500));
+			jobQueu.add(0, new Job(enemyHQ, 7, getAvailableSquadNum("offense"), 700));
 			initRush = false;
 			
 		} else {
 			while(numDefenseJobs() < idealNumPastures) {
 				for(int j = 0; j < safe.length; j++)
-					if(safe[j] && !jobAlreadyTaken(desiredPASTRs[j]))
-						if(teamHQ.distanceSquaredTo(enemyHQ) > 900 && mapX > 30 && mapY > 30) //If enemy is far and map is big, add it to the front of the queu 
-							jobQueu.add(0, new Job(j, desiredPASTRs[j], 4, getAvailableSquadNum("defense"), 350));
-						else
-							jobQueu.add(new Job(j, desiredPASTRs[j], 4, getAvailableSquadNum("defense"), 350));
-							
+					if(safe[j] && !jobAlreadyTaken(desiredPASTRs[j])) {
+						if(teamHQ.distanceSquaredTo(enemyHQ) > 900 && mapX > 30 && mapY > 30) { //If enemy is far and map is big, add it to the front of the queu 
+							jobQueu.add(0, new Job(j, desiredPASTRs[j], 4, getAvailableSquadNum("defense"), 700));
+							break;
+						} else {
+							jobQueu.add(new Job(j, desiredPASTRs[j], 4, getAvailableSquadNum("defense"), 700));
+							break;
+						}
+					}		
 			}
 		}
+		
+		if(testing)
+			for(Job job:jobQueu)
+				System.out.print(job + " | ");
 	}
 	
 	static int numDefenseJobs() {
@@ -181,10 +195,12 @@ public class HQ {
 		}
 		
 		int start = type.equals("defense") ? Channels.firstDefenseChannel : Channels.firstOffenseChannel;
-		for(int i = start; start < Channels.lastOffenseChannel; start++)
-			if(!usedSquadNums.contains(i))
+		for(int i = start; i < Channels.lastOffenseChannel; i++) {
+			if(!usedSquadNums.contains(i)) {
 				return i;
-		
+			}
+		}
+	
 		return Channels.firstDefenseChannel;
 	}
 	
@@ -313,7 +329,7 @@ public class HQ {
 		int[] copySquares = Arrays.copyOf(squares, index);
 		double[] copyRatios = Arrays.copyOf(safetyRatios, index);
 		double[] copyRatiosSorted = Arrays.copyOf(safetyRatios, index);
-		double[] copyProds = Arrays.copyOf(safetyRatios, index);
+		double[] copyProds = Arrays.copyOf(productivity, index);
 		
 		Arrays.sort(copyRatiosSorted);
 		double[] thresholds = new double[numSafetyIntervals-1];
@@ -323,7 +339,7 @@ public class HQ {
 		
 		double bestProd = 0;
 		
-		for(int i = 0; i < thresholds.length; i++) {
+		for(int i = 0; i < thresholds.length+1; i++) {
 			for(int j = 0; j < copyProds.length; j++){
 				if(i == 0 && copyRatios[j] < thresholds[i]) {
 					if(bestProd < copyProds[j]) {
@@ -335,7 +351,7 @@ public class HQ {
 						bestProd = copyProds[j];
 						desiredPASTRs[i] = Conversion.intToMapLocation(copySquares[j]);
 					}
-				} else if (copyRatios[j] < thresholds[i] && copyRatios[j] > thresholds[i-1]){
+				} else if (i != thresholds.length && copyRatios[j] < thresholds[i] && copyRatios[j] > thresholds[i-1]){
 					if(bestProd < copyProds[j]) {
 						bestProd = copyProds[j];
 						desiredPASTRs[i] = Conversion.intToMapLocation(copySquares[j]);

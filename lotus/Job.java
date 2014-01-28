@@ -33,6 +33,8 @@ public class Job {
 		this.type = this.squadNum < Channels.firstOffenseChannel ? 0 : 1;
 		
 		this.NTPASTRchannel = this.squadNum + 1;
+		
+		System.out.println("Job spawned. squad: " + this.squadNum + " with target " + this.target);
 	}
 	
 	public Job(MapLocation m, int numRobotsNeeded, int squadNum, int maxJobLength){
@@ -45,6 +47,7 @@ public class Job {
 		this.type = this.squadNum < Channels.firstOffenseChannel ? 0 : 1;
 		
 		this.NTPASTRchannel = this.squadNum + 1;
+		System.out.println("Job spawned. squad: " + this.squadNum + " with target " + this.target);
 	}
 	
 	
@@ -55,6 +58,7 @@ public class Job {
 	void prepareForRemoval(RobotController rc) throws GameActionException {
 		rc.broadcast(this.squadNum, 0);
 		rc.broadcast(this.NTPASTRchannel, 0);
+		System.out.println("Job deleted (timed out). squad: " + this.squadNum + " with target " + this.target);
 	}
 	
 	public String toString(){

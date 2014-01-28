@@ -32,7 +32,7 @@ public class COWBOY {
 		rc.yield();
 	}
 	
-	static void kamikaze(RobotController rc) throws GameActionException {
+	private static void kamikaze(RobotController rc) throws GameActionException {
 
 		Team enemy = rc.getTeam().opponent();
 		MapLocation[] enemyPASTRs = rc.sensePastrLocations(enemy);

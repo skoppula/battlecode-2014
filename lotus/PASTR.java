@@ -17,8 +17,12 @@ public class PASTR {
 			rc.broadcast(rc.getRobot().getID(), Channels.assignmentDecoding(rc.readBroadcast(nearestID))[0]);
 			
 		} else
-			COWBOY.kamikaze(rc);
+			kamikaze(rc);
 		
+	}
+	
+	private static void kamikaze(RobotController rc) throws GameActionException {
+		rc.selfDestruct();
 	}
 
 	public static void maintainPasture(RobotController rc) throws GameActionException {
@@ -28,7 +32,7 @@ public class PASTR {
 		
 		if(closeBy.length < 2) {
 			rc.broadcast(squad, 0);
-			COWBOY.kamikaze(rc);
+			kamikaze(rc);
 		}
 		
 		//Check if there is a NT nearby
