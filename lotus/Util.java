@@ -81,7 +81,6 @@ public class Util {
 			if (enemyRobots.length > 0) {
 				
 				MapLocation eloc = Attack.nearestEnemyLoc(rc, enemyRobots, loc); //SHOULD NOT OUTPUT AN HQ LOCATION
-				int maxAttackRad = rc.getType().attackRadiusMaxSquared;
 				
 				if(eloc != null && rc.isActive() && rc.canAttackSquare(eloc))
 					rc.attackSquare(eloc);

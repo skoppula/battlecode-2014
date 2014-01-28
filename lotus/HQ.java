@@ -127,8 +127,10 @@ public class HQ {
 		//Check if jobs have established an ongoing PASTR; if so, mark it.
 		for(int i = 0; i < jobQueu.size(); i++) {
 			Job job = jobQueu.get(i);
-			if(Arrays.asList(ourPASTRs).contains(job.target))
+			if(Arrays.asList(ourPASTRs).contains(job.target)) {
+				System.out.println(job + " just got marked as ONGOING!");
 				job.ongoingPASTR = true;
+			}
 		}
 		
 		//Create new jobs in offense, rush, and defense/PASTR creation
@@ -309,10 +311,12 @@ public class HQ {
 				if(cowDensMap[i+1][j+1] == 0)
 					continue;
 				
-				double ratio = (Math.pow((HQ.enemyHQ.x-(j+1)), 2) + Math.pow((HQ.enemyHQ.y-(i+1)), 2))
-								/(Math.pow((HQ.teamHQ.x-(j+1)), 2) + Math.pow((HQ.teamHQ.y-(i+1)), 2)); 
+				double ratio = Math.sqrt(Math.pow((HQ.enemyHQ.x-(j+1)), 2) + Math.pow((HQ.enemyHQ.y-(i+1)), 2))
+								/Math.sqrt(Math.pow((HQ.teamHQ.x-(j+1)), 2) + Math.pow((HQ.teamHQ.y-(i+1)), 2)); 
 				
-				if(ratio > 1)
+				System.out.println();
+				//WE WANT THIS RATIO TO BE AS LARGE AS POSSIBLE
+				if(ratio < 2)
 					continue;
 						
 				double sum = (cowDensMap[i][j] + cowDensMap[i+1][j] + cowDensMap[i+2][j] 
@@ -332,7 +336,8 @@ public class HQ {
 		double[] copyProds = Arrays.copyOf(productivity, index);
 		
 		Arrays.sort(copyRatiosSorted);
-		double[] thresholds = new double[numSafetyIntervals-1];
+		//ratios are now sorted from least safe to safest
+		double[] thresholds = new double[numSafetyIntervals];
 		
 		if(testing) {
 			System.out.println(Arrays.toString(copySquares));
@@ -342,28 +347,19 @@ public class HQ {
 			System.out.println(Arrays.toString(thresholds));
 		}
 		
-		for(double j = 1; j < numSafetyIntervals; j++)
-			thresholds[(int)j-1] = copyRatiosSorted[(int) j*copyRatiosSorted.length/numSafetyIntervals];
+		for(double j = 0; j < numSafetyIntervals; j++)
+			thresholds[(int) j] = copyRatiosSorted[(int) j*copyRatiosSorted.length/numSafetyIntervals];
 		
 		double bestProd = 0;
 		
-		for(int i = 0; i < thresholds.length+1; i++) {
+		for(int i = thresholds.length - 1; i > -1 ; i--) {
 			for(int j = 0; j < copyProds.length; j++){
-				if(i == 0 && copyRatios[j] < thresholds[i]) {
-					if(bestProd < copyProds[j]) {
+				if(copyRatios[j] > thresholds[i]) {
+					MapLocation m = Conversion.intToMapLocation(copySquares[j]);
+					if(bestProd < copyProds[j] && !Arrays.asList(desiredPASTRs).contains(m)) {
 						bestProd = copyProds[j];
-						desiredPASTRs[i] = Conversion.intToMapLocation(copySquares[j]);
+						desiredPASTRs[i] = m;
 					}		
-				} else if (i == thresholds.length && copyRatios[j] > thresholds[i-1]){
-					if(bestProd < copyProds[j]) {
-						bestProd = copyProds[j];
-						desiredPASTRs[i] = Conversion.intToMapLocation(copySquares[j]);
-					}
-				} else if (i != thresholds.length && copyRatios[j] < thresholds[i] && copyRatios[j] > thresholds[i-1]){
-					if(bestProd < copyProds[j]) {
-						bestProd = copyProds[j];
-						desiredPASTRs[i] = Conversion.intToMapLocation(copySquares[j]);
-					}
 				}
 			}
 			

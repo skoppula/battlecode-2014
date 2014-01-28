@@ -75,10 +75,10 @@ public class HQ {
 		if (rush){
 			return true;
 		}else if (enemy > ally) {
-			System.out.println("REACTIVE RUSH");
+//			System.out.println("REACTIVE RUSH");
 			return true;
 		}else if (rc.readBroadcast(Util.failedPastr) > 0) {
-			System.out.println("REACTIVE RUSH 1");
+//			System.out.println("REACTIVE RUSH 1");
 			return true;
 		}
 		
@@ -98,7 +98,7 @@ public class HQ {
     	teamHQ = rc.senseHQLocation();
     	createTerrainMap();
     	desiredPASTRs = findPastureLocs();
-    	System.out.println("Desired pastures : " + Arrays.deepToString(desiredPASTRs));
+//    	System.out.println("Desired pastures : " + Arrays.deepToString(desiredPASTRs));
     	
     	
     	initializerRun = true;
@@ -166,11 +166,11 @@ public class HQ {
 		// TODO How hard is it to rush the map? Can the enemy reach us in less than 30 turns?
 		double mapDensity = findMapDensity();
 		if(enemyHQ.distanceSquaredTo(teamHQ) < 900 || mapDensity <.1){
-			System.out.println("START-OF-GAME RUSHING THE OTHER TEAM");
+//			System.out.println("START-OF-GAME RUSHING THE OTHER TEAM");
 			return true;
 		}
 		else {
-			System.out.println("STARTING ECONOMY DEVELOPMENT PREFERRED");
+//			System.out.println("STARTING ECONOMY DEVELOPMENT PREFERRED");
 			return false;
 		}
 	}
@@ -260,7 +260,7 @@ public class HQ {
 				if(spawnSuccess) {
 					int j = Util.assignmentToInt(squad, 1);
 					rc.broadcast(Util.spawnchannel, j);
-					System.out.println("Spawned an attacker: " + j);
+//					System.out.println("Spawned an attacker: " + j);
 				}
 			
 			} else if (squad < 11) {
@@ -268,7 +268,7 @@ public class HQ {
 				if(spawnSuccess){
 					int j = Util.assignmentToInt(squad, 0);
 					rc.broadcast(Util.spawnchannel, j);
-					System.out.println("Spawned a defender: " + j);
+//					System.out.println("Spawned a defender: " + j);
 				}
 			}
 			
@@ -285,7 +285,7 @@ public class HQ {
 		int squad = rc.readBroadcast(Util.spawnNext);
 		if(squad!=0 && squad < 11 && !rush){
 			rc.broadcast(Util.spawnNext, 0); //reset value
-			System.out.println("spawning a replacement for defender" + squad);
+//			System.out.println("spawning a replacement for defender" + squad);
 			return squad;
 		}
 		
@@ -395,7 +395,7 @@ public class HQ {
 		
 		for (Direction i:Util.allDirections) {
 			MapLocation p = HQ.add(i, 10); //perimeter location
-			System.out.println("map" + p.x + "" + p.y);
+//			System.out.println("map" + p.x + "" + p.y);
 			if (p.x < 0 || p.x > mapX || p.y < 0 || p.y > mapY||i==toward_enemy)
 				continue;
 			else {

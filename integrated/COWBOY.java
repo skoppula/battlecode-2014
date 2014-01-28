@@ -143,7 +143,7 @@ public class COWBOY {
 					int left = (int) ((in/Math.pow(10, squad-diff)+1)*Math.pow(10, squad-diff));
 					int right = in % (int) Math.pow(10, squad-diff);
 					rc.broadcast(Util.pastrChannel, left + right);
-					System.out.println("Constructing a PASTR..." + allies.length + HQ.rush);
+//					System.out.println("Constructing a PASTR..." + allies.length + HQ.rush);
 				}else {
 					rc.broadcast(Util.failedPastr, 1);
 					int id = rc.getRobot().getID();
@@ -151,7 +151,7 @@ public class COWBOY {
 					rc.broadcast(id, 1101);
 					//signals that the robot has switched occupations
 					rc.broadcast(id+1, 1);
-					System.out.println("transformed into attacker" + id);
+//					System.out.println("transformed into attacker" + id);
 				}
 			} else if (rc.readBroadcast(Util.strategyChannel) > 0&&rc.isActive()&&status==0) {
 				double cows = rc.senseCowsAtLocation(loc);
@@ -160,7 +160,7 @@ public class COWBOY {
 					int left = (int) ((in/Math.pow(10, squad-diff)+1)*Math.pow(10, squad-diff));
 					int right = in % (int) Math.pow(10, squad-diff);
 					rc.broadcast(Util.pastrChannel, left + right);
-					System.out.println("Constructing a PASTR..." + allies.length + HQ.rush);
+//					System.out.println("Constructing a PASTR..." + allies.length + HQ.rush);
 				}
 			}
 			else if (areaSafe > 0 &&rc.senseCowsAtLocation(loc) > 300&&rc.isActive()){
@@ -173,7 +173,7 @@ public class COWBOY {
 				rc.broadcast(Util.pastrChannel, left + right);
 				//don't need defenders
 				rc.broadcast(squad, 900000);
-				System.out.println("Constructing a PASTR..." + allies.length + HQ.rush);
+				//System.out.println("Constructing a PASTR..." + allies.length + HQ.rush);
 			}
 			else if (allies.length>4 && (status==1) && rc.isActive()) {
 				if(Math.pow(loc.x-target.x,2) + Math.pow(loc.y-target.y, 2) < 16){
@@ -181,7 +181,7 @@ public class COWBOY {
 					int left = (int) ((in/Math.pow(10, squad-diff)+1)*Math.pow(10, squad-diff));
 					int right = in % (int) Math.pow(10, squad-diff);
 					rc.broadcast(Util.pastrChannel, left + right);
-					System.out.println("Constructing a NT...");
+					//System.out.println("Constructing a NT...");
 					
 					//Communicates to the pastr that a NT was created, so if it is destroyed, pastr can tell
 					rc.broadcast(Util.lastNTChannel, Clock.getRoundNum()); //channel 50: last noisetower constructed birthstamp

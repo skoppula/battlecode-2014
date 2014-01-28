@@ -71,13 +71,14 @@ public class COWBOY {
 		int PASTRstatus = Channels.NTPASTRDecoding(status)[0];
 		int NTstatus = Channels.NTPASTRDecoding(status)[1];
 		
-		Robot[] allies = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared, team);
+		Robot[] allies = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared*2, team);
 		
 		//Create a PASTR/NT if not already there
-		if(allies.length > 3 && curr.distanceSquaredTo(target) < 16 && rc.isActive()) {
+		if(allies.length > 2 && curr.distanceSquaredTo(target) < 16 && rc.isActive()) {
 			if(PASTRstatus == 0) {
 				rc.construct(RobotType.PASTR);
 				rc.broadcast(squad + 1, Channels.NTPASTREncoding(NTstatus, 1));
+				System.out.println("Putting into PASTR channel: " + Channels.NTPASTREncoding(NTstatus, 1));
 				System.out.println("Constructing a PASTR...");
 				
 			} else if (NTstatus == 0) {
@@ -119,7 +120,7 @@ public class COWBOY {
 		
 		//Go to right place
 		if(curr.distanceSquaredTo(target) > 7) {
-			System.out.println(target);
+//			System.out.println(target);
 			Util.moveTo(rc, target);
 		}
 		//Then attack!

@@ -22,7 +22,6 @@ public class PASTR {
 	}
 	
 	private static void kamikaze(RobotController rc) throws GameActionException {
-		rc.selfDestruct();
 	}
 
 	public static void maintainPasture(RobotController rc) throws GameActionException {
