@@ -19,6 +19,7 @@ public class Channels {
 	static int firstOffenseChannel = 11;
 	static int lastOffenseChannel = 19;
 	static int scoutChannel = 20;
+	static int backupChannel = 21;
 	
 	static int NTPASTREncoding(int NT, int PASTR) {
 		return NT*10+PASTR;

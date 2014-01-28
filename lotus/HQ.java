@@ -43,6 +43,13 @@ public class HQ {
 
 	static boolean testing = false;
 	
+	static int pastrMaxRoundsAlive = 600;
+	static int attackerMaxRoundsAlive = 600;
+	static int attackerMaxRoundsAlive_Long = 800;
+	static int numDefendersInSquad = 10;
+	static int numDefendersInSquad_Redefeding = 10;
+	static int numAttackersInSquad = 7;
+	
 	public static void runHeadquarters(RobotController rc) throws GameActionException {
 		
 		if(!initializerRun)
@@ -91,6 +98,8 @@ public class HQ {
 	
 	static void updateJobQueu(RobotController rc) throws GameActionException{
 		
+
+		
 		MapLocation[] ourPASTRs = rc.sensePastrLocations(team);
 		MapLocation[] enemyPASTRs = rc.sensePastrLocations(enemy);
 		
@@ -100,16 +109,16 @@ public class HQ {
 			boolean maxedOutTime = Clock.getRoundNum() > jobQueu.get(i).maxJobLength + jobQueu.get(i).startRound;
 			
 			//[If an ongoing PASTR reported, but none exists -> assume PASTR died] or [defense job without a PASTR took too long -> assume hit obstacle]
-			if((job.ongoingPASTR && !Arrays.asList(ourPASTRs).contains(job.target)) 
+			if((job.ongoingPASTR && !isPASTRNearby(job.target, ourPASTRs)) 
 					|| (job.type == 0 && !job.ongoingPASTR && maxedOutTime)) {
 				job.prepareForRemoval(rc);
 				safe[job.desiredPASTRs_index] = false; //mark that position as unsafe
 				System.out.println("PASTR position " + desiredPASTRs[job.desiredPASTRs_index] + " deemed unsafe.");
 				
 				//Add replacement PASTR in safer position
-				for(int j = 0; j < safe.length; j++) {		
+				for(int j = 0; j < safe.length; j++) {
 					if(safe[j] && !jobAlreadyTaken(desiredPASTRs[j])) {
-						jobQueu.add(new Job(j, desiredPASTRs[j], 10, getAvailableSquadNum("defense"), 700));
+						jobQueu.add(new Job(j, desiredPASTRs[j], numDefendersInSquad_Redefeding, getAvailableSquadNum("defense"), pastrMaxRoundsAlive));
 						break;
 					}
 				}
@@ -124,49 +133,65 @@ public class HQ {
 			}
 		}
 		
+		//If all locations are marked as unsafe, retry all locations
+		if(Util.areAllFalse(safe))
+	    	for(int i = 0; i < safe.length; i++)
+	    		safe[i] = true;
+		
+		
 		//Check if jobs have established an ongoing PASTR; if so, mark it.
 		for(int i = 0; i < jobQueu.size(); i++) {
 			Job job = jobQueu.get(i);
-			if(Arrays.asList(ourPASTRs).contains(job.target)) {
+			
+			if(job.ongoingPASTR == false && isPASTRNearby(job.target, ourPASTRs)) {
 				System.out.println(job + " just got marked as ONGOING!");
 				job.ongoingPASTR = true;
 			}
 		}
 		
 		//Create new jobs in offense, rush, and defense/PASTR creation
-		if(enemyPASTRs.length > ourPASTRs.length - 1) {
-
-			for(MapLocation enemyPASTR:enemyPASTRs) {
-				if(!jobAlreadyTaken(enemyPASTR))
-					if(teamHQ.distanceSquaredTo(enemyPASTR) < 900) //If enemy PASTR is close by, add it to the front of the queu
-						jobQueu.add(0, new Job(enemyPASTR, 6, getAvailableSquadNum("offense"), 700));
-					else
-						jobQueu.add(new Job(enemyPASTR, 6, getAvailableSquadNum("offense"), 700));
-			}
+		for(MapLocation enemyPASTR:enemyPASTRs) {
+			if(!jobAlreadyTaken(enemyPASTR))
+				if(enemyPASTRs.length > ourPASTRs.length - 1 || teamHQ.distanceSquaredTo(enemyPASTR) < 900) //If enemy PASTR is close by, add it to the front of the queu
+					jobQueu.add(0, new Job(enemyPASTR, numAttackersInSquad, getAvailableSquadNum("offense"), attackerMaxRoundsAlive));
+				else
+					jobQueu.add(new Job(enemyPASTR, numAttackersInSquad, getAvailableSquadNum("offense"), attackerMaxRoundsAlive_Long));
 		}
 
 		if(initRush) {
-			jobQueu.add(0, new Job(enemyHQ, 7, getAvailableSquadNum("offense"), 700));
+			jobQueu.add(0, new Job(enemyHQ, 7, getAvailableSquadNum("offense"), attackerMaxRoundsAlive));
 			initRush = false;
 			
 		} else {
-			while(numDefenseJobs() < idealNumPastures) {
-				for(int j = 0; j < safe.length; j++)
+			for(int i = 0; i < idealNumPastures; i++) {
+				for(int j = 0; j < safe.length; j++) {
 					if(safe[j] && !jobAlreadyTaken(desiredPASTRs[j])) {
 						if(teamHQ.distanceSquaredTo(enemyHQ) > 900 && mapX > 30 && mapY > 30) { //If enemy is far and map is big, add it to the front of the queu 
-							jobQueu.add(0, new Job(j, desiredPASTRs[j], 4, getAvailableSquadNum("defense"), 700));
+							jobQueu.add(0, new Job(j, desiredPASTRs[j], numDefendersInSquad, getAvailableSquadNum("defense"), pastrMaxRoundsAlive));
 							break;
+					
 						} else {
-							jobQueu.add(new Job(j, desiredPASTRs[j], 4, getAvailableSquadNum("defense"), 700));
+							jobQueu.add(new Job(j, desiredPASTRs[j], numDefendersInSquad, getAvailableSquadNum("defense"), pastrMaxRoundsAlive));
 							break;
 						}
-					}		
+					}
+				}
 			}
 		}
 		
 		if(testing)
 			for(Job job:jobQueu)
 				System.out.print(job + " | ");
+	}
+	
+	static private boolean isPASTRNearby(MapLocation target, MapLocation[] ourPASTRs) {
+		for(MapLocation m:ourPASTRs) {
+			if(target.distanceSquaredTo(m) < COWBOY.pastrDistCreationThreshold) {
+				return true;
+			}
+		}
+		
+		return false;
 	}
 	
 	static int numDefenseJobs() {
@@ -222,7 +247,7 @@ public class HQ {
 					
 					job.addRobotAssigned(1);
 					
-					String type = squad < Channels.firstOffenseChannel ? "attacker" : "defender";
+					String type = squad < Channels.firstOffenseChannel ? "defender" : "attacker";
 					System.out.println("Spawned a " + type + " with assignment " + assignment);
 					return;
 				}
@@ -234,7 +259,7 @@ public class HQ {
 	static boolean tryToSpawn(RobotController rc) throws GameActionException {
 		
 		if(rc.isActive() && rc.senseRobotCount() < GameConstants.MAX_ROBOTS) {
-			Direction dir = Util.findDirToMove(rc);
+			Direction dir = Move.findDirToMove(rc);
 			if(dir != null) {
 				rc.spawn(dir);
 				return true;
@@ -268,6 +293,8 @@ public class HQ {
 		int Xend = teamHQ.x < enemyHQ.x ? enemyHQ.x : teamHQ.x;
 		
 		int Xdiff = (Xend-Xstart), Ydiff = (Yend-Ystart);
+			Xdiff = Xdiff == 0 ? 1 : Xdiff;
+			Ydiff = Ydiff == 0 ? 1 : Ydiff;
 		boolean Xlarger = Xdiff > Ydiff;
 		int stepSize = Xlarger ? Xdiff/Ydiff : Ydiff/Xdiff;
 		
@@ -298,37 +325,62 @@ public class HQ {
 	static MapLocation[] findPastureLocs() throws GameActionException {
 		
 		int numSafetyIntervals = 8;
-		MapLocation[] desiredPASTRs = new MapLocation[numSafetyIntervals];
-				
+	
 		int[] squares = new int[mapX*mapY];
 		double[] productivity = new double[mapX*mapY];
 		double[] safetyRatios = new double[mapX*mapY];
 		int index = 0;
 		
-		for(int i = 0; i < mapY-3; i+=3){
-			for(int j = 0; j < mapX-3; j+=3){
+		int scanResolution = 3;
+		if(mapX*mapY < 400) {
+			scanResolution = 1;
+		} else if (mapX*mapY<900) {
+			scanResolution = 2;
+		}
+		
+		for(int i = 0; i < mapY-scanResolution; i+=scanResolution){
+			for(int j = 0; j < mapX-scanResolution; j+=scanResolution){
 				
-				if(cowDensMap[i+1][j+1] == 0)
+				if((scanResolution == 1 || scanResolution == 2) && cowDensMap[i][j] == 0)
+					continue;
+				else if(scanResolution == 3 && cowDensMap[i+1][j+1] == 0)
 					continue;
 				
 				double ratio = Math.sqrt(Math.pow((HQ.enemyHQ.x-(j+1)), 2) + Math.pow((HQ.enemyHQ.y-(i+1)), 2))
 								/Math.sqrt(Math.pow((HQ.teamHQ.x-(j+1)), 2) + Math.pow((HQ.teamHQ.y-(i+1)), 2)); 
 				
-				System.out.println();
 				//WE WANT THIS RATIO TO BE AS LARGE AS POSSIBLE
-				if(ratio < 2)
+				double ratioThreshold = mapX*mapY > 400 ? 2 : 1;
+				if(ratio < ratioThreshold)
 					continue;
-						
-				double sum = (cowDensMap[i][j] + cowDensMap[i+1][j] + cowDensMap[i+2][j] 
+				
+				double sum = 0; 
+				if(scanResolution == 1) {
+					sum = cowDensMap[i][j];
+					
+				} else if(scanResolution == 2) {
+					sum = (cowDensMap[i][j] + cowDensMap[i+1][j] 
+							+ cowDensMap[i][j+1] + cowDensMap[i+1][j+1]);
+				
+				} else {
+					sum = (cowDensMap[i][j] + cowDensMap[i+1][j] + cowDensMap[i+2][j] 
 							+ cowDensMap[i][j+1] + cowDensMap[i+1][j+1] + cowDensMap[i+2][j+1]
 							+ cowDensMap[i][j+2] + cowDensMap[i+1][j+2] + cowDensMap[i+2][j+2]);
+				}
+
 				
-				squares[index] = Conversion.coordinatesToInt(j+1, i+1);
+				squares[index] = scanResolution == 1 ? Conversion.coordinatesToInt(j, i) : Conversion.coordinatesToInt(j+1, i+1);
 				productivity[index] = sum;
 				safetyRatios[index] = ratio;
 				index++;
 			}
 		}
+		
+		while(index <= numSafetyIntervals) {
+			numSafetyIntervals--;
+		}
+		
+		MapLocation[] desiredPASTRs = new MapLocation[numSafetyIntervals];
 		
 		int[] copySquares = Arrays.copyOf(squares, index);
 		double[] copyRatios = Arrays.copyOf(safetyRatios, index);

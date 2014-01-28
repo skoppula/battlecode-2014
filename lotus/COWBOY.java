@@ -10,6 +10,8 @@ import battlecode.common.Team;
 
 public class COWBOY {
 	
+	static int pastrDistCreationThreshold = 3;
+	
 	public static void runCowboy(RobotController rc, int assignment) throws GameActionException {
 	
 		if (assignment == 0)
@@ -38,9 +40,9 @@ public class COWBOY {
 		MapLocation[] enemyPASTRs = rc.sensePastrLocations(enemy);
 		
 		if(enemyPASTRs.length > 0)
-			Util.moveTo(rc, enemyPASTRs[0]);
+			Move.moveTo(rc, enemyPASTRs[0]);
 		else
-			Util.moveTo(rc, rc.senseEnemyHQLocation());
+			Move.moveTo(rc, rc.senseEnemyHQLocation());
 		
 	}
 	
@@ -50,7 +52,7 @@ public class COWBOY {
 		MapLocation curr = rc.getLocation();
 		
 		if(curr.distanceSquaredTo(target) > 50)
-			Util.moveTo(rc, target);
+			Move.moveTo(rc, target);
 		
 		else {
 			int start = Channels.scoutDecoding(squadInfo)[0];
@@ -68,17 +70,16 @@ public class COWBOY {
 		MapLocation curr = rc.getLocation();
 		
 		int status = rc.readBroadcast(squad+1);
-		int PASTRstatus = Channels.NTPASTRDecoding(status)[0];
-		int NTstatus = Channels.NTPASTRDecoding(status)[1];
+		int PASTRstatus = Channels.NTPASTRDecoding(status)[1];
+		int NTstatus = Channels.NTPASTRDecoding(status)[0];
 		
-		Robot[] allies = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared*2, team);
+		Robot[] allies = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared*3, team);
 		
 		//Create a PASTR/NT if not already there
-		if(allies.length > 2 && curr.distanceSquaredTo(target) < 16 && rc.isActive()) {
+		if(allies.length > 5 && curr.distanceSquaredTo(target) < pastrDistCreationThreshold && rc.isActive()) {
 			if(PASTRstatus == 0) {
 				rc.construct(RobotType.PASTR);
 				rc.broadcast(squad + 1, Channels.NTPASTREncoding(NTstatus, 1));
-				System.out.println("Putting into PASTR channel: " + Channels.NTPASTREncoding(NTstatus, 1));
 				System.out.println("Constructing a PASTR...");
 				
 			} else if (NTstatus == 0) {
@@ -91,7 +92,7 @@ public class COWBOY {
 		
 		//Then go to right place
 		if(curr.distanceSquaredTo(target) > 8)
-			Util.moveTo(rc, target);
+			Move.moveTo(rc, target);
 		
 		//Then attack!
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, enemy);
@@ -99,7 +100,7 @@ public class COWBOY {
 		
 		if(eloc != null) {
 			if(rc.isActive())
-				Util.moveToward(rc, eloc);
+				Move.moveToward(rc, eloc);
 			if(rc.isActive() && rc.canAttackSquare(eloc))
 				rc.attackSquare(eloc);
 		}
@@ -116,12 +117,12 @@ public class COWBOY {
 		
 		//First steps away from home HQ
 		if(curr.distanceSquaredTo(rc.senseHQLocation()) < 25)
-			Util.tryToMove(rc);
+			Move.tryToMove(rc);
 		
 		//Go to right place
 		if(curr.distanceSquaredTo(target) > 7) {
 //			System.out.println(target);
-			Util.moveTo(rc, target);
+			Move.moveTo(rc, target);
 		}
 		//Then attack!
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, enemy);
@@ -129,7 +130,7 @@ public class COWBOY {
 		
 		if(eloc != null) {
 			if(rc.isActive())
-				Util.moveToward(rc, eloc);
+				Move.moveToward(rc, eloc);
 			if(rc.isActive() && rc.canAttackSquare(eloc))
 				rc.attackSquare(eloc);
 		}

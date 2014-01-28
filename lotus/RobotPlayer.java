@@ -19,6 +19,7 @@ import battlecode.common.RobotType;
 //TODO Fix pastr locations
 //TODO pastr status not working?
 //TODO retreat if outnumbered
+//TODO moveto fails on almsman?
 
 public class RobotPlayer{
 	

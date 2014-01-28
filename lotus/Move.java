@@ -1,38 +1,19 @@
-package integrated;
-import integrated.COWBOY;
-import integrated.Util;
+package lotus;
 
 import java.util.Random;
 
-import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.Robot;
 import battlecode.common.RobotController;
-import battlecode.common.RobotInfo;
 import battlecode.common.RobotType;
 
-public class Util {	
-
-	static int spawnchannel = 0;
-	static int distress = 1; //distress: [SS][T][SS][T]...SS=squad, and T = type of distressed robots
-	static int pastrChannel = 2;
-	//Defenders are on channels 3-9
-	static int spawnNext = 10; //receives squad number for things that are dying. 
-	//Attackers are on channels 11-21
-	static int lastNTChannel = 50;
-	static int NTexistenceChannel = 51;
-	static int areaSafeChannel = 52;
-	static int rushSuccess = 100; //channel that we broadcast to if our rush was a success
-	static int failedPastr = 101; //channel that triggers reactive rush
-	static int strategyChannel = 30;
+public class Move {	
 
     public static Direction allDirections[] = {Direction.NORTH, Direction.SOUTH, Direction.NORTH_EAST, Direction.SOUTH_EAST, Direction.WEST, Direction.SOUTH_WEST, Direction.NORTH_WEST, Direction.EAST};
     static Random rand = new Random();
-    
-	/***********SKANDA APPROVED FUNCTIONS ****************/
 	
 	static void moveToward(RobotController rc, MapLocation m) throws GameActionException{
 		MapLocation loc = rc.getLocation();
@@ -70,90 +51,6 @@ public class Util {
             }
     	}
 	}
-	
-	//Shoots any *all* nearby robots: does not coordinate shooting with other robots
-	static void indivShootNearby(RobotController rc, Robot[] enemyRobots) throws GameActionException {
-		MapLocation enemyHQ = rc.senseEnemyHQLocation();
-		
-		for(Robot enemy:enemyRobots){
-			if(rc.isActive()) {
-				RobotInfo info = rc.senseRobotInfo(enemy);
-				
-				if(info.location.equals(enemyHQ))
-					continue;
-				
-				if(info.location.distanceSquaredTo(rc.getLocation()) < rc.getType().attackRadiusMaxSquared && Clock.getBytecodeNum()<2000){
-					rc.attackSquare(info.location);
-				}
-			}
-		}
-	}
-	
-	public static int assignmentToInt(int squad, int role) {
-		return squad*100+role;
-	}
-
-	static int locToInt(MapLocation m){
-		return (m.x*100 + m.y);
-	}
-	
-	//broadcast to channel ID the assignment: AABB: A = squad[01-20] and B = type[00-03]
-	public static int getSquad(int i) {
-		return (i/100)%100;
-	}
-
-	public static int getRole(int i) {
-		return i%100;
-	}
-	
-	public static MapLocation nearestEnemyLoc(RobotController rc, Robot[] enemyRobots, MapLocation loc) throws GameActionException {
-		
-		//int minDist = HQ.mapX*HQ.mapY;
-		int minDist = 100000;
-		MapLocation bestLoc = null;
-		MapLocation enemyHQ = rc.senseEnemyHQLocation();
-		
-//		if(rc.canSenseObject(enemyRobots[0]))
-//			bestLoc = rc.senseRobotInfo(enemyRobots[0]).location;
-		
-		for(Robot robot:enemyRobots){
-			RobotInfo info = rc.senseRobotInfo(robot);
-			
-			if(info.location.equals(enemyHQ))
-				continue;
-			
-			if(!rc.canSenseObject(robot)){
-				continue;
-			} else {
-				MapLocation m = info.location;
-				int dist = m.distanceSquaredTo(loc);
-				if(minDist > dist){
-					minDist = dist;
-					bestLoc = m;
-
-				}
-			}
-		}
-		
-		return bestLoc;
-	}
-	
-	/***************************/
-	
-	/*****************DEFENDER ENDGAME FUNCTIONS***********************/
-	//Create a bunch of pastrs in a well defended area
-	
-	
-    public static int indexOfMin(int... arr) {
-        int idx = -1;
-        int p = Integer.MAX_VALUE;
-        for(int i = 0; i < arr.length; i++)
-            if(arr[i] < p) {
-                p = arr[i];
-                idx = i;
-            }
-        return idx;
-    }
     
 	static void cornerMove(RobotController rc) throws GameActionException {
 		//For some reason this shows preference for corners, and random twitching
@@ -172,123 +69,34 @@ public class Util {
 	}
 	
 	public static void toDoWhileMoving (RobotController rc) throws GameActionException{
-		//Sense nearby game objects, 200 bytecode
 		
-		avoidEnemyHQ(rc);
-		
-		MapLocation enemyPstrs[] = rc.sensePastrLocations(rc.getTeam());
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, rc.getTeam().opponent());
 		MapLocation loc = rc.getLocation();
-
-		if(hasBroadcastedDistress(rc) == false)
-			COWBOY.checkHealth(rc);
 		
-		while(enemyRobots.length>0 && enemyPstrs.length == 0){//SHOOT AT, OR RUN TOWARDS, ENEMIES
+		while(enemyRobots.length>0){
 			
-			avoidEnemyHQ(rc);
-			
-			//Sense nearby game objects, 200 bytecode
 			enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, rc.getTeam().opponent());
 			loc = rc.getLocation();
 			
 			if (enemyRobots.length > 0) {
 				
-				MapLocation eloc = Util.nearestEnemyLoc(rc, enemyRobots, loc); //SHOULD NOT OUTPUT AN HQ LOCATION
+				MapLocation eloc = Attack.nearestEnemyLoc(rc, enemyRobots, loc); //SHOULD NOT OUTPUT AN HQ LOCATION
 				
-				if(eloc == null) {
-//					System.out.println("ENEMY LOCATION IS NULL");
-//					if (rc.isActive()) {
-//						randomMove(rc);
-//					}
-				}
-				
-				int maxAttackRad = rc.getType().attackRadiusMaxSquared;
-				if(rc.isActive() && eloc.distanceSquaredTo(rc.getLocation())<=maxAttackRad)
+				if(eloc != null && rc.isActive() && rc.canAttackSquare(eloc))
 					rc.attackSquare(eloc);
-				else if(rc.isActive() && rc.canMove(loc.directionTo(eloc)))
-					//stay away from enemyHQ
-					if (loc.distanceSquaredTo(rc.senseEnemyHQLocation()) < 36) {
-						//don't move
-						//rush succeeded
-//						System.out.println("RUSH SUCCEEDED");
-						//hot fix communicate rush success to everyone
-						rc.broadcast(rushSuccess, 1);
-					}else {
-						rc.move(loc.directionTo(eloc));
-					}
-				else if (rc.isActive()) {
+				
+				else if(eloc != null && rc.isActive() && rc.canMove(loc.directionTo(eloc)))
+					if (loc.distanceSquaredTo(rc.senseEnemyHQLocation()) > 36)
+ 						rc.move(loc.directionTo(eloc));
+					
+				else if (rc.isActive()) 
 					tryToMove(rc);
-				}
 			}
-			if(Util.hasBroadcastedDistress(rc) == false){
-				COWBOY.checkHealth(rc);
-			}
+
+			
 			rc.yield();
 		}
     }
-
-	private static void avoidEnemyHQ(RobotController rc) throws GameActionException {
-		//hot fix stay away from enemy Pastr
-		MapLocation loc = rc.getLocation();
-		
-		if (loc.distanceSquaredTo(rc.senseEnemyHQLocation()) < 64) {
-			
-			if (loc.distanceSquaredTo(rc.senseEnemyHQLocation()) < 36){
-				Direction away = rc.senseEnemyHQLocation().directionTo(loc);
-				if (rc.isActive()&&rc.canMove(away)){
-					rc.move(away);
-				}
-			}else {
-				Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared, rc.getTeam().opponent());
-				while(enemyRobots.length>0 && Clock.getRoundNum()%30 < 10 && Clock.getRoundNum()%30 > 25){//SHOOT AT, OR RUN TOWARDS, ENEMIES
-//					//Sense nearby game objects, 200 bytecode
-					enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared, rc.getTeam().opponent());
-					loc = rc.getLocation();
-					
-					if (enemyRobots.length > 0) {
-						
-						MapLocation eloc = Util.nearestEnemyLoc(rc, enemyRobots, loc); //SHOULD NOT OUTPUT AN HQ LOCATION
-						
-						if(eloc == null) {
-							System.out.println("ENEMY LOCATION IS NULL");
-							break;
-						}
-						
-						int maxAttackRad = rc.getType().attackRadiusMaxSquared;
-						if(rc.isActive() && eloc.distanceSquaredTo(rc.getLocation())<=maxAttackRad)
-							rc.attackSquare(eloc);
-						else if(rc.isActive() && rc.canMove(loc.directionTo(eloc)))
-							//stay away from enemyHQ
-							if (loc.distanceSquaredTo(rc.senseEnemyHQLocation()) < 36) {
-								//don't move
-								//rush succeeded
-								System.out.println("RUSH SUCCEEDED");
-								//hot fix communicate rush success to everyone
-								int rushSucess = 100;
-								rc.broadcast(rushSucess, 1);
-							}else {
-								rc.move(loc.directionTo(eloc));
-							}
-						else if (rc.isActive()) {
-							tryToMove(rc);
-						}
-					}
-					//System.out.println("rusher senses" + enemyRobots.length);
-					rc.yield();
-				}
-			}
-		}
-	}
-
-	public static boolean hasBroadcastedDistress(RobotController rc) throws GameActionException{
-		int in = rc.readBroadcast(rc.getRobot().getID());
-		if(in<0){ //negative number in id channel means robot has broadcasted already
-			return true;			
-		}
-		else{
-			return false;
-		}
-	}
 
 	@SuppressWarnings("incomplete-switch")
 	public static Direction[] tryDirections(RobotController rc, Direction toDest, MapLocation dest){ //this method basically just returns a list of directions i think it should try when stuck. just logic'ed it out here.
@@ -430,7 +238,7 @@ public class Util {
 	}
 	
 	public static void moveTo(RobotController rc, MapLocation dest) throws GameActionException {
-		// TODO Auto-generated method stub
+		
 		MapLocation laststuck = new MapLocation(0,0);
 		MapLocation beforelaststuck = new MapLocation(0,0);
     	Direction toDest = rc.getLocation().directionTo(dest);
@@ -477,7 +285,7 @@ public class Util {
 	
 	public static void channelMove(RobotController rc) throws GameActionException{
 		int x = rc.readBroadcast(rc.getRobot().getID());
-		int team = getSquad(x); //Ash test
+		int team = Channels.assignmentDecoding(x)[0]; //Ash test
 		MapLocation dest = intToLoc(rc.readBroadcast(Math.abs(team)));
 		MapLocation laststuck = new MapLocation(0,0);
 		MapLocation beforelaststuck = new MapLocation(0,0);
@@ -488,7 +296,7 @@ public class Util {
     			break;
     		}
     		x = rc.readBroadcast(rc.getRobot().getID());
-    		team = getSquad(x); //Ash test
+    		team = Channels.assignmentDecoding(x)[0]; //Ash test
     		dest = intToLoc(rc.readBroadcast(Math.abs(team)));
     		if(rc.isActive() && rc.canMove(toDest)){
     			rc.move(toDest);
@@ -559,7 +367,7 @@ public class Util {
 	}
 	
 	public static void sneakTo(RobotController rc, MapLocation dest) throws GameActionException {
-		// TODO Auto-generated method stub
+		
 		MapLocation laststuck = new MapLocation(0,0);
 		MapLocation beforelaststuck = new MapLocation(0,0);
     	Direction toDest = rc.getLocation().directionTo(dest);
@@ -606,7 +414,7 @@ public class Util {
 	
 	public static void channelSneak(RobotController rc) throws GameActionException{
 		int x = rc.readBroadcast(rc.getRobot().getID());
-		int team = getSquad(x); //Ash test
+		int team = Channels.assignmentDecoding(x)[0]; //Ash test
 		MapLocation dest = intToLoc(rc.readBroadcast(team));
 		MapLocation laststuck = new MapLocation(0,0);
 		MapLocation beforelaststuck = new MapLocation(0,0);
@@ -617,7 +425,7 @@ public class Util {
     			break;
     		}
     		x = rc.readBroadcast(rc.getRobot().getID());
-    		team = getSquad(x); //Ash test
+    		team = Channels.assignmentDecoding(x)[0]; //Ash test
     		dest = intToLoc(rc.readBroadcast(team));
     		if(rc.isActive() && rc.canMove(toDest)){
     			rc.sneak(toDest);
@@ -655,7 +463,6 @@ public class Util {
 
 	
 	static void tryToMove(RobotController rc) throws GameActionException {
-		// TODO Auto-generated method stub
 		for (int i = 0;i<7;i++) {
     		Direction move = allDirections[(int)(rand.nextDouble()*8)];
             if(rc.isActive()&&rc.canMove(move)&&rc.senseRobotCount()<GameConstants.MAX_ROBOTS){
