@@ -22,6 +22,8 @@ public class Job {
 	int startRound;
 	int maxJobLength = 250;
 	
+	int numReinforcementsSent = 0;
+	
 	public Job(int desiredPASTRs_index, MapLocation m, int numRobotsNeeded, int squadNum, int maxJobLength){
 		this.desiredPASTRs_index = desiredPASTRs_index;
 		this.target = m;
@@ -50,6 +52,15 @@ public class Job {
 		System.out.println("Job spawned. squad: " + this.squadNum + " with target " + this.target);
 	}
 	
+	void restartRobotsAssigned(int enemies) {
+		numRobotsNeeded = enemies;
+		numRobotsAssigned = enemies;
+		numReinforcementsSent++;
+	}
+	
+	void updateTarget(MapLocation m) {
+		this.target = m;
+	}
 	
 	void addRobotAssigned(int num){
 		this.numRobotsAssigned += num;

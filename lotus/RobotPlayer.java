@@ -10,14 +10,11 @@ import battlecode.common.RobotType;
 //TODO introduce rally points into moveTo
 //TODO if cows = 0 at pastr location, switch to attacker
 //TODO economy based endgame, triggered when a pastr has been untouched for 130 rounds
-//TODO update NT status
 //TODO if pastr dies, don't eliminate the entire Job
 //TODO why/when use Util.channelMove(rc)? and Util.avoidEnemyHQ(rc)?
-//TODO ask the HQ for reinforcements?
+//TODO ask the HQ for reinforcements? retreat too
 //TODO in moveto, route robots around HQ, if possible, otherwise just pass through
 
-//TODO Fix pastr locations
-//TODO pastr status not working?
 //TODO retreat if outnumbered
 //TODO moveto fails on almsman?
 

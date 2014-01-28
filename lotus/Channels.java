@@ -1,7 +1,6 @@
 package lotus;
 
 import battlecode.common.MapLocation;
-
 public class Channels {
 	
 	/*
@@ -20,6 +19,8 @@ public class Channels {
 	static int lastOffenseChannel = 19;
 	static int scoutChannel = 20;
 	static int backupChannel = 21;
+	
+	static int numAlliesNeededChannel = 22; //number of allies needed to create a PASTR
 	
 	static int NTPASTREncoding(int NT, int PASTR) {
 		return NT*10+PASTR;
@@ -51,4 +52,14 @@ public class Channels {
 		int[] a = {(assignment/100)%100, assignment%10}; //{squad, role}
 		return a;
 	}
+
+	public static int backupEncoding(MapLocation m, int squad, int enemies) {
+		return m.x*1000000 + m.y*10000 + squad*100 + enemies;
+	}
+	
+	public static int[] backupDecoding(int helpcall) {
+		int[] a = {(helpcall/1000000)%100, (helpcall/10000)%100, (helpcall/100)%100, helpcall%100}; //{locationXX, locationYY, squadAA, enemiesBB}
+		return a;
+	}
+
 }
