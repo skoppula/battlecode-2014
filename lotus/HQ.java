@@ -92,7 +92,7 @@ public class HQ {
 		int distance = (int) Math.sqrt(teamHQ.distanceSquaredTo(enemyHQ));
 		attackerMaxRounds = getAttackerMaxRounds(distance);
 		
-		numDefenders = initRush ? 7 : 4;
+		numDefenders = initRush ? 10 : 4;
 		pastrMaxRounds = numDefenders*30 + 300;
 		
 		rc.broadcast(Channels.numAlliesNeededChannel, 3);
@@ -118,7 +118,6 @@ public class HQ {
 		if(helpCall != 0) {
 			
 			int[] info = Channels.backupDecoding(helpCall);
-			System.out.println("Help call recieved: " + Arrays.toString(info));
 			
 			int squad = info[2];
 			MapLocation newTarget = new MapLocation(info[0], info[1]);
@@ -126,9 +125,11 @@ public class HQ {
 			
 			Job job = findJobInQueu(squad);
 			if(job != null && job.numReinforcementsSent < 2) {
+				System.out.println("Help call recieved by squad " + squad + " at target " + newTarget + " so sending " + enemies + " soldiers | existing job");
 				job.restartRobotsAssigned(enemies);
 				job.updateTarget(newTarget);
 			} else {
+				System.out.println("Help call recieved by squad " + squad + " at target " + newTarget + " so sending " + enemies + " soldiers | creating new job");
 				int distance = (int) Math.sqrt(teamHQ.distanceSquaredTo(newTarget));
 				jobQueu.add(new Job(newTarget, enemies, getAvailableSquadNum("offense"), getAttackerMaxRounds(distance)));
 			}
@@ -163,7 +164,7 @@ public class HQ {
 				jobQueu.remove(i);
 				
 			//defense job without a running PASTR is taking too long -> assume hit obstacle	
-			} else if(job.type == 0 && !job.ongoingPASTR && maxedOutTime) {
+			} else if(job.type == 0 && !job.ongoingPASTR && maxedOutTime && job.startedSpawning == true) {
 				System.out.println("PASTR position " + desiredPASTRs[job.desiredPASTRs_index] + " maxed out their time.");
 				job.prepareForRemoval(rc);
 				
@@ -218,7 +219,7 @@ public class HQ {
 		}
 
 		if(initRush) {
-			jobQueu.add(0, new Job(enemyHQ, 7, getAvailableSquadNum("offense"), attackerMaxRounds));
+			jobQueu.add(0, new Job(enemyHQ, 10, getAvailableSquadNum("offense"), attackerMaxRounds));
 			initRush = false;
 			
 		} else {
@@ -310,11 +311,13 @@ public class HQ {
 			//System.out.println("no jobs left!" + jobQueu.size());
 		}
 				
-		for(Job job:jobQueu) {
+		for(int i = jobQueu.size() - 1; i > -1; i--) {
+
+			Job job = jobQueu.get(i);
 			
 			
-			if(job.numRobotsAssigned < job.numRobotsNeeded) {
-				
+			if(job.numRobotsAssigned < job.numRobotsNeeded && ((job.startedSpawning == true && job.finishedSpawning == false) || (i == 0 && job.startedSpawning == false && job.numRobotsAssigned < job.numRobotsNeeded))) {
+				System.out.println("Spawning job " + job + " " + job.numRobotsAssigned);
 				boolean spawnSuccess = false;
 				int squad = job.squadNum;
 				
@@ -329,6 +332,7 @@ public class HQ {
 					System.out.println("Spawned a " + type + " with assignment " + assignment);
 					return;
 				}
+				
 			}
 		}
 		
@@ -351,7 +355,7 @@ public class HQ {
 		
 		int[] scoutResults = Channels.scoutDecoding(rc.readBroadcast(Channels.scoutChannel));
 		
-		if((scoutResults[2] == 1 && scoutResults[0] < 50) || (enemyHQ.distanceSquaredTo(teamHQ) < 1000 && getDiagonalDensity() <.2)) {
+		if((scoutResults[2] == 1 && scoutResults[0] < 50) || (enemyHQ.distanceSquaredTo(teamHQ) < 900 /* && getDiagonalDensity() <.3 */)) {
 			System.out.println("Deciding on rush ...");
 			return true;
 			
@@ -398,7 +402,7 @@ public class HQ {
 						wall++;
 				}
 		}
-		
+		System.out.println((wall)/(normal+wall));
 		return (wall)/(normal+wall);
 		
 	}
@@ -413,9 +417,9 @@ public class HQ {
 		int index = 0;
 		
 		int scanResolution = 3;
-		if(mapX*mapY < 400)
+		if(mapX*mapY < 2500)
 			scanResolution = 1;
-		else if (mapX*mapY<900)
+		else if (mapX*mapY< 7500)
 			scanResolution = 2;
 		
 		
@@ -460,7 +464,7 @@ public class HQ {
 
 			}
 		}
-		
+
 		while(index <= numSafetyIntervals) {
 			numSafetyIntervals--;
 		}

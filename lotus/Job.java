@@ -23,6 +23,8 @@ public class Job {
 	int maxJobLength = 250;
 	
 	int numReinforcementsSent = 0;
+	boolean startedSpawning;
+	boolean finishedSpawning;
 	
 	public Job(int desiredPASTRs_index, MapLocation m, int numRobotsNeeded, int squadNum, int maxJobLength){
 		this.desiredPASTRs_index = desiredPASTRs_index;
@@ -55,6 +57,8 @@ public class Job {
 	void restartRobotsAssigned(int enemies) {
 		numRobotsNeeded = enemies;
 		numRobotsAssigned = enemies;
+		startedSpawning = false;
+		finishedSpawning = false;
 		numReinforcementsSent++;
 	}
 	
@@ -64,6 +68,12 @@ public class Job {
 	
 	void addRobotAssigned(int num){
 		this.numRobotsAssigned += num;
+		
+		if(this.numRobotsAssigned == this.numRobotsNeeded)
+			this.finishedSpawning = true;
+		
+		else if(this.numRobotsAssigned == 1)
+			this.startedSpawning = true;
 	}
 
 	void prepareForRemoval(RobotController rc) throws GameActionException {
