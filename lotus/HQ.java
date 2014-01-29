@@ -10,6 +10,8 @@ import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.Robot;
 import battlecode.common.RobotController;
+import battlecode.common.RobotLevel;
+import battlecode.common.RobotType;
 import battlecode.common.Team;
 import battlecode.common.TerrainTile;
 
@@ -42,6 +44,7 @@ public class HQ {
 	
 	static int numDefenders; //Number of defenders spawned to a squad
 	static int numAttackers; //' ' attackers ' '
+	static int numInitRush = 10;
 	
 	static ArrayList<Job> jobQueu = new ArrayList<Job>();
 	
@@ -130,10 +133,11 @@ public class HQ {
 				System.out.println("Help call recieved by squad " + squad + " at target " + newTarget + " so sending " + enemies + " soldiers | existing job");
 				job.restartRobotsAssigned(enemies);
 				job.updateTarget(newTarget);
+
 			} else {
 				System.out.println("Help call recieved by squad " + squad + " at target " + newTarget + " so sending " + enemies + " soldiers | creating new job");
 				int distance = (int) Math.sqrt(teamHQ.distanceSquaredTo(newTarget));
-				jobQueu.add(new Job(newTarget, enemies, getAvailableSquadNum("offense"), getAttackerMaxRounds(distance)));
+				jobQueu.add(new Job(newTarget, enemies, getAvailableSquadNum("offense"), getAttackerMaxRounds(distance), false));
 			}
 			
 			rc.broadcast(Channels.backupChannel, 0);
@@ -210,16 +214,27 @@ public class HQ {
 		//Create new jobs in offense, rush, and defense/PASTR creation
 		for(MapLocation enemyPASTR:enemyPASTRs) {
 			if(!jobAlreadyTaken(enemyPASTR)) {
+
+				
+				Job rush = getExistingRushJob();
+				if(rush != null && !Arrays.asList(enemyPASTRs).contains(rush.target)) {
+					rush.resetStartRound(Clock.getRoundNum());
+					rush.changeMaxRounds((int) Math.sqrt(rush.target.distanceSquaredTo(enemyPASTR)));
+					rush.changeTarget(enemyPASTR);
+					
+				}
+				
 				int distance = (int) Math.sqrt(teamHQ.distanceSquaredTo(enemyPASTR));
 				if(enemyPASTRs.length > ourPASTRs.length - 1 || teamHQ.distanceSquaredTo(enemyPASTR) < 900) //If enemy PASTR is close by, add it to the front of the queu
-					jobQueu.add(0, new Job(enemyPASTR, numAttackers, getAvailableSquadNum("offense"), getAttackerMaxRounds(distance)));
+					jobQueu.add(0, new Job(enemyPASTR, numAttackers, getAvailableSquadNum("offense"), getAttackerMaxRounds(distance), false));
 				else
-					jobQueu.add(new Job(enemyPASTR, numAttackers, getAvailableSquadNum("offense"), getAttackerMaxRounds(distance)));
+					jobQueu.add(new Job(enemyPASTR, numAttackers, getAvailableSquadNum("offense"), getAttackerMaxRounds(distance), false));
 			}
 		}
 
 		if(initRush) {
-			jobQueu.add(0, new Job(enemyHQ, 10, getAvailableSquadNum("offense"), attackerMaxRounds));
+			MapLocation rallyPoint = getRushRallyPoint(rc);
+			jobQueu.add(0, new Job(rallyPoint, numInitRush, getAvailableSquadNum("offense"), attackerMaxRounds, true));
 			//TODO wait around until enemy makes a pasture, and then attack that pasture
 			initRush = false;
 			
@@ -242,6 +257,77 @@ public class HQ {
 		}
 	}
 	
+	static Job getExistingRushJob() {
+		for(Job j:jobQueu) {
+			if(j.isRushJob)
+				return j;
+		}
+		
+		return null;
+	}
+	
+	static boolean isInMap(int x, int y) {
+		if(x < 0 || x > mapX-1 || y < 0 || y > mapY-1)
+			return false;
+		else
+			return true;
+	}
+	
+	private static MapLocation getRushRallyPoint(RobotController rc) {
+		int xDiff = enemyHQ.x - teamHQ.x, yDiff = enemyHQ.y - teamHQ.y;
+		int x = teamHQ.x + (int) (0.67*xDiff), y = teamHQ.y + (int) (0.67*yDiff);
+		MapLocation m = new MapLocation(x, y);
+
+		if((terrainMap[x][y] == ROAD || terrainMap[x][y] == NORMAL))
+			return new MapLocation(x, y);
+		
+		//Move in spiral fashion out of initial guess Rally Point until finds point on road or grass 
+		int lengthOfSide = 0, direction = 0;
+		for(int i = 0; i < 200; i++) {
+			if(direction == 0) {
+				lengthOfSide++;
+				for(int j = 0; j < lengthOfSide; j++) {
+					x++;
+					if(!isInMap(x, y))
+						continue;
+					if((terrainMap[x][y] == ROAD || terrainMap[x][y] == NORMAL))
+						return new MapLocation(x, y);
+				}
+				direction = 1;
+			} else if (direction == 1) {
+				for(int j = 0; j < lengthOfSide; j++) {
+					y--;
+					if(!isInMap(x, y))
+						continue;
+					if((terrainMap[x][y] == ROAD || terrainMap[x][y] == NORMAL))
+						return new MapLocation(x, y);
+				}
+				direction = 2;
+			} else if (direction == 2) {
+				lengthOfSide++;
+				for(int j = 0; j < lengthOfSide; j++) {
+					x--;
+					if(!isInMap(x, y))
+						continue;
+					if((terrainMap[x][y] == ROAD || terrainMap[x][y] == NORMAL))
+						return new MapLocation(x, y);
+				}
+				direction = 3;
+			} else if (direction == 3) {
+				for(int j = 0; j < lengthOfSide; j++) {
+					y++;
+					if(!isInMap(x, y))
+						continue;
+					if((terrainMap[x][y] == ROAD || terrainMap[x][y] == NORMAL))
+						return new MapLocation(x, y);
+				}
+				direction = 0;
+			}
+		}
+		
+		return new MapLocation(teamHQ.x + (int) (0.67*xDiff), teamHQ.y + (int) (0.67*yDiff));
+	}
+
 	static private Job findJobInQueu(int squad) {
 		for(Job j:jobQueu) {
 			if(j.squadNum == squad)

@@ -26,6 +26,8 @@ public class Job {
 	boolean startedSpawning;
 	boolean finishedSpawning;
 	
+	boolean isRushJob;
+	
 	public Job(int desiredPASTRs_index, MapLocation m, int numRobotsNeeded, int squadNum, int maxJobLength){
 		this.desiredPASTRs_index = desiredPASTRs_index;
 		this.target = m;
@@ -41,7 +43,7 @@ public class Job {
 		System.out.println("Job spawned. squad: " + this.squadNum + " with target " + this.target);
 	}
 	
-	public Job(MapLocation m, int numRobotsNeeded, int squadNum, int maxJobLength){
+	public Job(MapLocation m, int numRobotsNeeded, int squadNum, int maxJobLength, boolean isRushJob){
 		this.target = m;
 		this.numRobotsNeeded = numRobotsNeeded;
 		this.squadNum = squadNum;
@@ -49,6 +51,8 @@ public class Job {
 		this.startRound = Clock.getRoundNum();
 		this.maxJobLength = maxJobLength;
 		this.type = this.squadNum < Channels.firstOffenseChannel ? 0 : 1;
+		
+		this.isRushJob = isRushJob;
 		
 		this.NTPASTRchannel = this.squadNum + 1;
 		System.out.println("Job spawned. squad: " + this.squadNum + " with target " + this.target);
@@ -74,10 +78,18 @@ public class Job {
 		
 		else if(this.numRobotsAssigned == 1) {
 			this.startedSpawning = true;
-			startRound = Clock.getRoundNum(); //TODO
+			startRound = Clock.getRoundNum();
 		}
 	}
-
+	
+	void resetStartRound(int i) {
+		this.startRound = i;
+	}
+	
+	void changeMaxRounds(int i) {
+		this.maxJobLength = i;
+	}
+	
 	void prepareForRemoval(RobotController rc) throws GameActionException {
 		rc.broadcast(this.squadNum, 0);
 		rc.broadcast(this.NTPASTRchannel, 0);
@@ -90,5 +102,9 @@ public class Job {
 
 	void updateSquadChannel(RobotController rc) throws GameActionException {
 		rc.broadcast(squadNum, Conversion.mapLocationToInt(this.target));
+	}
+
+	public void changeTarget(MapLocation enemyPASTR) {
+		this.target = enemyPASTR;
 	}
 }
