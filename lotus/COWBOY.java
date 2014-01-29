@@ -123,9 +123,10 @@ public class COWBOY {
 		
 		//Go to right place
 		if(curr.distanceSquaredTo(target) > 7) {
-//			System.out.println(target);
+			System.out.println(target + " target " + allies.length + "ally length");
 			Move.moveTo(rc, target);
 		}
+		
 		//Then attack!
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, enemy);
 		MapLocation eloc = Attack.nearestEnemyLoc(rc, enemyRobots, rc.getLocation());

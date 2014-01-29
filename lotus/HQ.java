@@ -55,6 +55,8 @@ public class HQ {
 		for(Job job:jobQueu)
 			job.updateSquadChannel(rc);
 		
+		System.out.println(jobQueu);
+		
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared, enemy);
 		
 		if(enemyRobots.length > 0)
@@ -173,9 +175,7 @@ public class HQ {
 				//Add replacement PASTR in safer position
 				for(int j = 0; j < safe.length; j++) {
 					if(safe[j] && !jobAlreadyTaken(desiredPASTRs[j])) {
-						MapLocation myTeamHQ = rc.senseHQLocation();
-						System.out.println(teamHQ + "teamHQ");
-						int distance = (int) Math.sqrt(myTeamHQ.distanceSquaredTo(desiredPASTRs[j]));
+						int distance = (int) Math.sqrt(teamHQ.distanceSquaredTo(desiredPASTRs[j])); //TODO
 						jobQueu.add(new Job(j, desiredPASTRs[j], numDefenders, getAvailableSquadNum("defense"), getPASTRMaxRounds(distance)));
 						break;
 					}
@@ -220,6 +220,7 @@ public class HQ {
 
 		if(initRush) {
 			jobQueu.add(0, new Job(enemyHQ, 10, getAvailableSquadNum("offense"), attackerMaxRounds));
+			//TODO wait around until enemy makes a pasture, and then attack that pasture
 			initRush = false;
 			
 		} else {
@@ -303,7 +304,7 @@ public class HQ {
 		//This will just generate robots no matter what
 		
 		if (jobQueu.size()==0&&rc.isActive()){
-			System.out.println("no jobs!" + jobQueu.size());
+			//System.out.println("no jobs!" + jobQueu.size());
 			//possible fix below
 			//jobQueu.add(0, new Job(enemyHQ, 7, getAvailableSquadNum("offense"), attackerMaxRounds));
 			
@@ -316,8 +317,8 @@ public class HQ {
 			Job job = jobQueu.get(i);
 			
 			
-			if(job.numRobotsAssigned < job.numRobotsNeeded && ((job.startedSpawning == true && job.finishedSpawning == false) || (i == 0 && job.startedSpawning == false && job.numRobotsAssigned < job.numRobotsNeeded))) {
-				System.out.println("Spawning job " + job + " " + job.numRobotsAssigned);
+			if(job.numRobotsAssigned < job.numRobotsNeeded && (job.startedSpawning == true && job.finishedSpawning == false)) {
+				//System.out.println("Spawning job " + job + " " + job.numRobotsAssigned);
 				boolean spawnSuccess = false;
 				int squad = job.squadNum;
 				
@@ -329,10 +330,29 @@ public class HQ {
 					job.addRobotAssigned(1);
 					
 					String type = squad < Channels.firstOffenseChannel ? "defender" : "attacker";
-					System.out.println("Spawned a " + type + " with assignment " + assignment);
+					//System.out.println("Spawned a " + type + " with assignment " + assignment);
 					return;
 				}
 				
+			}
+		}
+		
+		for(Job job:jobQueu) {
+			if(job.numRobotsAssigned < job.numRobotsNeeded) {
+				boolean spawnSuccess = false;
+				int squad = job.squadNum;
+				
+				spawnSuccess = tryToSpawn(rc);
+				if(spawnSuccess) {
+					int assignment = squad < Channels.firstOffenseChannel ? Channels.assignmentEncoding(squad, 0) : Channels.assignmentEncoding(squad, 1);
+					rc.broadcast(Channels.spawnChannel, assignment);
+					
+					job.addRobotAssigned(1);
+					
+					String type = squad < Channels.firstOffenseChannel ? "defender" : "attacker";
+					//System.out.println("Spawned a " + type + " with assignment " + assignment);
+					return;
+				}
 			}
 		}
 		

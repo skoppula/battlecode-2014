@@ -72,8 +72,10 @@ public class Job {
 		if(this.numRobotsAssigned == this.numRobotsNeeded)
 			this.finishedSpawning = true;
 		
-		else if(this.numRobotsAssigned == 1)
+		else if(this.numRobotsAssigned == 1) {
 			this.startedSpawning = true;
+			startRound = Clock.getRoundNum(); //TODO
+		}
 	}
 
 	void prepareForRemoval(RobotController rc) throws GameActionException {
