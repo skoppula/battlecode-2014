@@ -9,6 +9,7 @@ import battlecode.common.MapLocation;
 import battlecode.common.Robot;
 import battlecode.common.RobotController;
 import battlecode.common.RobotType;
+import battlecode.common.TerrainTile;
 
 public class Move {	
 
@@ -237,6 +238,155 @@ public class Move {
 		//robot has found an opening that allows it to move in direction toDest
 	}
 	
+	public static int surroundingWalls(RobotController rc, MapLocation loc){
+		Direction[] dirs = {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
+		int walls = 0;
+		for(Direction direction:dirs){
+			if(rc.senseTerrainTile(loc.add(direction)) == TerrainTile.VOID || rc.senseTerrainTile(loc.add(direction)) == TerrainTile.OFF_MAP){
+				walls++;
+			}
+		}
+		return walls;
+	}
+	
+	public static Direction wallFollow(RobotController rc) throws GameActionException{ //consciously following left side of wall
+		Direction res = null;
+		if(surroundingWalls(rc, rc.getLocation())<3){
+			if(rc.isActive() && rc.canMove(Direction.WEST) && (rc.senseTerrainTile(rc.getLocation().add(Direction.NORTH)) == TerrainTile.VOID || rc.senseTerrainTile(rc.getLocation().add(Direction.NORTH)) == TerrainTile.OFF_MAP)){
+				rc.move(Direction.WEST);
+				rc.yield();
+				res = Direction.WEST;
+			} else if(rc.isActive() && rc.canMove(Direction.NORTH) && (rc.senseTerrainTile(rc.getLocation().add(Direction.EAST)) == TerrainTile.VOID || rc.senseTerrainTile(rc.getLocation().add(Direction.EAST)) == TerrainTile.OFF_MAP)){
+				rc.move(Direction.NORTH);
+				rc.yield();
+				res = Direction.NORTH;
+			} else if(rc.isActive() && rc.canMove(Direction.EAST) && (rc.senseTerrainTile(rc.getLocation().add(Direction.SOUTH)) == TerrainTile.VOID || rc.senseTerrainTile(rc.getLocation().add(Direction.SOUTH)) == TerrainTile.OFF_MAP)){
+				rc.move(Direction.EAST);
+				rc.yield();
+				res = Direction.EAST;
+			} else if(rc.isActive() && rc.canMove(Direction.SOUTH) &&(rc.senseTerrainTile(rc.getLocation().add(Direction.WEST)) == TerrainTile.VOID || rc.senseTerrainTile(rc.getLocation().add(Direction.WEST)) == TerrainTile.OFF_MAP)){
+				rc.move(Direction.SOUTH);
+				rc.yield();
+				res = Direction.SOUTH;
+			} else if(rc.isActive() && rc.canMove(Direction.NORTH) && (rc.senseTerrainTile(rc.getLocation().add(Direction.NORTH_EAST)) == TerrainTile.VOID || rc.senseTerrainTile(rc.getLocation().add(Direction.NORTH_EAST)) == TerrainTile.OFF_MAP)){
+				rc.move(Direction.NORTH);
+				rc.yield();
+				res = Direction.NORTH;
+			} else if(rc.isActive() && rc.canMove(Direction.EAST) && (rc.senseTerrainTile(rc.getLocation().add(Direction.SOUTH_EAST)) == TerrainTile.VOID || rc.senseTerrainTile(rc.getLocation().add(Direction.SOUTH_EAST)) == TerrainTile.OFF_MAP)){
+				rc.move(Direction.EAST);
+				rc.yield();
+				res = Direction.EAST;
+			} else if(rc.isActive() && rc.canMove(Direction.SOUTH) && (rc.senseTerrainTile(rc.getLocation().add(Direction.SOUTH_WEST)) == TerrainTile.VOID || rc.senseTerrainTile(rc.getLocation().add(Direction.SOUTH_WEST)) == TerrainTile.OFF_MAP)){
+				rc.move(Direction.SOUTH);
+				rc.yield();
+				res = Direction.SOUTH;
+			} else if(rc.isActive() && rc.canMove(Direction.WEST) && (rc.senseTerrainTile(rc.getLocation().add(Direction.NORTH_WEST)) == TerrainTile.VOID || rc.senseTerrainTile(rc.getLocation().add(Direction.NORTH_WEST)) == TerrainTile.OFF_MAP)){
+				rc.move(Direction.WEST);
+				rc.yield();
+				res = Direction.WEST;
+			}
+		}
+		else{
+			if(rc.isActive() && rc.canMove(Direction.SOUTH_WEST) && ((rc.senseTerrainTile(rc.getLocation().add(Direction.WEST)) == TerrainTile.VOID &&  rc.senseTerrainTile(rc.getLocation().add(Direction.SOUTH)) == TerrainTile.VOID)|| (rc.senseTerrainTile(rc.getLocation().add(Direction.SOUTH)) == TerrainTile.OFF_MAP && rc.senseTerrainTile(rc.getLocation().add(Direction.WEST)) == TerrainTile.OFF_MAP))){
+				rc.move(Direction.SOUTH_WEST);
+				rc.yield();
+				res = Direction.SOUTH_WEST;
+			} else if(rc.isActive() && rc.canMove(Direction.NORTH_WEST) && ((rc.senseTerrainTile(rc.getLocation().add(Direction.WEST)) == TerrainTile.VOID &&  rc.senseTerrainTile(rc.getLocation().add(Direction.NORTH)) == TerrainTile.VOID)|| (rc.senseTerrainTile(rc.getLocation().add(Direction.WEST)) == TerrainTile.OFF_MAP && rc.senseTerrainTile(rc.getLocation().add(Direction.NORTH)) == TerrainTile.OFF_MAP))){
+				rc.move(Direction.NORTH_WEST);
+				rc.yield();
+				res = Direction.NORTH_WEST;
+			} else if(rc.isActive() && rc.canMove(Direction.NORTH_EAST) && ((rc.senseTerrainTile(rc.getLocation().add(Direction.EAST)) == TerrainTile.VOID &&  rc.senseTerrainTile(rc.getLocation().add(Direction.NORTH)) == TerrainTile.VOID)|| (rc.senseTerrainTile(rc.getLocation().add(Direction.EAST)) == TerrainTile.OFF_MAP && rc.senseTerrainTile(rc.getLocation().add(Direction.NORTH)) == TerrainTile.OFF_MAP))){
+				rc.move(Direction.NORTH_EAST);
+				rc.yield();
+				res = Direction.NORTH_EAST;
+			} else if(rc.isActive() && rc.canMove(Direction.SOUTH_EAST) && ((rc.senseTerrainTile(rc.getLocation().add(Direction.EAST)) == TerrainTile.VOID &&  rc.senseTerrainTile(rc.getLocation().add(Direction.SOUTH)) == TerrainTile.VOID)|| (rc.senseTerrainTile(rc.getLocation().add(Direction.EAST)) == TerrainTile.OFF_MAP && rc.senseTerrainTile(rc.getLocation().add(Direction.SOUTH)) == TerrainTile.OFF_MAP))){
+				rc.move(Direction.SOUTH_EAST);
+				rc.yield();
+				res = Direction.SOUTH_EAST;
+			}
+		}
+		return res;
+	}
+	
+	@SuppressWarnings("incomplete-switch")
+	public static Direction wallFollow(RobotController rc, Direction lastdir) throws GameActionException{
+		System.out.println("Last Direction was " + lastdir);
+		Direction res = null;
+		Direction[] directions = null;
+		switch(lastdir){
+		case NORTH:
+			directions = new Direction[]{Direction.NORTH, Direction.NORTH_EAST, Direction.NORTH_WEST, Direction.EAST, Direction.WEST, Direction.SOUTH_EAST, Direction.SOUTH_WEST};
+			break;
+		case NORTH_EAST:
+			directions = new Direction[]{Direction.NORTH_EAST, Direction.EAST, Direction.NORTH, Direction.SOUTH_EAST, Direction.NORTH_WEST, Direction.SOUTH, Direction.WEST};
+			break;
+		case EAST:
+			directions = new Direction[]{Direction.EAST, Direction.NORTH_EAST, Direction.SOUTH_EAST, Direction.NORTH, Direction.SOUTH, Direction.SOUTH_WEST, Direction.NORTH_WEST};
+			break;
+		case SOUTH_EAST:
+			directions = new Direction[]{Direction.SOUTH_EAST, Direction.SOUTH, Direction.EAST, Direction.NORTH_EAST, Direction.SOUTH_WEST, Direction.NORTH, Direction.WEST};
+			break;
+		case SOUTH:
+			directions = new Direction[]{Direction.SOUTH, Direction.SOUTH_EAST, Direction.SOUTH_WEST, Direction.WEST, Direction.EAST, Direction.NORTH_WEST, Direction.NORTH_EAST};
+			break;
+		case SOUTH_WEST:
+			directions = new Direction[]{Direction.SOUTH_WEST, Direction.SOUTH, Direction.WEST, Direction.SOUTH_EAST, Direction.NORTH_WEST, Direction.EAST, Direction.NORTH};
+			break;
+		case WEST:
+			directions = new Direction[]{Direction.WEST, Direction.NORTH_WEST, Direction.SOUTH_WEST, Direction.NORTH, Direction.SOUTH, Direction.SOUTH_EAST, Direction.NORTH_EAST};
+			break;
+		case NORTH_WEST:
+			directions = new Direction[]{Direction.NORTH_WEST, Direction.NORTH, Direction.WEST, Direction.NORTH_EAST, Direction.SOUTH_WEST, Direction.SOUTH, Direction.EAST};
+			break;
+		}
+		for(Direction direction:directions){
+			if(rc.isActive() && rc.canMove(direction) && surroundingWalls(rc, rc.getLocation().add(direction)) > 0){
+				rc.move(direction);
+				rc.yield();
+				res = direction;
+				break;
+			}
+		}
+		return res;
+	}
+	
+	public static int countWalls(RobotController rc, MapLocation dest) {
+		int wall = 0;
+		Direction toDest = rc.getLocation().directionTo(dest);
+		int distance = (int) Math.sqrt(rc.getLocation().distanceSquaredTo(dest));
+		for(int i = 1; i < distance; i++){
+			TerrainTile tile = rc.senseTerrainTile(rc.getLocation().add(toDest, i));
+			if(tile == TerrainTile.valueOf("VOID")){
+				wall++;
+			}
+		}
+		return wall;
+	}
+	
+	public static void breakCycle(RobotController rc, MapLocation dest) throws GameActionException{
+		MapLocation last = rc.getLocation();
+		Direction lastdir, beforelast = null;
+		rc.yield();
+		lastdir = wallFollow(rc);
+		int wallsToDest = countWalls(rc, dest);
+		while(countWalls(rc, dest) >= wallsToDest){//distances should be getting closer to destination, so delta.get[0] should be negative
+			if(rc.isActive()){
+				if(lastdir != null){
+					beforelast = lastdir;
+					lastdir = wallFollow(rc, lastdir);
+				}else
+					lastdir = wallFollow(rc, beforelast);
+				rc.yield();
+				last = valueOf(rc.getLocation());
+			}
+			rc.yield();
+		}
+
+		if(countWalls(rc, dest) < wallsToDest){ //what conditions do we break out?
+			//System.out.println("Broke free");
+		}
+	}
+	
 	public static void moveTo(RobotController rc, MapLocation dest) throws GameActionException {
 		
 		MapLocation laststuck = new MapLocation(0,0);
@@ -257,18 +407,7 @@ public class Move {
     		}else{ //robot is either inactive or can't move toDest
     			if(rc.isActive() && (rc.canMove(toDest) == false || next.distanceSquaredTo(enemyHQ)<RobotType.HQ.attackRadiusMaxSquared)){ //if robot can't move toDest either because there's a wall or HQ is in way...
     				if(laststuck.equals(rc.getLocation()) || beforelaststuck.equals(rc.getLocation())){ //wait, I've been here before
-    					Random randint = new Random();
-
-    					while(rc.canMove(toDest) == false&& rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent()).length==0){
-    						Direction randdir = allDirections[randint.nextInt(7)];
-//        					System.out.println("I'm stuck. Trying random direction " + randdir);
-        					while(rc.canMove(randdir)&&rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent()).length==0){
-        						if(rc.isActive()){
-        							rc.move(randdir);
-        						}
-        						rc.yield();	
-        					}
-    					}
+    					breakCycle(rc, dest);
     				}
     				else{
     					beforelaststuck = valueOf(laststuck);
@@ -305,17 +444,7 @@ public class Move {
     		}else{ //robot is either inactive or can't move toDest
     			if(rc.isActive() && rc.canMove(toDest) == false){ //if robot can't move toDest...
     				if(laststuck.equals(rc.getLocation()) || beforelaststuck.equals(rc.getLocation())){ //wait, I've been here before
-    					Random randint = new Random();
-    					while(rc.canMove(toDest) == false&& rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent()).length==0){
-    						Direction randdir = allDirections[randint.nextInt(7)];
-//        					System.out.println("I'm stuck. Trying random direction " + randdir);
-        					while(rc.canMove(randdir)&& rc.senseNearbyGameObjects(Robot.class,10000,rc.getTeam().opponent()).length==0){
-        						if(rc.isActive()){
-        							rc.move(randdir);
-        						}
-        						rc.yield();	
-        					}
-    					}
+    					breakCycle(rc, dest);
     				}
     				else{
     					beforelaststuck = valueOf(laststuck);
@@ -383,17 +512,7 @@ public class Move {
     		}else{ //robot is either inactive or can't move toDest
     			if(rc.isActive() && rc.canMove(toDest) == false){ //if robot can't move toDest...
     				if(laststuck.equals(rc.getLocation()) || beforelaststuck.equals(rc.getLocation())){ //wait... I've been here before
-    					Random randint = new Random();
-    					while(rc.canMove(toDest) == false){
-							Direction randdir = allDirections[randint.nextInt(7)]; //try a random direction to go in to break from oscillation
-							System.out.println("I'm stuck. Trying random direction " + randdir);
-							while(rc.canMove(randdir)){
-								if(rc.isActive()){
-									rc.sneak(randdir);
-								}
-								rc.yield();
-							}
-    					}
+    					breakCycle(rc, dest);
     				}
     				else{
     					beforelaststuck = valueOf(laststuck);
@@ -434,17 +553,7 @@ public class Move {
     		}else{ //robot is either inactive or can't move toDest
     			if(rc.isActive() && rc.canMove(toDest) == false){ //if robot can't move toDest...
     				if(laststuck.equals(rc.getLocation()) || beforelaststuck.equals(rc.getLocation())){ //wait... I've been here before
-    					Random randint = new Random();
-    					while(rc.canMove(toDest) == false){
-							Direction randdir = allDirections[randint.nextInt(7)]; //try a random direction to go in to break from oscillation
-							System.out.println("I'm stuck. Trying random direction " + randdir);
-							while(rc.canMove(randdir)){
-								if(rc.isActive()){
-									rc.sneak(randdir);
-								}
-								rc.yield();
-							}
-    					}
+    					breakCycle(rc, dest);
     				}
     				else{
     					beforelaststuck = valueOf(laststuck);
