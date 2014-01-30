@@ -407,7 +407,8 @@ public class Move {
     		}else{ //robot is either inactive or can't move toDest
     			if(rc.isActive() && (rc.canMove(toDest) == false || next.distanceSquaredTo(enemyHQ)<RobotType.HQ.attackRadiusMaxSquared)){ //if robot can't move toDest either because there's a wall or HQ is in way...
     				if(laststuck.equals(rc.getLocation()) || beforelaststuck.equals(rc.getLocation())){ //wait, I've been here before
-    					breakCycle(rc, dest);
+    					//breakCycle(rc, dest);
+    					System.out.println("temporary fix");
     				}
     				else{
     					beforelaststuck = valueOf(laststuck);
