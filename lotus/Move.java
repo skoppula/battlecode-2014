@@ -313,6 +313,10 @@ public class Move {
 		System.out.println("Last Direction was " + lastdir);
 		Direction res = null;
 		Direction[] directions = null;
+		
+		if (lastdir==null){
+			lastdir = Direction.NORTH;
+		}
 		switch(lastdir){
 		case NORTH:
 			directions = new Direction[]{Direction.NORTH, Direction.NORTH_EAST, Direction.NORTH_WEST, Direction.EAST, Direction.WEST, Direction.SOUTH_EAST, Direction.SOUTH_WEST};
@@ -338,6 +342,8 @@ public class Move {
 		case NORTH_WEST:
 			directions = new Direction[]{Direction.NORTH_WEST, Direction.NORTH, Direction.WEST, Direction.NORTH_EAST, Direction.SOUTH_WEST, Direction.SOUTH, Direction.EAST};
 			break;
+		default:
+			directions = new Direction[] {Direction.NORTH};break;
 		}
 		for(Direction direction:directions){
 			if(rc.isActive() && rc.canMove(direction) && surroundingWalls(rc, rc.getLocation().add(direction)) > 0){
@@ -407,7 +413,7 @@ public class Move {
     		}else{ //robot is either inactive or can't move toDest
     			if(rc.isActive() && (rc.canMove(toDest) == false || next.distanceSquaredTo(enemyHQ)<RobotType.HQ.attackRadiusMaxSquared)){ //if robot can't move toDest either because there's a wall or HQ is in way...
     				if(laststuck.equals(rc.getLocation()) || beforelaststuck.equals(rc.getLocation())){ //wait, I've been here before
-    					//breakCycle(rc, dest);
+    					breakCycle(rc, dest);
     					System.out.println("temporary fix");
     				}
     				else{

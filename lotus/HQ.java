@@ -58,14 +58,16 @@ public class HQ {
 		for(Job job:jobQueu)
 			job.updateSquadChannel(rc);
 		
-		//System.out.println(jobQueu);
+		System.out.println(jobQueu);
 		
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared, enemy);
 		
 		if(enemyRobots.length > 0){
 			Attack.indivShootNearby(rc, enemyRobots);
-		} else
+		} else {
 			spawnRobot(rc);
+		}
+			
 		
 		rc.yield();
 	}
@@ -231,9 +233,26 @@ public class HQ {
 
 		if(initRush) {
 			MapLocation rallyPoint = getRushRallyPoint(rc);
+			//jobQueu.add(0, new Job(rallyPoint, 25, getAvailableSquadNum("offense"), attackerMaxRounds, true));
 			jobQueu.add(0, new Job(rallyPoint, numInitRush, getAvailableSquadNum("offense"), attackerMaxRounds, true));
 			//TODO wait around until enemy makes a pasture, and then attack that pasture
 			initRush = false;
+			
+			for(int i = 0; i < idealNumPastures && numDefenseJobs() < idealNumPastures; i++) {
+				for(int j = 0; j < safe.length; j++) {
+					if(safe[j] && !jobAlreadyTaken(desiredPASTRs[j])) {
+						int distance = (int) Math.sqrt(teamHQ.distanceSquaredTo(desiredPASTRs[j]));
+						if(teamHQ.distanceSquaredTo(enemyHQ) > 900 && mapX > 30 && mapY > 30) { //If enemy is far and map is big, add it to the front of the queu 
+							jobQueu.add(0, new Job(j, desiredPASTRs[j], numDefenders, getAvailableSquadNum("defense"), getPASTRMaxRounds(distance)));
+							break;
+					
+						} else {
+							jobQueu.add(new Job(j, desiredPASTRs[j], numDefenders, getAvailableSquadNum("defense"), getPASTRMaxRounds(distance)));
+							break;
+						}
+					}
+				}
+			}
 			
 		} else {
 			for(int i = 0; i < idealNumPastures && numDefenseJobs() < idealNumPastures; i++) {
@@ -252,6 +271,7 @@ public class HQ {
 				}
 			}
 		}
+		
 	}
 	
 	static Job getExistingRushJob() {
@@ -409,10 +429,13 @@ public class HQ {
 		if (jobQueu.size()==0&&rc.isActive()){
 			//System.out.println("no jobs!" + jobQueu.size());
 			//possible fix below
-			//jobQueu.add(0, new Job(enemyHQ, 7, getAvailableSquadNum("offense"), attackerMaxRounds));
+			MapLocation newTarget = rc.senseEnemyHQLocation();
+			int enemies = 3;
+			int distance = 10000;
+			jobQueu.add(new Job(newTarget, enemies, getAvailableSquadNum("offense"), getAttackerMaxRounds(distance), false));
 			
 			//TODO this happens in desolation
-			//System.out.println("no jobs left!" + jobQueu.size());
+			System.out.println("no jobs left!" + jobQueu.size());
 		}
 				
 		for(int i = jobQueu.size() - 1; i > -1; i--) {
