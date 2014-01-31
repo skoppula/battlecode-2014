@@ -123,17 +123,16 @@ public class HQ {
 		if(helpCall != 0) {
 			
 			int[] info = Channels.backupDecoding(helpCall);
-			
 			int squad = info[2];
 			MapLocation newTarget = new MapLocation(info[0], info[1]);
 			int enemies = info[3];
 			
 			Job job = findJobInQueu(squad);
-			if(job != null && job.numReinforcementsSent < 1) {
+			if(job != null && job.numReinforcementsSent < 3) {
 				System.out.println("Help call recieved by squad " + squad + " at target " + newTarget + " so sending " + enemies + " soldiers | existing job");
 				job.restartRobotsAssigned(enemies);
 				job.updateTarget(newTarget);
-			} else {
+			} else if (job == null) {
 				System.out.println("Help call recieved by squad " + squad + " at target " + newTarget + " so sending " + enemies + " soldiers | creating new job");
 				int distance = (int) Math.sqrt(teamHQ.distanceSquaredTo(newTarget));
 				jobQueu.add(new Job(newTarget, enemies, getAvailableSquadNum("offense"), getAttackerMaxRounds(distance), false));
@@ -154,7 +153,7 @@ public class HQ {
 				System.out.println("PASTR position " + desiredPASTRs[job.desiredPASTRs_index] + " deemed unsafe.");
 				job.prepareForRemoval(rc);
 				safe[job.desiredPASTRs_index] = false;
-				numDefenders += 3;
+				numDefenders += 2;
 				rc.broadcast(Channels.numAlliesNeededChannel, 2 + rc.readBroadcast(Channels.numAlliesNeededChannel));
 
 				//Add replacement PASTR in safer position
@@ -225,7 +224,7 @@ public class HQ {
 				if(enemyPASTRs.length > ourPASTRs.length - 1 || teamHQ.distanceSquaredTo(enemyPASTR) < 900) //If enemy PASTR is close by, add it to the front of the queu
 					jobQueu.add(0, new Job(enemyPASTR, numAttackers, getAvailableSquadNum("offense"), getAttackerMaxRounds(distance), false));
 				else
-					jobQueu.add(new Job(enemyPASTR, numAttackers, getAvailableSquadNum("offense"), getAttackerMaxRounds(distance), false));
+					jobQueu.add(0, new Job(enemyPASTR, numAttackers, getAvailableSquadNum("offense"), getAttackerMaxRounds(distance), false));
 			}
 		}
 
@@ -236,6 +235,8 @@ public class HQ {
 			//TODO wait around until enemy makes a pasture, and then attack that pasture
 			initRush = false;
 			
+			//reverse tranverse the desiredPASTRs so that in rush, create safe PASTRs
+			numDefenders += 1;
 			for(int i = 0; i < idealNumPastures && numDefenseJobs() < idealNumPastures; i++) {
 				for(int j = 0; j < safe.length; j++) {
 					if(safe[j] && !jobAlreadyTaken(desiredPASTRs[j])) {
@@ -253,6 +254,13 @@ public class HQ {
 			}
 			
 		} else {
+
+			//if they seem to be rushing/not creating PASTRs
+//			if(rc.sensePastrLocations(enemy).length == 0 && Clock.getRoundNum() > 300) {
+//				numDefenders += 1;
+//				rc.broadcast(Channels.numAlliesNeededChannel, 1 + rc.readBroadcast(Channels.numAlliesNeededChannel));
+//			}
+			
 			for(int i = 0; i < idealNumPastures && numDefenseJobs() < idealNumPastures; i++) {
 				for(int j = 0; j < safe.length; j++) {
 					if(safe[j] && !jobAlreadyTaken(desiredPASTRs[j])) {
@@ -288,7 +296,8 @@ public class HQ {
 			return true;
 	}
 	
-	private static MapLocation getRushRallyPoint(RobotController rc) {
+	static MapLocation getRushRallyPoint(RobotController rc) {
+
 		int xDiff = enemyHQ.x - teamHQ.x, yDiff = enemyHQ.y - teamHQ.y;
 		int y = teamHQ.x + (int) (0.67*xDiff), x = teamHQ.y + (int) (0.67*yDiff);
 

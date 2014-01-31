@@ -10,7 +10,7 @@ import battlecode.common.Team;
 
 public class COWBOY {
 	
-	static int distanceThreshold = 9; //How close the robot can be to target to establish PASTR
+	static int distanceThreshold = 16; //How close the robot can be to target to establish PASTR
 	
 	static void checkIfBackupNeeded(RobotController rc) throws GameActionException {
 		
@@ -100,6 +100,8 @@ public class COWBOY {
 		Robot[] allies = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared*2, team);
 		
 		//Create a PASTR/NT if not already there
+		
+		//System.out.println(allies.length + " " + rc.readBroadcast(Channels.numAlliesNeededChannel));
 		if(allies.length >= rc.readBroadcast(Channels.numAlliesNeededChannel) && curr.distanceSquaredTo(target) < distanceThreshold && rc.isActive()) {
 			if(PASTRstatus == 0) {
 				rc.construct(RobotType.PASTR);
