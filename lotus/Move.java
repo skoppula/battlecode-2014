@@ -343,7 +343,7 @@ public class Move {
 			directions = new Direction[]{Direction.NORTH_WEST, Direction.NORTH, Direction.WEST, Direction.NORTH_EAST, Direction.SOUTH_WEST, Direction.SOUTH, Direction.EAST};
 			break;
 		default:
-			directions = new Direction[] {Direction.NORTH};break;
+			directions = new Direction[] {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};break;
 		}
 		for(Direction direction:directions){
 			if(rc.isActive() && rc.canMove(direction) && surroundingWalls(rc, rc.getLocation().add(direction)) > 0){
