@@ -10,8 +10,6 @@ import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.Robot;
 import battlecode.common.RobotController;
-import battlecode.common.RobotLevel;
-import battlecode.common.RobotType;
 import battlecode.common.Team;
 import battlecode.common.TerrainTile;
 
@@ -58,7 +56,7 @@ public class HQ {
 		for(Job job:jobQueu)
 			job.updateSquadChannel(rc);
 		
-		System.out.println(jobQueu);
+		//System.out.println(jobQueu);
 		
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared, enemy);
 		
@@ -131,7 +129,7 @@ public class HQ {
 			int enemies = info[3];
 			
 			Job job = findJobInQueu(squad);
-			if(job != null && job.numReinforcementsSent < 2) {
+			if(job != null && job.numReinforcementsSent < 1) {
 				System.out.println("Help call recieved by squad " + squad + " at target " + newTarget + " so sending " + enemies + " soldiers | existing job");
 				job.restartRobotsAssigned(enemies);
 				job.updateTarget(newTarget);
@@ -293,7 +291,6 @@ public class HQ {
 	private static MapLocation getRushRallyPoint(RobotController rc) {
 		int xDiff = enemyHQ.x - teamHQ.x, yDiff = enemyHQ.y - teamHQ.y;
 		int y = teamHQ.x + (int) (0.67*xDiff), x = teamHQ.y + (int) (0.67*yDiff);
-		MapLocation m = new MapLocation(x, y);
 
 		if((terrainMap[x][y] == ROAD || terrainMap[x][y] == NORMAL))
 			return new MapLocation(x, y);
@@ -345,25 +342,6 @@ public class HQ {
 		return new MapLocation(teamHQ.x + (int) (0.67*xDiff), teamHQ.y + (int) (0.67*yDiff));
 	}
 
-	
-	private static MapLocation determineRallyPoint(RobotController rc) {
-		// TODO this can basically win the game for us, it's THAT important. You HAVE to avoid enemy contact
-		//until they create a pastr
-		int proximity = teamHQ.distanceSquaredTo(enemyHQ);
-		
-		MapLocation rallyPoint = new MapLocation ((enemyHQ.x + 2*teamHQ.x)/3, (enemyHQ.y + 2*teamHQ.y)/3);
-		
-		if (proximity < 200) {
-			Direction away = enemyHQ.directionTo(teamHQ);
-			rallyPoint = teamHQ.add(away, 10);
-		}
-		//MapLocation rallyPoint = new MapLocation (teamHQ.x, teamHQ.y -10);
-		
-		//for maps where the HQ is really close together --- this wins the game:
-		//MapLocation rallyPoint = new MapLocation ((enemyHQ.x + 5*teamHQ.x)/6, (enemyHQ.y + 5*teamHQ.y)/6);
-		//MapLocation rallyPoint = desiredPASTRs[1]; //rallyPoints have to be REALLY good!!!
-		return rallyPoint;
-	}
 	
 	static private Job findJobInQueu(int squad) {
 		for(Job j:jobQueu) {
@@ -423,19 +401,16 @@ public class HQ {
 	
 	static void spawnRobot(RobotController rc) throws GameActionException{
 		
-		//In some cases, if the initial rush fails miserably, we don't produce robots at all for a time
 		//This will just generate robots no matter what
-		
-		if (jobQueu.size()==0&&rc.isActive()){
-			//System.out.println("no jobs!" + jobQueu.size());
-			//possible fix below
+		if (jobQueu.size()==0 && rc.isActive()){
+			
+			System.out.println("No jobs detected! Adding offense job.");
+			
 			MapLocation newTarget = rc.senseEnemyHQLocation();
 			int enemies = 3;
 			int distance = 10000;
 			jobQueu.add(new Job(newTarget, enemies, getAvailableSquadNum("offense"), getAttackerMaxRounds(distance), false));
 			
-			//TODO this happens in desolation
-			System.out.println("no jobs left!" + jobQueu.size());
 		}
 				
 		for(int i = jobQueu.size() - 1; i > -1; i--) {
@@ -456,7 +431,7 @@ public class HQ {
 					job.addRobotAssigned(1);
 					
 					String type = squad < Channels.firstOffenseChannel ? "defender" : "attacker";
-					//System.out.println("Spawned a " + type + " with assignment " + assignment);
+					System.out.println("Spawned a " + type + " with assignment " + assignment);
 					return;
 				}
 				
@@ -476,7 +451,7 @@ public class HQ {
 					job.addRobotAssigned(1);
 					
 					String type = squad < Channels.firstOffenseChannel ? "defender" : "attacker";
-					//System.out.println("Spawned a " + type + " with assignment " + assignment);
+					System.out.println("Spawned a " + type + " with assignment " + assignment);
 					return;
 				}
 			}

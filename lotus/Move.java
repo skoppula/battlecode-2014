@@ -310,7 +310,7 @@ public class Move {
 	
 	@SuppressWarnings("incomplete-switch")
 	public static Direction wallFollow(RobotController rc, Direction lastdir) throws GameActionException{
-		System.out.println("Last Direction was " + lastdir);
+		//System.out.println("Last Direction was " + lastdir);
 		Direction res = null;
 		Direction[] directions = null;
 		
@@ -414,7 +414,7 @@ public class Move {
     			if(rc.isActive() && (rc.canMove(toDest) == false || next.distanceSquaredTo(enemyHQ)<RobotType.HQ.attackRadiusMaxSquared)){ //if robot can't move toDest either because there's a wall or HQ is in way...
     				if(laststuck.equals(rc.getLocation()) || beforelaststuck.equals(rc.getLocation())){ //wait, I've been here before
     					breakCycle(rc, dest);
-    					System.out.println("temporary fix");
+    					//System.out.println("temporary fix");
     				}
     				else{
     					beforelaststuck = valueOf(laststuck);
@@ -467,26 +467,26 @@ public class Move {
 	}
 	
 	public static void sneakunstick(RobotController rc, Direction toDest, MapLocation dest) throws GameActionException{
-		System.out.println("Trying to sneak " + toDest + " towards (" + dest.x + ", " + dest.y + ")");
+		//System.out.println("Trying to sneak " + toDest + " towards (" + dest.x + ", " + dest.y + ")");
 		Direction[] directions = tryDirections(rc, toDest, dest);
 		for(Direction tryDir: directions){ //think of ways that would make sense to try, ordered by likelihood of finding opening
 			while(rc.canMove(tryDir) && rc.canMove(toDest) == false){ //robot moves along wall to try to find way to move in toDest
 				toDoWhileMoving(rc);
 				if(rc.isActive()){
-					System.out.println("Sneaking " + tryDir);
+					//System.out.println("Sneaking " + tryDir);
 					rc.sneak(tryDir);
 				}
 				rc.yield();
 			}
 			if(rc.canMove(tryDir) == false){ //robot couldn't find a way to move in toDest before hitting another wall in tryDir direction (corner case)
-				System.out.println("Can't sneak " + tryDir);
+				//System.out.println("Can't sneak " + tryDir);
 				continue;
 			}
 			if(rc.canMove(toDest)){
-				System.out.println("found hole");
+				//System.out.println("found hole");
 				if(rc.isActive()){
 					rc.sneak(toDest);
-					System.out.println("Sneaking toDest");
+					//System.out.println("Sneaking toDest");
 				}
 				else{
 					rc.yield();
@@ -494,7 +494,7 @@ public class Move {
 					if (rc.isActive()){
 						rc.sneak(toDest);
 					}
-					System.out.println("Took a nap and then sneaked toDest");
+					//System.out.println("Took a nap and then sneaked toDest");
 					break;
 				}
 			}
@@ -524,7 +524,7 @@ public class Move {
     				else{
     					beforelaststuck = valueOf(laststuck);
     					laststuck = rc.getLocation();
-    					System.out.println("UNSTICKING");
+    					//System.out.println("UNSTICKING");
     					sneakunstick(rc, toDest, dest); //unstick it
     					toDest = rc.getLocation().directionTo(dest);
     				}
@@ -565,7 +565,7 @@ public class Move {
     				else{
     					beforelaststuck = valueOf(laststuck);
     					laststuck = rc.getLocation();
-    					System.out.println("UNSTICKING");
+    					//System.out.println("UNSTICKING");
     					sneakunstick(rc, toDest, dest); //unstick it
     					toDest = rc.getLocation().directionTo(dest);
     				}

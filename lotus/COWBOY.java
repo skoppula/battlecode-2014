@@ -12,6 +12,28 @@ public class COWBOY {
 	
 	static int distanceThreshold = 9; //How close the robot can be to target to establish PASTR
 	
+	static void checkIfBackupNeeded(RobotController rc) throws GameActionException {
+		
+		int soldierSenseRad = (int) RobotType.SOLDIER.sensorRadiusSquared;
+		
+		Robot[] allies = rc.senseNearbyGameObjects(Robot.class, soldierSenseRad, rc.getTeam());
+		Robot[] enemies = rc.senseNearbyGameObjects(Robot.class, soldierSenseRad, rc.getTeam().opponent());
+		
+		//System.out.println(allies.length + " " + enemies.length);
+		
+		boolean outnumbered = false;
+		if(enemies.length == 0)
+			outnumbered = false;
+		else if((double) allies.length/enemies.length <= 1.5)
+			outnumbered = true;
+		
+		if(outnumbered && rc.readBroadcast(Channels.backupChannel) == 0) {
+			int squad = rc.readBroadcast(rc.getRobot().getID());
+			rc.broadcast(Channels.backupChannel, Channels.backupEncoding(rc.getLocation(), squad, enemies.length));
+			System.out.println("COWBOY sending help call");
+		}
+	}
+	
 	public static void runCowboy(RobotController rc, int assignment) throws GameActionException {
 	
 		if (assignment == 0)
@@ -24,6 +46,8 @@ public class COWBOY {
 			System.out.println("My time has elapsed. I must die in battle with honor for my squad " + squad + "!");
 			kamikaze(rc);
 		}
+		
+		//checkIfBackupNeeded(rc);
 		
 		switch(role){                              
 	        case 0: COWBOY.runDefender (rc, squad); break;
@@ -123,7 +147,7 @@ public class COWBOY {
 		
 		//Go to right place
 		if(curr.distanceSquaredTo(target) > 7) {
-			System.out.println(target + " target " + allies.length + "ally length");
+			//System.out.println(target + " target " + allies.length + "ally length");
 			Move.moveTo(rc, target);
 		}
 		

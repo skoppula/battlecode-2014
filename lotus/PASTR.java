@@ -13,8 +13,7 @@ public class PASTR {
 		int pastrSenseRad = (int) RobotType.PASTR.sensorRadiusSquared;
 		
 		Robot[] allies = rc.senseNearbyGameObjects(Robot.class, pastrSenseRad, rc.getTeam());
-		Robot[] enemies = rc.senseNearbyGameObjects(Robot.class, pastrSenseRad, rc.getTeam().opponent());
-		System.out.println("ALLIES LENGTH" + allies.length);
+		
 		//Get squad number from allies nearby
 		if(allies.length > 1) {
 			int nearestID = allies[0].getID();
@@ -31,6 +30,12 @@ public class PASTR {
 	}
 
 	public static void maintainPasture(RobotController rc) throws GameActionException {
+		
+		checkIfBackupNeeded(rc);
+		
+	}
+	
+	static void checkIfBackupNeeded(RobotController rc) throws GameActionException {
 		
 		int pastrSenseRad = (int) RobotType.PASTR.sensorRadiusSquared;
 		
@@ -50,8 +55,5 @@ public class PASTR {
 			rc.broadcast(Channels.backupChannel, Channels.backupEncoding(rc.getLocation(), squad, enemies.length));
 			System.out.println("Sending help call");
 		}
-		
-		
-		
 	}
 }
