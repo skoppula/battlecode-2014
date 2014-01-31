@@ -9,6 +9,7 @@ import battlecode.common.RobotType;
 //TODO enemy population based jobs
 //TODO scout fix
 
+
 //TODO face oncoming enemy side when defending
 //TODO offense camp and attack? retreat when outnumbered?
 //TODO introduce rally points into moveTo
