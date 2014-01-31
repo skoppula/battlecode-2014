@@ -315,7 +315,7 @@ public class Move {
 		Direction[] directions = null;
 		
 		if (lastdir==null){
-			lastdir = Direction.NORTH;
+			lastdir = Direction.OMNI;
 		}
 		switch(lastdir){
 		case NORTH:
@@ -414,7 +414,6 @@ public class Move {
     			if(rc.isActive() && (rc.canMove(toDest) == false || next.distanceSquaredTo(enemyHQ)<RobotType.HQ.attackRadiusMaxSquared)){ //if robot can't move toDest either because there's a wall or HQ is in way...
     				if(laststuck.equals(rc.getLocation()) || beforelaststuck.equals(rc.getLocation())){ //wait, I've been here before
     					breakCycle(rc, dest);
-    					//System.out.println("temporary fix");
     				}
     				else{
     					beforelaststuck = valueOf(laststuck);
@@ -588,6 +587,15 @@ public class Move {
     	}
 	}
 	
+	static void tryToSneak(RobotController rc) throws GameActionException {
+		for (int i = 0;i<7;i++) {
+    		Direction move = allDirections[(int)(rand.nextDouble()*8)];
+            if(rc.isActive()&&rc.canMove(move)&&rc.senseRobotCount()<GameConstants.MAX_ROBOTS){
+            	rc.sneak(move);
+            	break;
+            }
+    	}
+	}
 	
 
 }

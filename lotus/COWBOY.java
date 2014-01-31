@@ -130,6 +130,13 @@ public class COWBOY {
 			if(rc.isActive() && rc.canAttackSquare(eloc))
 				rc.attackSquare(eloc);
 		}
+		
+		//If there is a pastr and noisetower, don't block them!
+		if (PASTRstatus==1 && NTstatus ==1) {
+			if (enemyRobots.length ==0 && rc.senseCowsAtLocation(rc.getLocation()) > 30) {
+				Move.tryToSneak(rc);
+			}
+		}
 	}
 	
 	static void runAttacker (RobotController rc, int squad) throws GameActionException {
@@ -147,13 +154,7 @@ public class COWBOY {
 		if(curr.distanceSquaredTo(rc.senseHQLocation()) < 25)
 			Move.tryToMove(rc);
 		
-		//Go to right place
-		if(curr.distanceSquaredTo(target) > 7) {
-			//System.out.println(target + " target " + allies.length + "ally length");
-			Move.moveTo(rc, target);
-		}
-		
-		//Then attack!
+		//attack!
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().sensorRadiusSquared*2, enemy);
 		MapLocation eloc = Attack.nearestEnemyLoc(rc, enemyRobots, rc.getLocation());
 		
@@ -162,6 +163,12 @@ public class COWBOY {
 				Move.moveToward(rc, eloc);
 			if(rc.isActive() && rc.canAttackSquare(eloc))
 				rc.attackSquare(eloc);
+		}
+		
+		//Go to right place
+		if(curr.distanceSquaredTo(target) > 7) {
+			//System.out.println(target + " target " + allies.length + "ally length");
+			Move.moveTo(rc, target);
 		}
 		
 	}
