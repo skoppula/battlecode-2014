@@ -62,10 +62,12 @@ public class HQ {
 		
 		Robot[] enemyRobots = rc.senseNearbyGameObjects(Robot.class, rc.getType().attackRadiusMaxSquared, enemy);
 		
-		if(enemyRobots.length > 0)
+		if(enemyRobots.length > 0){
 			Attack.indivShootNearby(rc, enemyRobots);
-		else
+		} else {
 			spawnRobot(rc);
+		}
+			
 		
 		rc.yield();
 	}
@@ -76,8 +78,8 @@ public class HQ {
     	team =  hq.getTeam();
     	enemy = team.opponent();
     	cowDensMap = hq.senseCowGrowth();
-    	mapY = cowDensMap.length;
-    	mapX = cowDensMap[0].length;
+    	mapY = cowDensMap[0].length;
+    	mapX = cowDensMap.length;
     	
     	enemyHQ = rc.senseEnemyHQLocation();
     	teamHQ = rc.senseHQLocation();
@@ -133,7 +135,6 @@ public class HQ {
 				System.out.println("Help call recieved by squad " + squad + " at target " + newTarget + " so sending " + enemies + " soldiers | existing job");
 				job.restartRobotsAssigned(enemies);
 				job.updateTarget(newTarget);
-
 			} else {
 				System.out.println("Help call recieved by squad " + squad + " at target " + newTarget + " so sending " + enemies + " soldiers | creating new job");
 				int distance = (int) Math.sqrt(teamHQ.distanceSquaredTo(newTarget));
@@ -214,14 +215,12 @@ public class HQ {
 		//Create new jobs in offense, rush, and defense/PASTR creation
 		for(MapLocation enemyPASTR:enemyPASTRs) {
 			if(!jobAlreadyTaken(enemyPASTR)) {
-
 				
 				Job rush = getExistingRushJob();
 				if(rush != null && !Arrays.asList(enemyPASTRs).contains(rush.target)) {
 					rush.resetStartRound(Clock.getRoundNum());
 					rush.changeMaxRounds((int) Math.sqrt(rush.target.distanceSquaredTo(enemyPASTR)));
-					rush.changeTarget(enemyPASTR);
-					
+					rush.changeTarget(enemyPASTR);	
 				}
 				
 				int distance = (int) Math.sqrt(teamHQ.distanceSquaredTo(enemyPASTR));
@@ -234,9 +233,26 @@ public class HQ {
 
 		if(initRush) {
 			MapLocation rallyPoint = getRushRallyPoint(rc);
+			//jobQueu.add(0, new Job(rallyPoint, 25, getAvailableSquadNum("offense"), attackerMaxRounds, true));
 			jobQueu.add(0, new Job(rallyPoint, numInitRush, getAvailableSquadNum("offense"), attackerMaxRounds, true));
 			//TODO wait around until enemy makes a pasture, and then attack that pasture
 			initRush = false;
+			
+			for(int i = 0; i < idealNumPastures && numDefenseJobs() < idealNumPastures; i++) {
+				for(int j = 0; j < safe.length; j++) {
+					if(safe[j] && !jobAlreadyTaken(desiredPASTRs[j])) {
+						int distance = (int) Math.sqrt(teamHQ.distanceSquaredTo(desiredPASTRs[j]));
+						if(teamHQ.distanceSquaredTo(enemyHQ) > 900 && mapX > 30 && mapY > 30) { //If enemy is far and map is big, add it to the front of the queu 
+							jobQueu.add(0, new Job(j, desiredPASTRs[j], numDefenders, getAvailableSquadNum("defense"), getPASTRMaxRounds(distance)));
+							break;
+					
+						} else {
+							jobQueu.add(new Job(j, desiredPASTRs[j], numDefenders, getAvailableSquadNum("defense"), getPASTRMaxRounds(distance)));
+							break;
+						}
+					}
+				}
+			}
 			
 		} else {
 			for(int i = 0; i < idealNumPastures && numDefenseJobs() < idealNumPastures; i++) {
@@ -255,6 +271,7 @@ public class HQ {
 				}
 			}
 		}
+		
 	}
 	
 	static Job getExistingRushJob() {
@@ -275,7 +292,7 @@ public class HQ {
 	
 	private static MapLocation getRushRallyPoint(RobotController rc) {
 		int xDiff = enemyHQ.x - teamHQ.x, yDiff = enemyHQ.y - teamHQ.y;
-		int x = teamHQ.x + (int) (0.67*xDiff), y = teamHQ.y + (int) (0.67*yDiff);
+		int y = teamHQ.x + (int) (0.67*xDiff), x = teamHQ.y + (int) (0.67*yDiff);
 		MapLocation m = new MapLocation(x, y);
 
 		if((terrainMap[x][y] == ROAD || terrainMap[x][y] == NORMAL))
@@ -328,6 +345,26 @@ public class HQ {
 		return new MapLocation(teamHQ.x + (int) (0.67*xDiff), teamHQ.y + (int) (0.67*yDiff));
 	}
 
+	
+	private static MapLocation determineRallyPoint(RobotController rc) {
+		// TODO this can basically win the game for us, it's THAT important. You HAVE to avoid enemy contact
+		//until they create a pastr
+		int proximity = teamHQ.distanceSquaredTo(enemyHQ);
+		
+		MapLocation rallyPoint = new MapLocation ((enemyHQ.x + 2*teamHQ.x)/3, (enemyHQ.y + 2*teamHQ.y)/3);
+		
+		if (proximity < 200) {
+			Direction away = enemyHQ.directionTo(teamHQ);
+			rallyPoint = teamHQ.add(away, 10);
+		}
+		//MapLocation rallyPoint = new MapLocation (teamHQ.x, teamHQ.y -10);
+		
+		//for maps where the HQ is really close together --- this wins the game:
+		//MapLocation rallyPoint = new MapLocation ((enemyHQ.x + 5*teamHQ.x)/6, (enemyHQ.y + 5*teamHQ.y)/6);
+		//MapLocation rallyPoint = desiredPASTRs[1]; //rallyPoints have to be REALLY good!!!
+		return rallyPoint;
+	}
+	
 	static private Job findJobInQueu(int squad) {
 		for(Job j:jobQueu) {
 			if(j.squadNum == squad)
@@ -392,10 +429,13 @@ public class HQ {
 		if (jobQueu.size()==0&&rc.isActive()){
 			//System.out.println("no jobs!" + jobQueu.size());
 			//possible fix below
-			//jobQueu.add(0, new Job(enemyHQ, 7, getAvailableSquadNum("offense"), attackerMaxRounds));
+			MapLocation newTarget = rc.senseEnemyHQLocation();
+			int enemies = 3;
+			int distance = 10000;
+			jobQueu.add(new Job(newTarget, enemies, getAvailableSquadNum("offense"), getAttackerMaxRounds(distance), false));
 			
 			//TODO this happens in desolation
-			//System.out.println("no jobs left!" + jobQueu.size());
+			System.out.println("no jobs left!" + jobQueu.size());
 		}
 				
 		for(int i = jobQueu.size() - 1; i > -1; i--) {
@@ -441,7 +481,6 @@ public class HQ {
 				}
 			}
 		}
-		
 	}
 
 	static boolean tryToSpawn(RobotController rc) throws GameActionException {
@@ -451,6 +490,20 @@ public class HQ {
 			if(dir != null) {
 				rc.spawn(dir);
 				return true;
+			} else {
+				//the HQ is blocked up, move other squads
+				int id = rc.senseObjectAtLocation(teamHQ.add(1, 0)).getID();
+				System.out.println("there was a blockup by " + id);
+				int squad = Channels.assignmentDecoding(rc.readBroadcast(id))[0];
+				
+				//move that squad away
+				for(Job job:jobQueu){
+					if(job.squadNum == squad) {
+						Direction away = teamHQ.directionTo(enemyHQ);
+						job.changeTarget(teamHQ.add(away, 3));
+					}
+				}
+				
 			}
 		}
 		
@@ -529,9 +582,9 @@ public class HQ {
 			scanResolution = 2;
 		
 		
-		for(int i = 0; i < mapY-scanResolution; i+=scanResolution){
+		for(int i = 0; i < mapX-scanResolution; i+=scanResolution){
 
-			for(int j = 0; j < mapX-scanResolution; j+=scanResolution){
+			for(int j = 0; j < mapY-scanResolution; j+=scanResolution){
 
 				if((scanResolution == 1 || scanResolution == 2) && cowDensMap[i][j] == 0)
 					continue;
@@ -539,8 +592,8 @@ public class HQ {
 					continue;
 				
 				
-				double ratio = Math.sqrt(Math.pow((HQ.enemyHQ.x-(j+1)), 2) + Math.pow((HQ.enemyHQ.y-(i+1)), 2))
-								/Math.sqrt(Math.pow((HQ.teamHQ.x-(j+1)), 2) + Math.pow((HQ.teamHQ.y-(i+1)), 2)); 
+				double ratio = Math.sqrt(Math.pow((HQ.enemyHQ.x-(i+1)), 2) + Math.pow((HQ.enemyHQ.y-(j+1)), 2))
+								/Math.sqrt(Math.pow((HQ.teamHQ.x-(i+1)), 2) + Math.pow((HQ.teamHQ.y-(j+1)), 2)); 
 				
 				//WE WANT THIS RATIO TO BE AS LARGE AS POSSIBLE
 				double ratioThreshold = mapX*mapY > 400 ? 2 : 1;
@@ -563,7 +616,7 @@ public class HQ {
 				}
 
 				
-				squares[index] = scanResolution == 1 ? Conversion.coordinatesToInt(j, i) : Conversion.coordinatesToInt(j+1, i+1);
+				squares[index] = scanResolution == 1 ? Conversion.coordinatesToInt(i, j) : Conversion.coordinatesToInt(i+1, j+1);
 				productivity[index] = sum;
 				safetyRatios[index] = ratio;
 				index++;
@@ -608,10 +661,10 @@ public class HQ {
 					}		
 				}
 			}
-			
+
 			bestProd = 0;
 		}
-		
+		System.out.println(desiredPASTRs);
 		return desiredPASTRs;
 	}
 		
