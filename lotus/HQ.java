@@ -411,21 +411,31 @@ public class HQ {
 	static void spawnRobot(RobotController rc) throws GameActionException{
 		
 		//This will just generate robots no matter what
-		if (jobQueu.size()==0 && rc.isActive()){
+		if (jobQueu.size()<2 && rc.isActive()){
 			
-			System.out.println("No jobs detected! Adding offense job.");
+			System.out.println("Jobs running low! Adding offense job.");
 			
 			MapLocation newTarget = rc.senseEnemyHQLocation();
 			int enemies = 3;
 			int distance = 10000;
 			jobQueu.add(new Job(newTarget, enemies, getAvailableSquadNum("offense"), getAttackerMaxRounds(distance), false));
 			
+			rc.broadcast(0, Channels.assignmentEncoding(11, 1));
+    		MapLocation teamHQ = rc.senseHQLocation();
+    		MapLocation enemyHQ =  rc.senseEnemyHQLocation();
+    		
+    		MapLocation[] enemyPastrs = rc.sensePastrLocations(enemy);
+    		if (enemyPastrs.length > 0) {
+    			MapLocation target = enemyPastrs[ enemyPastrs.length - 1];
+    			rc.broadcast(11, Conversion.mapLocationToInt(target));
+    		}
+    		HQ.tryToSpawn(rc);
+			
 		}
 				
 		for(int i = jobQueu.size() - 1; i > -1; i--) {
 
 			Job job = jobQueu.get(i);
-			
 			
 			if(job.numRobotsAssigned < job.numRobotsNeeded && (job.startedSpawning == true && job.finishedSpawning == false)) {
 				//System.out.println("Spawning job " + job + " " + job.numRobotsAssigned);
